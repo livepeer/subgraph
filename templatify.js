@@ -14,8 +14,12 @@ function getNetworkNameForSubgraph() {
     case undefined:
     case "livepeer/livepeer":
       return "mainnet";
-    case "livepeer/livepeer-rinkeby":
+    case "livepeer/rinkeby":
       return "rinkeby";
+    case "livepeer/arbitrum-rinkeby":
+      return "arbitrum-rinkeby";
+    case "livepeer/arbitrum":
+      return "arbitrum-rinkeby";
     default:
       return null;
   }
