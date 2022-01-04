@@ -1,4 +1,4 @@
-import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 
 // Import event types from the registrar contract ABIs
 import {
@@ -30,6 +30,7 @@ import {
   createRound,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
+import { decimal } from "@protofire/subgraph-toolkit";
 
 // Handler for NewRound events
 export function newRound(event: NewRound): void {
@@ -39,9 +40,26 @@ export function newRound(event: NewRound): void {
   );
   let round = createOrLoadRound(event.block.number);
   let day = createOrLoadDay(event.block.timestamp.toI32());
-  let currentTranscoder = bondingManager.getFirstTranscoderInPool();
-  let transcoder = Transcoder.load(currentTranscoder.toHex());
-  let totalActiveStake = convertToDecimal(bondingManager.getTotalBonded());
+  let currentTranscoder = EMPTY_ADDRESS;
+  let totalActiveStake = decimal.ZERO;
+  let transcoder: Transcoder;
+
+  // will revert if there are no transcoders in pool
+  let callResult = bondingManager.try_getFirstTranscoderInPool();
+  if (callResult.reverted) {
+    log.info("getFirstTranscoderInPool reverted", []);
+  } else {
+    currentTranscoder = callResult.value;
+    transcoder = Transcoder.load(currentTranscoder.toHex()) as Transcoder;
+  }
+
+  // will revert if there is no LPT bonded
+  let getTotalBondedCallResult = bondingManager.try_getTotalBonded();
+  if (getTotalBondedCallResult.reverted) {
+    log.info("getTotalBonded reverted", []);
+  } else {
+    totalActiveStake = convertToDecimal(getTotalBondedCallResult.value);
+  }
 
   round.initialized = true;
   round.totalActiveStake = totalActiveStake;
@@ -95,7 +113,7 @@ export function newRound(event: NewRound): void {
       currentTranscoder
     );
 
-    transcoder = Transcoder.load(currentTranscoder.toHex());
+    transcoder = Transcoder.load(currentTranscoder.toHex()) as Transcoder;
   }
 
   protocol.lastInitializedRound = event.params.round.toString();
