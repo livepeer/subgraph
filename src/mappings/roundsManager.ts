@@ -97,12 +97,9 @@ export function newRound(event: NewRound): void {
     // reward() for a given round, we store its reward tokens inside this Pool
     // entry in a field called "rewardTokens". If "rewardTokens" is null for a
     // given transcoder and round then we know the transcoder failed to call reward()
-    poolId = makePoolId(
-      currentTranscoder.toHex(),
-      event.params.round.toString()
-    );
+    poolId = makePoolId(currentTranscoder.toHex(), round.id);
     pool = new Pool(poolId);
-    pool.round = event.params.round.toString();
+    pool.round = round.id;
     pool.delegate = currentTranscoder.toHex();
     pool.totalStake = transcoder.totalStake;
     pool.rewardCut = transcoder.rewardCut as BigInt;
@@ -116,7 +113,7 @@ export function newRound(event: NewRound): void {
     transcoder = Transcoder.load(currentTranscoder.toHex()) as Transcoder;
   }
 
-  protocol.lastInitializedRound = event.params.round.toString();
+  protocol.lastInitializedRound = round.id;
   protocol.totalActiveStake = totalActiveStake;
 
   day.totalActiveStake = totalActiveStake;
@@ -149,7 +146,7 @@ export function newRound(event: NewRound): void {
   );
   newRoundEvent.transaction = event.transaction.hash.toHex();
   newRoundEvent.timestamp = event.block.timestamp.toI32();
-  newRoundEvent.round = event.params.round.toString();
+  newRoundEvent.round = round.id;
   newRoundEvent.blockHash = event.params.blockHash.toHexString();
   newRoundEvent.save();
 }
