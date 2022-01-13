@@ -87,7 +87,7 @@ export function getBondingManagerAddress(network: string): string {
   if (network == "mainnet") {
     return "511bc4556d823ae99630ae8de28b9b80df90ea2e";
   } else if (network == "rinkeby") {
-    return "e75a5DccfFe8939F7f16CC7f63EB252bB542FE95";
+    return "C40df4db2f99e7e235780A93B192F1a934f0c45b"
   } else {
     return "A94B7f0465E98609391C623d0560C5720a3f2D33";
   }
@@ -97,7 +97,7 @@ export function getLivepeerTokenAddress(network: string): string {
   if (network == "mainnet") {
     return "58b6a8a3302369daec383334672404ee733ab239";
   } else if (network == "rinkeby") {
-    return "23b814a57D53b1a7A860194F53401D0D639abED7";
+    return "Ef5F154eb0261CB0331a28BC0fB60CA73E716617"
   } else {
     return "D833215cBcc3f914bD1C9ece3EE7BF8B14f841bb";
   }
