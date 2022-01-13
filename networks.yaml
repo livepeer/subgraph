@@ -31,32 +31,32 @@ mainnet:
 rinkeby:
   contracts:
     controller:
-      address: "A268AEa9D048F8d3A592dD7f1821297972D4C8Ea"
-      startBlock: 5325848
+      address: "9a9827455911a858E55f07911904fACC0D66027E"
+      startBlock: 9974866
     bondingManager:
-      address: "e75a5DccfFe8939F7f16CC7f63EB252bB542FE95"
-      startBlock: 5325862
+      address: "C40df4db2f99e7e235780A93B192F1a934f0c45b"
+      startBlock: 9974922
     roundsManager:
-      address: "572d1591bD41f50130FD0212058eAe34F1B17290"
-      startBlock: 5325866
+      address: "6c2A6B5cFDB30DAC34BD54af06611267e66fB07F"
+      startBlock: 9974943
     livepeerToken:
-      address: "23b814a57D53b1a7A860194F53401D0D639abED7"
-      startBlock: 5325849
+      address: "Ef5F154eb0261CB0331a28BC0fB60CA73E716617"
+      startBlock: 9974880
     minterV1:
-      address: "e5056d1fE48F562dd8AcB1BBFFa147223d448C1B"
-      startBlock: 5325851
+      address: "187E962A5a1CD2cE2D133e80182A82f0eBd29Ef5"
+      startBlock: 9974884
     minter:
-      address: "63B12E71F9c620BeAdf53b0e95189a16A2Af8Ed2"
-      startBlock: 7041202
+      address: "187E962A5a1CD2cE2D133e80182A82f0eBd29Ef5"
+      startBlock: 9974884
     ticketBroker:
-      address: "40897Ff6e44Ca2e145A691701897844669Bf7cee"
-      startBlock: 5325857
+      address: "242f1361CCdaAe8CCdf8539DE183Cb518856254f"
+      startBlock: 9974902
     pollCreator:
-      address: "149805ef90fada12d27e8a020b6c138f3d86a9a3"
-      startBlock: 6459857
+      address: "6749dFa7990Aa27E0B82dCD735C8100BC711AeE7"
+      startBlock: 9974866
     serviceRegistry:
-      address: "a7AFBB45eb8C27a26379F9C550B3b9be7f09c3eA"
-      startBlock: 5325870
+      address: "E9C2d88ffcCe434000aFAc366Db840b8E55459E5"
+      startBlock: 9974866
   networkName: rinkeby
 arbitrum-rinkeby:
   contracts:
