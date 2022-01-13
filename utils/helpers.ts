@@ -87,7 +87,7 @@ export function getBondingManagerAddress(network: string): string {
   if (network == "mainnet") {
     return "511bc4556d823ae99630ae8de28b9b80df90ea2e";
   } else if (network == "rinkeby") {
-    return "e75a5DccfFe8939F7f16CC7f63EB252bB542FE95";
+    return "C40df4db2f99e7e235780A93B192F1a934f0c45b"
   } else {
     return "A94B7f0465E98609391C623d0560C5720a3f2D33";
   }
@@ -97,7 +97,7 @@ export function getLivepeerTokenAddress(network: string): string {
   if (network == "mainnet") {
     return "58b6a8a3302369daec383334672404ee733ab239";
   } else if (network == "rinkeby") {
-    return "23b814a57D53b1a7A860194F53401D0D639abED7";
+    return "Ef5F154eb0261CB0331a28BC0fB60CA73E716617"
   } else {
     return "D833215cBcc3f914bD1C9ece3EE7BF8B14f841bb";
   }
@@ -239,36 +239,24 @@ export function createOrLoadRound(blockNumber: BigInt): Round {
   let roundsSinceLastUpdate = blockNumber
     .minus(protocol.lastRoundLengthUpdateStartBlock)
     .div(protocol.roundLength);
-  let round: Round;
 
-  // true if we need to create
-  // it is checking if at least 1 round has passed since the last creation
-  let needsCreating = roundsSinceLastUpdate.gt(
-    integer
-      .fromString(protocol.currentRound)
-      .minus(integer.fromString(protocol.lastRoundLengthUpdateRound))
-  );
+  let newRound = integer.fromString(protocol.lastRoundLengthUpdateRound).plus(roundsSinceLastUpdate)
 
-  if (needsCreating) {
-    let newRound = integer
-      .fromString(protocol.lastRoundLengthUpdateRound)
-      .plus(roundsSinceLastUpdate);
+  let round = Round.load(newRound.toString()) as Round
+  if (round) {
+    // We are already aware of this round so just return it without creating a new one
+    return round
+  } 
 
-    // Need to get the start block according to the contracts, not just the start block this
-    // entity was created in the subgraph
-    let startBlock = protocol.lastRoundLengthUpdateStartBlock.plus(
-      roundsSinceLastUpdate.times(protocol.roundLength)
-    );
-    round = createRound(startBlock, protocol.roundLength, newRound);
-    protocol.roundCount = protocol.roundCount + 1;
-    protocol.currentRound = newRound.toString();
-    protocol.save();
+  // Need to get the start block according to the contracts, not just the start block this
+  // entity was created in the subgraph
+  let startBlock = protocol.lastRoundLengthUpdateStartBlock.plus(roundsSinceLastUpdate.times(protocol.roundLength))
+  // We are not aware of this round so create and return it
+  protocol.roundCount = protocol.roundCount + 1
+  protocol.currentRound = newRound.toString()
+  protocol.save()
 
-    // If there is no need to create a new round, just return the current one
-  } else {
-    round = Round.load(protocol.currentRound) as Round;
-  }
-  return round;
+  return createRound(startBlock, protocol.roundLength, newRound)
 }
 
 export function createRound(
