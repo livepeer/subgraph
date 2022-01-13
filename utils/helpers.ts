@@ -239,36 +239,24 @@ export function createOrLoadRound(blockNumber: BigInt): Round {
   let roundsSinceLastUpdate = blockNumber
     .minus(protocol.lastRoundLengthUpdateStartBlock)
     .div(protocol.roundLength);
-  let round: Round;
 
-  // true if we need to create
-  // it is checking if at least 1 round has passed since the last creation
-  let needsCreating = roundsSinceLastUpdate.gt(
-    integer
-      .fromString(protocol.currentRound)
-      .minus(integer.fromString(protocol.lastRoundLengthUpdateRound))
-  );
+  let newRound = integer.fromString(protocol.lastRoundLengthUpdateRound).plus(roundsSinceLastUpdate)
 
-  if (needsCreating) {
-    let newRound = integer
-      .fromString(protocol.lastRoundLengthUpdateRound)
-      .plus(roundsSinceLastUpdate);
+  let round = Round.load(newRound.toString()) as Round
+  if (round) {
+    // We are already aware of this round so just return it without creating a new one
+    return round
+  } 
 
-    // Need to get the start block according to the contracts, not just the start block this
-    // entity was created in the subgraph
-    let startBlock = protocol.lastRoundLengthUpdateStartBlock.plus(
-      roundsSinceLastUpdate.times(protocol.roundLength)
-    );
-    round = createRound(startBlock, protocol.roundLength, newRound);
-    protocol.roundCount = protocol.roundCount + 1;
-    protocol.currentRound = newRound.toString();
-    protocol.save();
+  // Need to get the start block according to the contracts, not just the start block this
+  // entity was created in the subgraph
+  let startBlock = protocol.lastRoundLengthUpdateStartBlock.plus(roundsSinceLastUpdate.times(protocol.roundLength))
+  // We are not aware of this round so create and return it
+  protocol.roundCount = protocol.roundCount + 1
+  protocol.currentRound = newRound.toString()
+  protocol.save()
 
-    // If there is no need to create a new round, just return the current one
-  } else {
-    round = Round.load(protocol.currentRound) as Round;
-  }
-  return round;
+  return createRound(startBlock, protocol.roundLength, newRound)
 }
 
 export function createRound(
