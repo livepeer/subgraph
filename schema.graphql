@@ -366,7 +366,7 @@ type BondEvent implements Event @entity {
   "Reference to the Delegator's new delegate"
   newDelegate: Transcoder!
   "Reference to the Delegator's old delegate"
-  oldDelegate: Transcoder!
+  oldDelegate: Transcoder
   "Reference to the Delegator that bonded"
   delegator: Delegator!
 }
