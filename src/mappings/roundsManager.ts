@@ -28,6 +28,7 @@ import {
   createOrLoadRound,
   PERC_DIVISOR,
   createRound,
+  getBlockNum,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
 import { decimal } from "@protofire/subgraph-toolkit";
@@ -164,7 +165,7 @@ export function parameterUpdate(event: ParameterUpdate): void {
     let lastRoundLengthUpdateRound = roundsManager.lastRoundLengthUpdateRound();
 
     if (protocol.roundLength.toI32() == 0) {
-      createRound(event.block.number, roundLength, currentRound);
+      createRound(getBlockNum(), roundLength, currentRound);
     }
     protocol.roundLength = roundLength;
     protocol.lastRoundLengthUpdateStartBlock = lastRoundLengthUpdateStartBlock;
