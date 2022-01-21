@@ -34,6 +34,7 @@ function getNetworkNameForSubgraph() {
   // );
 
   const networkName = process.env.NETWORK_NAME || getNetworkNameForSubgraph();
+  console.log(process.env.NETWORK_NAME, getNetworkNameForSubgraph());
   const network = networks[networkName];
 
   if (t(network).isFalsy) {
