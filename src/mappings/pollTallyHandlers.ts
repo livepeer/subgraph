@@ -21,6 +21,7 @@ import {
   EMPTY_ADDRESS,
   convertToDecimal,
   createOrLoadRound,
+  getBlockNum,
 } from "../../utils/helpers";
 import { tallyVotes } from "./poll";
 import { integer } from "@protofire/subgraph-toolkit";
@@ -45,7 +46,7 @@ export function updatePollTallyOnReward(event: Reward): void {
     return;
   }
 
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let voteId = makeVoteId(delegator.id, poll.id);
   let vote = Vote.load(voteId);
   let transcoder = Transcoder.load(event.params.transcoder.toHex());
@@ -229,7 +230,7 @@ export function updatePollTallyOnEarningsClaimed(event: EarningsClaimed): void {
     return;
   }
 
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let voteId = makeVoteId(voterAddress, pollAddress);
   let vote = Vote.load(voteId);
   let transcoder = Transcoder.load(voterAddress);

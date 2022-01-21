@@ -24,6 +24,7 @@ import {
   createOrLoadRound,
   createOrLoadTranscoder,
   createOrLoadTranscoderDay,
+  getBlockNum,
   getUniswapV1DaiEthExchangeAddress,
   getUniswapV2DaiEthPairAddress,
   makeEventId,
@@ -31,7 +32,7 @@ import {
 } from "../../utils/helpers";
 
 export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let day = createOrLoadDay(event.block.timestamp.toI32());
   let winningTicketRedeemedEvent = new WinningTicketRedeemedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -130,7 +131,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 }
 
 export function depositFunded(event: DepositFunded): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let broadcaster = Broadcaster.load(event.params.sender.toHex());
 
   if (broadcaster == null) {
@@ -167,7 +168,7 @@ export function depositFunded(event: DepositFunded): void {
 }
 
 export function reserveFunded(event: ReserveFunded): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let broadcaster = Broadcaster.load(event.params.reserveHolder.toHex());
 
   if (broadcaster == null) {
@@ -204,7 +205,7 @@ export function reserveFunded(event: ReserveFunded): void {
 }
 
 export function reserveClaimed(event: ReserveClaimed): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let broadcaster = Broadcaster.load(event.params.reserveHolder.toHex());
   broadcaster.reserve = broadcaster.reserve.minus(
     convertToDecimal(event.params.amount)
@@ -235,7 +236,7 @@ export function reserveClaimed(event: ReserveClaimed): void {
 }
 
 export function withdrawal(event: Withdrawal): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let broadcaster = Broadcaster.load(event.params.sender.toHex());
   broadcaster.deposit = ZERO_BD;
   broadcaster.reserve = ZERO_BD;

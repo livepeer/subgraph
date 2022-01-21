@@ -4,11 +4,15 @@ import {
   PauseEvent,
   UnpauseEvent,
 } from "../types/schema";
-import { createOrLoadRound, makeEventId } from "../../utils/helpers";
+import {
+  createOrLoadRound,
+  getBlockNum,
+  makeEventId,
+} from "../../utils/helpers";
 import { Pause, Unpause } from "../types/Controller/Controller";
 
 export function pause(event: Pause): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let protocol = Protocol.load("0");
   protocol.paused = true;
   protocol.save();
@@ -34,7 +38,7 @@ export function pause(event: Pause): void {
 }
 
 export function unpause(event: Unpause): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let protocol = Protocol.load("0");
   protocol.paused = false;
   protocol.save();

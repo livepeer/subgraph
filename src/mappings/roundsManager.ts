@@ -38,7 +38,9 @@ export function newRound(event: NewRound): void {
   let bondingManager = BondingManager.bind(
     Address.fromString(bondingManagerAddress)
   );
-  let round = createOrLoadRound(event.block.number);
+  let roundsManager = RoundsManager.bind(event.address);
+  let blockNum = roundsManager.blockNum();
+  let round = createOrLoadRound(blockNum);
   let day = createOrLoadDay(event.block.timestamp.toI32());
   let currentTranscoder = EMPTY_ADDRESS;
   let totalActiveStake = decimal.ZERO;

@@ -35,12 +35,13 @@ import {
   createOrLoadDelegator,
   createOrLoadTranscoder,
   createOrLoadRound,
+  getBlockNum,
 } from "../../utils/helpers";
 import { integer } from "@protofire/subgraph-toolkit";
 
 // Handler for TranscoderUpdate events
 export function transcoderUpdate(event: TranscoderUpdate): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
 
   // Update transcoder
@@ -76,7 +77,7 @@ export function transcoderUpdate(event: TranscoderUpdate): void {
 // Handler for TranscoderResigned events
 export function transcoderResigned(event: TranscoderResigned): void {
   let transcoder = Transcoder.load(event.params.transcoder.toHex());
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
 
   // Update transcoder
   transcoder.active = false;
@@ -108,7 +109,7 @@ export function transcoderResigned(event: TranscoderResigned): void {
 // Handler for TranscoderEvicted events
 export function transcoderEvicted(event: TranscoderEvicted): void {
   let transcoder = Transcoder.load(event.params.transcoder.toHex());
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
 
   // Update transcoder
   transcoder.active = false;
@@ -149,7 +150,7 @@ export function bond(call: BondCall): void {
     let amount = convertToDecimal(call.inputs._amount);
     let delegatorData = bondingManager.getDelegator(delegatorAddress);
     let delegateData = bondingManager.getDelegator(newDelegateAddress);
-    let round = createOrLoadRound(call.block.number);
+    let round = createOrLoadRound(getBlockNum());
     let transcoder = createOrLoadTranscoder(newDelegateAddress.toHex());
     let delegate = createOrLoadDelegator(newDelegateAddress.toHex());
     let delegator = createOrLoadDelegator(delegatorAddress.toHex());
@@ -250,7 +251,7 @@ export function unbond(event: Unbond): void {
   let bondingManager = BondingManager.bind(event.address);
   let delegator = Delegator.load(event.params.delegator.toHex());
   let transcoderAddress = delegator.delegate;
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let transcoder = Transcoder.load(transcoderAddress);
   let delegate = Delegator.load(transcoderAddress);
   let delegateData = bondingManager.getDelegator(
@@ -356,7 +357,7 @@ export function claimEarnings(call: ClaimEarningsCall): void {
 // Handler for WithdrawStake events
 export function withdrawStake(event: WithdrawStake): void {
   let delegator = Delegator.load(event.params.delegator.toHex());
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
 
   let tx =
     Transaction.load(event.transaction.hash.toHex()) ||

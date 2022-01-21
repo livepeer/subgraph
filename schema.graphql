@@ -8,9 +8,6 @@ type Protocol @entity {
   inflation: BigInt!
   "Change in inflation rate per round until the target bonding rate is achieved"
   inflationChange: BigInt!
-  "Max number of rounds that a caller can claim earnings for at once"
-  maxEarningsClaimsRounds: Int!
-    @deprecated(reason: "This constraint of was removed as of LIP-52")
   "Total active transcoders"
   numActiveTranscoders: Int!
   "True if the protocol is paused"

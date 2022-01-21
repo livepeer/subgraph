@@ -1,4 +1,10 @@
-import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts";
+import {
+  Address,
+  BigDecimal,
+  BigInt,
+  Bytes,
+  dataSource,
+} from "@graphprotocol/graph-ts";
 import { integer } from "@protofire/subgraph-toolkit";
 import {
   Day,
@@ -8,6 +14,8 @@ import {
   Transcoder,
   TranscoderDay,
 } from "../src/types/schema";
+import { networks } from "../networks";
+import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 
 let x = BigInt.fromI32(2);
 let y = 255 as u8;
@@ -84,22 +92,20 @@ export function percPoints(_fracNum: BigInt, _fracDenom: BigInt): BigInt {
 }
 
 export function getBondingManagerAddress(network: string): string {
-  if (network == "mainnet") {
-    return "511bc4556d823ae99630ae8de28b9b80df90ea2e";
-  } else if (network == "rinkeby") {
-    return "C40df4db2f99e7e235780A93B192F1a934f0c45b"
-  } else {
-    return "A94B7f0465E98609391C623d0560C5720a3f2D33";
-  }
+  return networks[network].contracts.bondingManager.address;
 }
 
-export function getLivepeerTokenAddress(network: string): string {
+export function getRoundsManagerAddress(network: string): string {
   if (network == "mainnet") {
-    return "58b6a8a3302369daec383334672404ee733ab239";
+    return "3984fc4ceeef1739135476f625d36d6c35c40dc3";
+  } else if (network == "arbitrum-one") {
+    return "C40df4db2f99e7e235780A93B192F1a934f0c45b";
   } else if (network == "rinkeby") {
-    return "Ef5F154eb0261CB0331a28BC0fB60CA73E716617"
+    return "55cfb784ca12744275d9742B843486225C695e64";
+  } else if (network == "arbitrum-rinkeby") {
+    return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
   } else {
-    return "D833215cBcc3f914bD1C9ece3EE7BF8B14f841bb";
+    return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
   }
 }
 
@@ -144,7 +150,6 @@ export function createOrLoadProtocol(): Protocol {
     protocol.totalVolumeETH = ZERO_BD;
     protocol.totalVolumeUSD = ZERO_BD;
     protocol.unbondingPeriod = ZERO_BI;
-    protocol.maxEarningsClaimsRounds = 0;
     protocol.numActiveTranscoders = 0;
     protocol.winningTicketCount = 0;
     protocol.roundCount = 0;
@@ -240,23 +245,27 @@ export function createOrLoadRound(blockNumber: BigInt): Round {
     .minus(protocol.lastRoundLengthUpdateStartBlock)
     .div(protocol.roundLength);
 
-  let newRound = integer.fromString(protocol.lastRoundLengthUpdateRound).plus(roundsSinceLastUpdate)
+  let newRound = integer
+    .fromString(protocol.lastRoundLengthUpdateRound)
+    .plus(roundsSinceLastUpdate);
 
-  let round = Round.load(newRound.toString()) as Round
+  let round = Round.load(newRound.toString()) as Round;
   if (round) {
     // We are already aware of this round so just return it without creating a new one
-    return round
-  } 
+    return round;
+  }
 
   // Need to get the start block according to the contracts, not just the start block this
   // entity was created in the subgraph
-  let startBlock = protocol.lastRoundLengthUpdateStartBlock.plus(roundsSinceLastUpdate.times(protocol.roundLength))
+  let startBlock = protocol.lastRoundLengthUpdateStartBlock.plus(
+    roundsSinceLastUpdate.times(protocol.roundLength)
+  );
   // We are not aware of this round so create and return it
-  protocol.roundCount = protocol.roundCount + 1
-  protocol.currentRound = newRound.toString()
-  protocol.save()
+  protocol.roundCount = protocol.roundCount + 1;
+  protocol.currentRound = newRound.toString();
+  protocol.save();
 
-  return createRound(startBlock, protocol.roundLength, newRound)
+  return createRound(startBlock, protocol.roundLength, newRound);
 }
 
 export function createRound(
@@ -281,4 +290,13 @@ export function createRound(
   round.newStake = ZERO_BD;
   round.save();
   return round;
+}
+
+export function getBlockNum(): BigInt {
+  let roundsManagerAddress =
+    networks["devnet-arbitrum-rinkeby"].contracts.roundsManager.address;
+  let roundsManager = RoundsManager.bind(
+    Address.fromString(roundsManagerAddress)
+  );
+  return roundsManager.blockNum();
 }

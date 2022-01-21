@@ -2,6 +2,7 @@ import {
   convertToDecimal,
   createOrLoadDay,
   createOrLoadRound,
+  getBlockNum,
   makeEventId,
   ZERO_BD,
 } from "../../utils/helpers";
@@ -25,7 +26,7 @@ export function mint(event: Mint): void {
     day.participationRate = protocol.participationRate;
   }
 
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   round.totalSupply = totalSupply;
   round.participationRate = protocol.participationRate;
   round.save();
@@ -56,7 +57,7 @@ export function mint(event: Mint): void {
 }
 
 export function burn(event: Burn): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let day = createOrLoadDay(event.block.timestamp.toI32());
   let protocol = Protocol.load("0");
   let value = convertToDecimal(event.params.value);
