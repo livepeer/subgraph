@@ -28,6 +28,7 @@ import {
   createOrLoadRound,
   PERC_DIVISOR,
   createRound,
+  getBlockNum,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
 import { decimal } from "@protofire/subgraph-toolkit";
@@ -38,7 +39,9 @@ export function newRound(event: NewRound): void {
   let bondingManager = BondingManager.bind(
     Address.fromString(bondingManagerAddress)
   );
-  let round = createOrLoadRound(event.block.number);
+  let roundsManager = RoundsManager.bind(event.address);
+  let blockNum = roundsManager.blockNum();
+  let round = createOrLoadRound(blockNum);
   let day = createOrLoadDay(event.block.timestamp.toI32());
   let currentTranscoder = EMPTY_ADDRESS;
   let totalActiveStake = decimal.ZERO;
@@ -162,7 +165,7 @@ export function parameterUpdate(event: ParameterUpdate): void {
     let lastRoundLengthUpdateRound = roundsManager.lastRoundLengthUpdateRound();
 
     if (protocol.roundLength.toI32() == 0) {
-      createRound(event.block.number, roundLength, currentRound);
+      createRound(getBlockNum(), roundLength, currentRound);
     }
     protocol.roundLength = roundLength;
     protocol.lastRoundLengthUpdateStartBlock = lastRoundLengthUpdateStartBlock;

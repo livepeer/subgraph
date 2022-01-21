@@ -19,6 +19,8 @@ dataSources:
       abis:
         - name: BondingManager
           file: ./abis/BondingManager.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
           - BondEvent
           - Delegator
@@ -80,6 +82,8 @@ dataSources:
           file: ./abis/BondingManager.json
         - name: LivepeerToken
           file: ./abis/LivepeerToken.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Day
         - NewRoundEvent
@@ -109,6 +113,8 @@ dataSources:
       abis:
         - name: Minter
           file: ./abis/Minter.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Round
         - Transaction
@@ -139,6 +145,8 @@ dataSources:
           file: ./abis/UniswapV1Exchange.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Transaction
         - Day
@@ -177,6 +185,8 @@ dataSources:
       abis:
         - name: Controller
           file: ./abis/Controller.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Pause
         - Unpause
@@ -200,6 +210,8 @@ dataSources:
       abis:
         - name: PollCreator
           file: ./abis/PollCreator.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Transaction
         - Protocol
@@ -223,6 +235,8 @@ dataSources:
       abis:
         - name: ServiceRegistry
           file: ./abis/ServiceRegistry.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Transaction
         - Transcoder
@@ -246,6 +260,8 @@ dataSources:
       abis:
         - name: LivepeerToken
           file: ./abis/LivepeerToken.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Transaction
         - MintEvent
@@ -280,6 +296,8 @@ dataSources:
       abis:
         - name: BondingManager
           file: ./abis/BondingManagerV1.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - BondEvent
         - Delegator
@@ -337,6 +355,8 @@ dataSources:
           file: ./abis/BondingManagerV1.json
         - name: LivepeerToken
           file: ./abis/LivepeerToken.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Transaction
         - Transcoder
@@ -362,6 +382,8 @@ dataSources:
       abis:
         - name: Minter
           file: ./abis/Minter.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Round
         - Transaction
@@ -393,6 +415,8 @@ templates:
       abis:
         - name: BondingManager
           file: ./abis/BondingManager.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - BondingManager
         - Reward
@@ -426,6 +450,8 @@ templates:
           file: ./abis/Poll.json
         - name: BondingManager
           file: ./abis/BondingManager.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - Transaction
         - Protocol

@@ -5,7 +5,7 @@ const path = require("path");
 const yaml = require("js-yaml");
 const { t } = require("typy");
 
-Handlebars.registerHelper("ifEquals", function (arg1, arg2, options) {
+Handlebars.registerHelper("ifEquals", function(arg1, arg2, options) {
   return arg1 === arg2 ? options.fn(this) : options.inverse(this);
 });
 
@@ -33,6 +33,7 @@ function getNetworkNameForSubgraph() {
 
   const networkName = process.env.NETWORK_NAME || getNetworkNameForSubgraph();
   const network = t(networks, networkName).safeObject;
+
   if (t(network).isFalsy) {
     throw new Error(
       'Please set either a "NETWORK_NAME" or a "SUBGRAPH" environment variable'

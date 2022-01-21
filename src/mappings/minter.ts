@@ -12,12 +12,13 @@ import {
 import {
   convertToDecimal,
   createOrLoadRound,
+  getBlockNum,
   makeEventId,
 } from "../../utils/helpers";
 
 export function setCurrentRewardTokens(event: SetCurrentRewardTokens): void {
   let minter = Minter.bind(event.address);
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let protocol = Protocol.load("0");
 
   round.mintableTokens = convertToDecimal(event.params.currentMintableTokens);
@@ -57,7 +58,7 @@ export function setCurrentRewardTokens(event: SetCurrentRewardTokens): void {
 
 export function parameterUpdate(event: ParameterUpdate): void {
   let minter = Minter.bind(event.address);
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let protocol = Protocol.load("0");
 
   if (event.params.param == "targetBondingRate") {
