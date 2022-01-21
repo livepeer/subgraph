@@ -19,8 +19,6 @@
     "prepare:rinkeby": "NETWORK_NAME=rinkeby ts-node ./templatify.ts",
     "prepare:arbitrum": "NETWORK_NAME=arbitrum ts-node ./templatify.ts",
     "prepare:arbitrum-rinkeby": "NETWORK_NAME=arbitrum-rinkeby ts-node ./templatify.ts",
-    "prepare:devnet-rinkeby": "NETWORK_NAME=devnet-rinkeby ts-node ./templatify.ts",
-    "prepare:devnet-arbitrum-rinkeby": "NETWORK_NAME=devnet-arbitrum-rinkeby ts-node ./templatify.ts",
     "prepare:development": "prepare:yaml NETWORK_NAME=development ts-node ./templatify.ts",
     "docker:build": "docker build --cache-from livepeer/subgraph:latest -t livepeer/subgraph:latest .",
     "test:docker": "DOCKER=true npx truffle test --network=docker",

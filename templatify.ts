@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { networks } from "./networks";
-
 const Handlebars = require("handlebars");
 const fs = require("fs-extra");
 const path = require("path");
@@ -28,14 +26,13 @@ function getNetworkNameForSubgraph() {
 }
 
 (async () => {
-  // const networksFilePath = path.join(__dirname, "networks.yaml");
-  // const networks = yaml.load(
-  //   await fs.readFile(networksFilePath, { encoding: "utf-8" })
-  // );
+  const networksFilePath = path.join(__dirname, "networks.yaml");
+  const networks = yaml.load(
+    await fs.readFile(networksFilePath, { encoding: "utf-8" })
+  );
 
   const networkName = process.env.NETWORK_NAME || getNetworkNameForSubgraph();
-  console.log(process.env.NETWORK_NAME, getNetworkNameForSubgraph());
-  const network = networks[networkName];
+  const network = t(networks, networkName).safeObject;
 
   if (t(network).isFalsy) {
     throw new Error(

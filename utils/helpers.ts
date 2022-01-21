@@ -14,7 +14,6 @@ import {
   Transcoder,
   TranscoderDay,
 } from "../src/types/schema";
-import { networks } from "../networks";
 import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 
 let x = BigInt.fromI32(2);
@@ -92,7 +91,13 @@ export function percPoints(_fracNum: BigInt, _fracDenom: BigInt): BigInt {
 }
 
 export function getBondingManagerAddress(network: string): string {
-  return networks[network].contracts.bondingManager.address;
+  if (network == "mainnet") {
+    return "511bc4556d823ae99630ae8de28b9b80df90ea2e";
+  } else if (network == "rinkeby") {
+    return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
+  } else {
+    return "A94B7f0465E98609391C623d0560C5720a3f2D33";
+  }
 }
 
 export function getRoundsManagerAddress(network: string): string {
@@ -293,8 +298,18 @@ export function createRound(
 }
 
 export function getBlockNum(): BigInt {
-  let roundsManagerAddress =
-    networks["devnet-arbitrum-rinkeby"].contracts.roundsManager.address;
+  let network = dataSource.network();
+  let roundsManagerAddress = "";
+  if (network == "mainnet") {
+    roundsManagerAddress = "511bc4556d823ae99630ae8de28b9b80df90ea2e";
+  } else if (network == "rinkeby") {
+    roundsManagerAddress = "55cfb784ca12744275d9742B843486225C695e64";
+  } else if (network == "arbitrum-rinkeby") {
+    roundsManagerAddress = "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
+  } else {
+    roundsManagerAddress = "C40df4db2f99e7e235780A93B192F1a934f0c45b";
+  }
+
   let roundsManager = RoundsManager.bind(
     Address.fromString(roundsManagerAddress)
   );
