@@ -272,7 +272,7 @@ function updatePollTally<T extends Rebond>(event: T): void {
     return;
   }
 
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let voterAddress = dataSource.context().getString("voter");
   let voteId = makeVoteId(voterAddress, pollAddress);
   let vote = Vote.load(voteId);

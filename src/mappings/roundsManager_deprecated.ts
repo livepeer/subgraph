@@ -22,6 +22,7 @@ import {
   ZERO_BD,
   createOrLoadDay,
   createOrLoadRound,
+  getBlockNum,
 } from "../../utils/helpers";
 
 // Handler for NewRound events
@@ -31,7 +32,7 @@ export function newRound(event: NewRound): void {
     Address.fromString(bondingManagerAddress)
   );
   let day = createOrLoadDay(event.block.timestamp.toI32());
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let currentTranscoder = bondingManager.getFirstTranscoderInPool();
   let transcoder = Transcoder.load(currentTranscoder.toHex());
   let totalActiveStake = convertToDecimal(bondingManager.getTotalBonded());
