@@ -93,8 +93,12 @@ export function percPoints(_fracNum: BigInt, _fracDenom: BigInt): BigInt {
 export function getBondingManagerAddress(network: string): string {
   if (network == "mainnet") {
     return "511bc4556d823ae99630ae8de28b9b80df90ea2e";
+  } else if (network == "arbitrum") {
+    return "68B463bcA7d561118636e9f028fF0F2e8398dd6a";
   } else if (network == "rinkeby") {
     return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
+  } else if (network == "arbitrum-rinkeby") {
+    return "68B463bcA7d561118636e9f028fF0F2e8398dd6a";
   } else {
     return "A94B7f0465E98609391C623d0560C5720a3f2D33";
   }

@@ -64,7 +64,7 @@ arbitrum-rinkeby:
       address: "65ea76efD31c7566c81676f7c3C02fD69dF16C7d"
       startBlock: 8644709
     bondingManager:
-      address: "511Bc4556D823Ae99630aE8de28b9B80Df90eA2e"
+      address: "68B463bcA7d561118636e9f028fF0F2e8398dd6a"
       startBlock: 8644709
     roundsManager:
       address: "a3Aa52cE79e85a21d9cCdA705C57e426B160112c"
