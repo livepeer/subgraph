@@ -49,3 +49,7 @@ Follow the instructions documented
 After downloading the latest blocks from Ethereum, you should begin to see
 Livepeer smart contract events flying in. Open a GraphiQL browser at
 localhost:8000 to query the Graph Node.
+
+## Mainnet
+
+To deploy the old Livepeer subgraph on mainnet checkout commit `b02006b5f7cf27e0c307a8e12b6b065b942f4dab`
