@@ -1,17 +1,18 @@
 import {
   convertToDecimal,
   createOrLoadDay,
+  createOrLoadProtocol,
   createOrLoadRound,
   getBlockNum,
   makeEventId,
   ZERO_BD,
 } from "../../utils/helpers";
 import { Mint, Burn } from "../types/LivepeerToken/LivepeerToken";
-import { Transaction, MintEvent, BurnEvent, Protocol } from "../types/schema";
+import { Transaction, MintEvent, BurnEvent } from "../types/schema";
 
 export function mint(event: Mint): void {
+  let protocol = createOrLoadProtocol();
   let day = createOrLoadDay(event.block.timestamp.toI32());
-  let protocol = Protocol.load("0");
   let amount = convertToDecimal(event.params.amount);
   let totalSupply = protocol.totalSupply.plus(amount);
 
@@ -57,9 +58,9 @@ export function mint(event: Mint): void {
 }
 
 export function burn(event: Burn): void {
+  let protocol = createOrLoadProtocol();
   let round = createOrLoadRound(getBlockNum());
   let day = createOrLoadDay(event.block.timestamp.toI32());
-  let protocol = Protocol.load("0");
   let value = convertToDecimal(event.params.value);
   let totalSupply = protocol.totalSupply.minus(value);
 
