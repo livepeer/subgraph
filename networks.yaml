@@ -70,13 +70,13 @@ arbitrum-rinkeby:
       address: "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58"
       startBlock: 8912035
     livepeerToken:
-      address: "663D000d6d6B61580fc23ef9d23Ea43D2850af40"
+      address: "743b8469e5f54cD765F1954604cD4dfA67b64bF6"
       startBlock: 8700932
     minterV1:
-      address: "F03Ab68232c9D19E5969097Ef856e39846e07441"
+      address: "C10525f660F2A0a71E46340e8ee8cc7b1cD26Dd4"
       startBlock: 8911969
     minter:
-      address: "F03Ab68232c9D19E5969097Ef856e39846e07441"
+      address: "C10525f660F2A0a71E46340e8ee8cc7b1cD26Dd4"
       startBlock: 8911969
     ticketBroker:
       address: "D218f6eA99907C2EDB889A151DF326aCd0F70D88"
