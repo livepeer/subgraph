@@ -293,9 +293,9 @@ export function rebond(event: Rebond): void {
     event.params.unbondingLockId
   );
   let round = createOrLoadRound(getBlockNum());
-  let transcoder = Transcoder.load(event.params.delegate.toHex());
-  let delegate = Delegator.load(event.params.delegate.toHex());
-  let delegator = Delegator.load(event.params.delegator.toHex());
+  let transcoder = createOrLoadTranscoder(event.params.delegate.toHex());
+  let delegate = createOrLoadDelegator(event.params.delegate.toHex());
+  let delegator = createOrLoadDelegator(event.params.delegator.toHex());
   let delegateData = bondingManager.getDelegator(event.params.delegate);
   let protocol = Protocol.load("0");
 
@@ -331,7 +331,11 @@ export function rebond(event: Rebond): void {
   transcoder.save();
   delegator.save();
   protocol.save();
-  store.remove("UnbondingLock", uniqueUnbondingLockId);
+
+  let unbondingLock = UnbondingLock.load(uniqueUnbondingLockId);
+  if (unbondingLock) {
+    store.remove("UnbondingLock", uniqueUnbondingLockId);
+  }
 
   let tx =
     Transaction.load(event.transaction.hash.toHex()) ||
