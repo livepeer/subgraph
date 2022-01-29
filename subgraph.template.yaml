@@ -23,6 +23,7 @@ dataSources:
           file: ./abis/RoundsManager.json
       entities:
           - BondEvent
+          - TransferBondEvent
           - Delegator
           - EarningsClaimedEvent
           - ParameterUpdateEvent
@@ -63,6 +64,8 @@ dataSources:
           handler: withdrawFees
         - event: ParameterUpdate(string)
           handler: parameterUpdate
+        - event: TransferBond(indexed address,indexed address,uint256,uint256,uint256)
+          handler: transferBond
   - kind: ethereum/contract
     name: RoundsManager
     network: {{networkName}}

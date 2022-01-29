@@ -5,6 +5,7 @@ import {
   BondingManager,
   WithdrawStake,
   Bond,
+  TransferBond,
   Unbond,
   Rebond,
   WithdrawFees,
@@ -19,6 +20,7 @@ import {
 
 import {
   BondEvent,
+  TransferBondEvent,
   Delegator,
   EarningsClaimedEvent,
   ParameterUpdateEvent,
@@ -50,6 +52,7 @@ import {
   MAXIMUM_VALUE_UINT256,
   createOrLoadProtocol,
   getBlockNum,
+  ZERO_BD,
 } from "../../utils/helpers";
 
 export function bond(event: Bond): void {
@@ -144,6 +147,59 @@ export function bond(event: Bond): void {
   bondEvent.bondedAmount = convertToDecimal(event.params.bondedAmount);
   bondEvent.additionalAmount = convertToDecimal(event.params.additionalAmount);
   bondEvent.save();
+}
+
+export function transferBond(event: TransferBond): void {
+  let round = createOrLoadRound(getBlockNum());
+  let oldUniqueUnbondingLockId = makeUnbondingLockId(
+    event.params.oldDelegator,
+    event.params.oldUnbondingLockId
+  );
+  let newUniqueUnbondingLockId = makeUnbondingLockId(
+    event.params.newDelegator,
+    event.params.newUnbondingLockId
+  );
+
+  // Add unbonding lock for new delegator since it was transferred from the old delegator
+  let newUnbondingLock =
+    UnbondingLock.load(newUniqueUnbondingLockId) ||
+    new UnbondingLock(newUniqueUnbondingLockId);
+  let oldUnbondingLock = UnbondingLock.load(oldUniqueUnbondingLockId);
+
+  newUnbondingLock.unbondingLockId = event.params.newUnbondingLockId.toI32();
+  newUnbondingLock.delegator = event.params.newDelegator.toHex();
+  newUnbondingLock.delegate = oldUnbondingLock.delegate;
+  newUnbondingLock.withdrawRound = oldUnbondingLock.withdrawRound;
+  newUnbondingLock.amount = convertToDecimal(event.params.amount);
+
+  newUnbondingLock.save();
+
+  // Remove unbonding lock for old delegator since it has been transferred to the new delegator
+  store.remove("UnbondingLock", oldUniqueUnbondingLockId);
+
+  let tx =
+    Transaction.load(event.transaction.hash.toHex()) ||
+    new Transaction(event.transaction.hash.toHex());
+  tx.blockNumber = event.block.number;
+  tx.gasUsed = event.transaction.gasUsed;
+  tx.gasPrice = event.transaction.gasPrice;
+  tx.timestamp = event.block.timestamp.toI32();
+  tx.from = event.transaction.from.toHex();
+  tx.to = event.transaction.to.toHex();
+  tx.save();
+
+  let transferBondEvent = new TransferBondEvent(
+    makeEventId(event.transaction.hash, event.logIndex)
+  );
+  transferBondEvent.transaction = event.transaction.hash.toHex();
+  transferBondEvent.timestamp = event.block.timestamp.toI32();
+  transferBondEvent.round = round.id;
+  transferBondEvent.amount = convertToDecimal(event.params.amount);
+  transferBondEvent.newDelegator = event.params.newDelegator.toHex();
+  transferBondEvent.oldDelegator = event.params.oldDelegator.toHex();
+  transferBondEvent.newUnbondingLockId = event.params.newUnbondingLockId.toI32();
+  transferBondEvent.oldUnbondingLockId = event.params.oldUnbondingLockId.toI32();
+  transferBondEvent.save();
 }
 
 // Handler for Unbond events
@@ -259,9 +315,12 @@ export function rebond(event: Rebond): void {
   delegator.lastClaimRound = round.id;
   delegator.bondedAmount = convertToDecimal(delegatorData.value0);
   delegator.fees = convertToDecimal(delegatorData.value1);
-  delegator.unbonded = delegator.unbonded.minus(
-    convertToDecimal(event.params.amount)
-  );
+
+  if (delegator.unbonded.gt(ZERO_BD)) {
+    delegator.unbonded = delegator.unbonded.minus(
+      convertToDecimal(event.params.amount)
+    );
+  }
 
   // update delegate
   delegate.delegatedAmount = convertToDecimal(delegateData.value3);

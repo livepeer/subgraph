@@ -412,6 +412,25 @@ type RebondEvent implements Event @entity {
 }
 
 """
+TransferBond entities are created for every emitted TransferBond event.
+"""
+type TransferBondEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occured in"
+  round: Round!
+  amount: BigDecimal!
+  newDelegator: Delegator!
+  oldDelegator: Delegator!
+  newUnbondingLockId: Int!
+  oldUnbondingLockId: Int!
+}
+
+"""
 RewardEvent entities are created for every emitted Reward event.
 """
 type RewardEvent implements Event @entity {
