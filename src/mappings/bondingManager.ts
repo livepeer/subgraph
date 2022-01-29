@@ -151,6 +151,7 @@ export function bond(event: Bond): void {
 
 export function transferBond(event: TransferBond): void {
   let round = createOrLoadRound(getBlockNum());
+  let delegator = createOrLoadDelegator(event.params.newDelegator.toHex());
   let oldUniqueUnbondingLockId = makeUnbondingLockId(
     event.params.oldDelegator,
     event.params.oldUnbondingLockId
@@ -159,6 +160,13 @@ export function transferBond(event: TransferBond): void {
     event.params.newDelegator,
     event.params.newUnbondingLockId
   );
+
+  // update delegator's principal
+  delegator.principal = delegator.principal.plus(
+    convertToDecimal(event.params.amount)
+  );
+
+  delegator.save();
 
   // Add unbonding lock for new delegator since it was transferred from the old delegator
   let newUnbondingLock =
