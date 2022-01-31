@@ -176,6 +176,7 @@ export function transferBond(event: TransferBond): void {
 
   newUnbondingLock.unbondingLockId = event.params.newUnbondingLockId.toI32();
   newUnbondingLock.delegator = event.params.newDelegator.toHex();
+  newUnbondingLock.sender = event.params.oldDelegator.toHex();
   newUnbondingLock.delegate = oldUnbondingLock.delegate;
   newUnbondingLock.withdrawRound = oldUnbondingLock.withdrawRound;
   newUnbondingLock.amount = convertToDecimal(event.params.amount);
@@ -257,6 +258,7 @@ export function unbond(event: Unbond): void {
 
   unbondingLock.unbondingLockId = event.params.unbondingLockId.toI32();
   unbondingLock.delegator = event.params.delegator.toHex();
+  unbondingLock.sender = event.params.delegator.toHex();
   unbondingLock.delegate = event.params.delegate.toHex();
   unbondingLock.withdrawRound = withdrawRound;
   unbondingLock.amount = amount;
@@ -296,16 +298,17 @@ export function unbond(event: Unbond): void {
 // Handler for Rebond events
 export function rebond(event: Rebond): void {
   let bondingManager = BondingManager.bind(event.address);
-  let uniqueUnbondingLockId = makeUnbondingLockId(
-    event.params.delegator,
-    event.params.unbondingLockId
-  );
   let round = createOrLoadRound(getBlockNum());
   let transcoder = createOrLoadTranscoder(event.params.delegate.toHex());
   let delegate = createOrLoadDelegator(event.params.delegate.toHex());
   let delegator = createOrLoadDelegator(event.params.delegator.toHex());
   let delegateData = bondingManager.getDelegator(event.params.delegate);
   let protocol = Protocol.load("0");
+  let uniqueUnbondingLockId = makeUnbondingLockId(
+    event.params.delegator,
+    event.params.unbondingLockId
+  );
+  let unbondingLock = UnbondingLock.load(uniqueUnbondingLockId);
 
   // If rebonding from unbonded
   if (!delegator.delegate) {
@@ -324,7 +327,11 @@ export function rebond(event: Rebond): void {
   delegator.bondedAmount = convertToDecimal(delegatorData.value0);
   delegator.fees = convertToDecimal(delegatorData.value1);
 
-  if (delegator.unbonded.gt(ZERO_BD)) {
+  // If the sender field for the lock is equal to the delegator's address then
+  // we know that this is an unbonding lock the delegator created by calling
+  // unbond() and if it is not then we know that this is an unbonding lock created
+  // by transferBond(). In the latter case, we wouldn't need to subtract from unbonded.
+  if (unbondingLock.sender == event.params.delegator.toHex()) {
     delegator.unbonded = delegator.unbonded.minus(
       convertToDecimal(event.params.amount)
     );
@@ -340,7 +347,6 @@ export function rebond(event: Rebond): void {
   delegator.save();
   protocol.save();
 
-  let unbondingLock = UnbondingLock.load(uniqueUnbondingLockId);
   if (unbondingLock) {
     store.remove("UnbondingLock", uniqueUnbondingLockId);
   }

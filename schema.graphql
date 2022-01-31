@@ -215,6 +215,8 @@ type UnbondingLock @entity {
   amount: BigDecimal!
   "Round number when the unbonding amount will be available for withdrawal"
   withdrawRound: BigInt!
+  "Account that initiates the transaction that creates the unbonding lock"
+  sender: String!
 }
 
 """
