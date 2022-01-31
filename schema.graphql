@@ -215,6 +215,8 @@ type UnbondingLock @entity {
   amount: BigDecimal!
   "Round number when the unbonding amount will be available for withdrawal"
   withdrawRound: BigInt!
+  "Account that initiates the transaction that creates the unbonding lock"
+  sender: String!
 }
 
 """
@@ -409,6 +411,25 @@ type RebondEvent implements Event @entity {
   delegate: Transcoder!
   amount: BigDecimal!
   unbondingLockId: Int!
+}
+
+"""
+TransferBond entities are created for every emitted TransferBond event.
+"""
+type TransferBondEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occured in"
+  round: Round!
+  amount: BigDecimal!
+  newDelegator: Delegator!
+  oldDelegator: Delegator!
+  newUnbondingLockId: Int!
+  oldUnbondingLockId: Int!
 }
 
 """

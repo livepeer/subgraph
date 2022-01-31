@@ -5,6 +5,7 @@ import {
   BondingManager,
   WithdrawStake,
   Bond,
+  TransferBond,
   Unbond,
   Rebond,
   WithdrawFees,
@@ -19,6 +20,7 @@ import {
 
 import {
   BondEvent,
+  TransferBondEvent,
   Delegator,
   EarningsClaimedEvent,
   ParameterUpdateEvent,
@@ -50,6 +52,7 @@ import {
   MAXIMUM_VALUE_UINT256,
   createOrLoadProtocol,
   getBlockNum,
+  ZERO_BD,
 } from "../../utils/helpers";
 
 export function bond(event: Bond): void {
@@ -146,6 +149,68 @@ export function bond(event: Bond): void {
   bondEvent.save();
 }
 
+export function transferBond(event: TransferBond): void {
+  let round = createOrLoadRound(getBlockNum());
+  let delegator = createOrLoadDelegator(event.params.newDelegator.toHex());
+  let oldUniqueUnbondingLockId = makeUnbondingLockId(
+    event.params.oldDelegator,
+    event.params.oldUnbondingLockId
+  );
+  let newUniqueUnbondingLockId = makeUnbondingLockId(
+    event.params.newDelegator,
+    event.params.newUnbondingLockId
+  );
+
+  // update delegator's principal
+  delegator.principal = delegator.principal.plus(
+    convertToDecimal(event.params.amount)
+  );
+
+  delegator.save();
+
+  // Add unbonding lock for new delegator since it was transferred from the old delegator
+  let newUnbondingLock =
+    UnbondingLock.load(newUniqueUnbondingLockId) ||
+    new UnbondingLock(newUniqueUnbondingLockId);
+  let oldUnbondingLock = UnbondingLock.load(oldUniqueUnbondingLockId);
+
+  newUnbondingLock.unbondingLockId = event.params.newUnbondingLockId.toI32();
+  newUnbondingLock.delegator = event.params.newDelegator.toHex();
+  newUnbondingLock.sender = event.params.oldDelegator.toHex();
+  newUnbondingLock.delegate = oldUnbondingLock.delegate;
+  newUnbondingLock.withdrawRound = oldUnbondingLock.withdrawRound;
+  newUnbondingLock.amount = convertToDecimal(event.params.amount);
+
+  newUnbondingLock.save();
+
+  // Remove unbonding lock for old delegator since it has been transferred to the new delegator
+  store.remove("UnbondingLock", oldUniqueUnbondingLockId);
+
+  let tx =
+    Transaction.load(event.transaction.hash.toHex()) ||
+    new Transaction(event.transaction.hash.toHex());
+  tx.blockNumber = event.block.number;
+  tx.gasUsed = event.transaction.gasUsed;
+  tx.gasPrice = event.transaction.gasPrice;
+  tx.timestamp = event.block.timestamp.toI32();
+  tx.from = event.transaction.from.toHex();
+  tx.to = event.transaction.to.toHex();
+  tx.save();
+
+  let transferBondEvent = new TransferBondEvent(
+    makeEventId(event.transaction.hash, event.logIndex)
+  );
+  transferBondEvent.transaction = event.transaction.hash.toHex();
+  transferBondEvent.timestamp = event.block.timestamp.toI32();
+  transferBondEvent.round = round.id;
+  transferBondEvent.amount = convertToDecimal(event.params.amount);
+  transferBondEvent.newDelegator = event.params.newDelegator.toHex();
+  transferBondEvent.oldDelegator = event.params.oldDelegator.toHex();
+  transferBondEvent.newUnbondingLockId = event.params.newUnbondingLockId.toI32();
+  transferBondEvent.oldUnbondingLockId = event.params.oldUnbondingLockId.toI32();
+  transferBondEvent.save();
+}
+
 // Handler for Unbond events
 export function unbond(event: Unbond): void {
   let bondingManager = BondingManager.bind(event.address);
@@ -193,6 +258,7 @@ export function unbond(event: Unbond): void {
 
   unbondingLock.unbondingLockId = event.params.unbondingLockId.toI32();
   unbondingLock.delegator = event.params.delegator.toHex();
+  unbondingLock.sender = event.params.delegator.toHex();
   unbondingLock.delegate = event.params.delegate.toHex();
   unbondingLock.withdrawRound = withdrawRound;
   unbondingLock.amount = amount;
@@ -232,16 +298,17 @@ export function unbond(event: Unbond): void {
 // Handler for Rebond events
 export function rebond(event: Rebond): void {
   let bondingManager = BondingManager.bind(event.address);
+  let round = createOrLoadRound(getBlockNum());
+  let transcoder = createOrLoadTranscoder(event.params.delegate.toHex());
+  let delegate = createOrLoadDelegator(event.params.delegate.toHex());
+  let delegator = createOrLoadDelegator(event.params.delegator.toHex());
+  let delegateData = bondingManager.getDelegator(event.params.delegate);
+  let protocol = Protocol.load("0");
   let uniqueUnbondingLockId = makeUnbondingLockId(
     event.params.delegator,
     event.params.unbondingLockId
   );
-  let round = createOrLoadRound(getBlockNum());
-  let transcoder = Transcoder.load(event.params.delegate.toHex());
-  let delegate = Delegator.load(event.params.delegate.toHex());
-  let delegator = Delegator.load(event.params.delegator.toHex());
-  let delegateData = bondingManager.getDelegator(event.params.delegate);
-  let protocol = Protocol.load("0");
+  let unbondingLock = UnbondingLock.load(uniqueUnbondingLockId);
 
   // If rebonding from unbonded
   if (!delegator.delegate) {
@@ -259,9 +326,16 @@ export function rebond(event: Rebond): void {
   delegator.lastClaimRound = round.id;
   delegator.bondedAmount = convertToDecimal(delegatorData.value0);
   delegator.fees = convertToDecimal(delegatorData.value1);
-  delegator.unbonded = delegator.unbonded.minus(
-    convertToDecimal(event.params.amount)
-  );
+
+  // If the sender field for the lock is equal to the delegator's address then
+  // we know that this is an unbonding lock the delegator created by calling
+  // unbond() and if it is not then we know that this is an unbonding lock created
+  // by transferBond(). In the latter case, we wouldn't need to subtract from unbonded.
+  if (unbondingLock.sender == event.params.delegator.toHex()) {
+    delegator.unbonded = delegator.unbonded.minus(
+      convertToDecimal(event.params.amount)
+    );
+  }
 
   // update delegate
   delegate.delegatedAmount = convertToDecimal(delegateData.value3);
@@ -272,7 +346,10 @@ export function rebond(event: Rebond): void {
   transcoder.save();
   delegator.save();
   protocol.save();
-  store.remove("UnbondingLock", uniqueUnbondingLockId);
+
+  if (unbondingLock) {
+    store.remove("UnbondingLock", uniqueUnbondingLockId);
+  }
 
   let tx =
     Transaction.load(event.transaction.hash.toHex()) ||
