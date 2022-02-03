@@ -903,3 +903,23 @@ type BurnEvent implements Event @entity {
   "Amount of tokens burned"
   value: BigDecimal!
 }
+
+"""
+MigrateDelegatorFinalizedEvent entities are created for every emitted WithdrawStakeEvent event.
+"""
+type MigrateDelegatorFinalizedEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occured in"
+  round: Round!
+  l1Addr: String!
+  l2Addr: String!
+  stake: BigDecimal!
+  delegatedStake: BigDecimal!
+  fees: BigDecimal!
+  delegate: String!
+}

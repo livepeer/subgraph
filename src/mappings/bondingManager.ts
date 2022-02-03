@@ -52,7 +52,6 @@ import {
   MAXIMUM_VALUE_UINT256,
   createOrLoadProtocol,
   getBlockNum,
-  ZERO_BD,
 } from "../../utils/helpers";
 
 export function bond(event: Bond): void {

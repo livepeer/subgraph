@@ -87,6 +87,9 @@ arbitrum-rinkeby:
     serviceRegistry:
       address: "22BEc4A040f9F3491F510E7BfbbbBEf347dbb8bf"
       startBlock: 8912040
+    l2Migrator:
+      address: "e2f931931B8E04a01c99a2DeBA44A9FF782F688a"
+      startBlock: 8959965
   networkName: arbitrum-rinkeby
 development:
   contracts:

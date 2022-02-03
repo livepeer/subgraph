@@ -67,6 +67,29 @@ dataSources:
         - event: TransferBond(indexed address,indexed address,uint256,uint256,uint256)
           handler: transferBond
   - kind: ethereum/contract
+    name: L2Migrator
+    network: {{networkName}}
+    source:
+      startBlock: {{contracts.l2Migrator.startBlock}}
+      address: {{contracts.l2Migrator.address}}
+      abi: L2Migrator
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mappings/l2Migrator.ts
+      abis:
+        - name: L2Migrator
+          file: ./abis/L2Migrator.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
+      entities:
+        - MigrateDelegatorFinalizedEvent
+        - Transaction
+      eventHandlers:
+        - event: MigrateDelegatorFinalized((address,address,uint256,uint256,uint256,address))
+          handler: migrateDelegatorFinalized
+  - kind: ethereum/contract
     name: RoundsManager
     network: {{networkName}}
     source:
