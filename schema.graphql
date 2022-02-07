@@ -905,7 +905,7 @@ type BurnEvent implements Event @entity {
 }
 
 """
-MigrateDelegatorFinalizedEvent entities are created for every emitted WithdrawStakeEvent event.
+MigrateDelegatorFinalizedEvent entities are created for every emitted WithdrawStake event.
 """
 type MigrateDelegatorFinalizedEvent implements Event @entity {
   "Ethereum transaction hash + event log index"
@@ -922,4 +922,22 @@ type MigrateDelegatorFinalizedEvent implements Event @entity {
   delegatedStake: BigDecimal!
   fees: BigDecimal!
   delegate: String!
+}
+
+"""
+StakeClaimedEvent entities are created for every emitted StakeClaimed event.
+"""
+type StakeClaimedEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occured in"
+  round: Round!
+  delegator: String!
+  delegate: String!
+  stake: BigDecimal!
+  fees: BigDecimal!
 }

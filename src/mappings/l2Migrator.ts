@@ -1,11 +1,18 @@
-import { Transaction, MigrateDelegatorFinalizedEvent } from "../types/schema";
+import {
+  Transaction,
+  MigrateDelegatorFinalizedEvent,
+  StakeClaimedEvent,
+} from "../types/schema";
 import {
   createOrLoadRound,
   getBlockNum,
   makeEventId,
   convertToDecimal,
 } from "../../utils/helpers";
-import { MigrateDelegatorFinalized } from "../types/L2Migrator/L2Migrator";
+import {
+  MigrateDelegatorFinalized,
+  StakeClaimed,
+} from "../types/L2Migrator/L2Migrator";
 
 export function migrateDelegatorFinalized(
   event: MigrateDelegatorFinalized
@@ -42,4 +49,31 @@ export function migrateDelegatorFinalized(
   );
   migrateDelegatorFinalizedEvent.delegate = event.params.params.delegate.toHex();
   migrateDelegatorFinalizedEvent.save();
+}
+
+export function stakeClaimed(event: StakeClaimed): void {
+  let round = createOrLoadRound(getBlockNum());
+
+  let tx =
+    Transaction.load(event.transaction.hash.toHex()) ||
+    new Transaction(event.transaction.hash.toHex());
+  tx.blockNumber = event.block.number;
+  tx.gasUsed = event.transaction.gasUsed;
+  tx.gasPrice = event.transaction.gasPrice;
+  tx.timestamp = event.block.timestamp.toI32();
+  tx.from = event.transaction.from.toHex();
+  tx.to = event.transaction.to.toHex();
+  tx.save();
+
+  let stakeClaimedEvent = new StakeClaimedEvent(
+    makeEventId(event.transaction.hash, event.logIndex)
+  );
+  stakeClaimedEvent.transaction = event.transaction.hash.toHex();
+  stakeClaimedEvent.timestamp = event.block.timestamp.toI32();
+  stakeClaimedEvent.round = round.id;
+  stakeClaimedEvent.delegator = event.params.delegator.toHex();
+  stakeClaimedEvent.delegate = event.params.delegate.toHex();
+  stakeClaimedEvent.stake = convertToDecimal(event.params.stake);
+  stakeClaimedEvent.fees = convertToDecimal(event.params.fees);
+  stakeClaimedEvent.save();
 }

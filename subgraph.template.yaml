@@ -89,6 +89,8 @@ dataSources:
       eventHandlers:
         - event: MigrateDelegatorFinalized((address,address,uint256,uint256,uint256,address))
           handler: migrateDelegatorFinalized
+        - event: StakeClaimed(indexed address,address,uint256,uint256)
+          handler: stakeClaimed
   - kind: ethereum/contract
     name: RoundsManager
     network: {{networkName}}
