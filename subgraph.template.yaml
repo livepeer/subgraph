@@ -173,6 +173,8 @@ dataSources:
           file: ./abis/UniswapV1Exchange.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pool
+          file: ./abis/UniswapV3Pool.json
         - name: RoundsManager
           file: ./abis/RoundsManager.json
       entities:

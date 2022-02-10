@@ -6,6 +6,7 @@ import {
   Withdrawal,
 } from "../types/TicketBroker/TicketBroker";
 import { UniswapV2Pair } from "../types/TicketBroker/UniswapV2Pair";
+import { UniswapV3Pool } from "../types/TicketBroker/UniswapV3Pool";
 import { UniswapV1Exchange } from "../types/TicketBroker/UniswapV1Exchange";
 import {
   Transaction,
@@ -17,7 +18,7 @@ import {
   DepositFundedEvent,
   WithdrawalEvent,
 } from "../types/schema";
-import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadDay,
@@ -27,7 +28,9 @@ import {
   getBlockNum,
   getUniswapV1DaiEthExchangeAddress,
   getUniswapV2DaiEthPairAddress,
+  getUniswapV3DaiEthPoolAddress,
   makeEventId,
+  sqrtPriceX96ToTokenPrices,
   ZERO_BD,
 } from "../../utils/helpers";
 
@@ -41,17 +44,33 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let faceValue = convertToDecimal(event.params.faceValue);
   let ethPrice = ZERO_BD;
 
-  // DAI-ETH V2 pair was created during this block
-  if (dataSource.network() === "mainnet") {
+  if (
+    dataSource.network() == "arbitrum-one" ||
+    dataSource.network() == "arbitrum-rinkeby"
+  ) {
+    let address = getUniswapV3DaiEthPoolAddress(dataSource.network());
+    let daiEthPool = UniswapV3Pool.bind(Address.fromString(address));
+    let slot0 = daiEthPool.slot0();
+    let sqrtPriceX96 = slot0.value0;
+    let prices = sqrtPriceX96ToTokenPrices(
+      sqrtPriceX96,
+      BigInt.fromI32(18),
+      BigInt.fromI32(18)
+    );
+    ethPrice = prices[0];
+  }
+
+  if (dataSource.network() == "mainnet") {
+    // DAI-ETH V2 pair was created during this block
     if (event.block.number.gt(BigInt.fromI32(10095742))) {
-      let address = getUniswapV2DaiEthPairAddress();
+      let address = getUniswapV2DaiEthPairAddress(dataSource.network());
       let daiEthPair = UniswapV2Pair.bind(Address.fromString(address));
       let daiEthPairReserves = daiEthPair.getReserves();
       ethPrice = convertToDecimal(daiEthPairReserves.value0).div(
         convertToDecimal(daiEthPairReserves.value1)
       );
     } else {
-      let address = getUniswapV1DaiEthExchangeAddress();
+      let address = getUniswapV1DaiEthExchangeAddress(dataSource.network());
       let daiEthExchange = UniswapV1Exchange.bind(Address.fromString(address));
       ethPrice = convertToDecimal(
         daiEthExchange.getTokenToEthOutputPrice(BigInt.fromI32(10).pow(18))

@@ -265,37 +265,85 @@ export function createRound(
   return round;
 }
 
-export function getUniswapV1DaiEthExchangeAddress(): string {
-  return "2a1530C4C41db0B0b2bB646CB5Eb1A67b7158667";
+// return 0 if denominator is 0 in division
+export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
+  if (amount1.equals(ZERO_BD)) {
+    return ZERO_BD;
+  } else {
+    return amount0.div(amount1);
+  }
 }
 
-export function getUniswapV2DaiEthPairAddress(): string {
-  return "a478c2975ab1ea89e8196811f51a7b7ade33eb11";
+let Q192 = 2 ** 192;
+export function sqrtPriceX96ToTokenPrices(
+  sqrtPriceX96: BigInt,
+  token0Decimals: BigInt,
+  token1Decimals: BigInt
+): BigDecimal[] {
+  let num = sqrtPriceX96.times(sqrtPriceX96).toBigDecimal();
+  let denom = BigDecimal.fromString(Q192.toString());
+  let price1 = num
+    .div(denom)
+    .times(exponentToBigDecimal(token0Decimals))
+    .div(exponentToBigDecimal(token1Decimals));
+
+  let price0 = safeDiv(BigDecimal.fromString("1"), price1);
+  return [price0, price1];
+}
+
+export function getUniswapV1DaiEthExchangeAddress(network: string): string {
+  if (network == "mainnet") {
+    return "2a1530C4C41db0B0b2bB646CB5Eb1A67b7158667";
+  } else if (network == "rinkeby") {
+    return "2a1530C4C41db0B0b2bB646CB5Eb1A67b7158667";
+  } else {
+    return "2a1530C4C41db0B0b2bB646CB5Eb1A67b7158667";
+  }
+}
+
+export function getUniswapV2DaiEthPairAddress(network: string): string {
+  if (network == "mainnet") {
+    return "a478c2975ab1ea89e8196811f51a7b7ade33eb11";
+  } else if (network == "rinkeby") {
+    return "a478c2975ab1ea89e8196811f51a7b7ade33eb11";
+  } else {
+    return "a478c2975ab1ea89e8196811f51a7b7ade33eb11";
+  }
+}
+
+export function getUniswapV3DaiEthPoolAddress(network: string): string {
+  if (network == "arbitrum-one") {
+    return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
+  } else if (network == "arbitrum-rinkeby") {
+    return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
+  } else {
+    return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
+  }
 }
 
 export function getBondingManagerAddress(network: string): string {
-  if (network == "mainnet") {
-    return "511bc4556d823ae99630ae8de28b9b80df90ea2e";
-  } else if (network == "arbitrum") {
+  if (network == "arbitrum-one") {
     return "68B463bcA7d561118636e9f028fF0F2e8398dd6a";
-  } else if (network == "rinkeby") {
-    return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
   } else if (network == "arbitrum-rinkeby") {
     return "e42229d764F673EB3FB8B9a56016C2a4DA45ffd7";
+  } else if (network == "mainnet") {
+    return "511bc4556d823ae99630ae8de28b9b80df90ea2e";
+  } else if (network == "rinkeby") {
+    return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
   } else {
     return "A94B7f0465E98609391C623d0560C5720a3f2D33";
   }
 }
 
 export function getRoundsManagerAddress(network: string): string {
-  if (network == "mainnet") {
-    return "3984fc4ceeef1739135476f625d36d6c35c40dc3";
-  } else if (network == "arbitrum-one") {
+  if (network == "arbitrum-one") {
     return "C40df4db2f99e7e235780A93B192F1a934f0c45b";
-  } else if (network == "rinkeby") {
-    return "55cfb784ca12744275d9742B843486225C695e64";
   } else if (network == "arbitrum-rinkeby") {
     return "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
+  } else if (network == "mainnet") {
+    return "3984fc4ceeef1739135476f625d36d6c35c40dc3";
+  } else if (network == "rinkeby") {
+    return "55cfb784ca12744275d9742B843486225C695e64";
   } else {
     return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
   }
@@ -304,12 +352,14 @@ export function getRoundsManagerAddress(network: string): string {
 export function getBlockNum(): BigInt {
   let network = dataSource.network();
   let roundsManagerAddress = "";
-  if (network == "mainnet") {
+  if (network == "arbitrum-one") {
+    roundsManagerAddress = "511bc4556d823ae99630ae8de28b9b80df90ea2e";
+  } else if (network == "arbitrum-rinkeby") {
+    roundsManagerAddress = "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
+  } else if (network == "mainnet") {
     roundsManagerAddress = "511bc4556d823ae99630ae8de28b9b80df90ea2e";
   } else if (network == "rinkeby") {
     roundsManagerAddress = "55cfb784ca12744275d9742B843486225C695e64";
-  } else if (network == "arbitrum-rinkeby") {
-    roundsManagerAddress = "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
   } else {
     roundsManagerAddress = "C40df4db2f99e7e235780A93B192F1a934f0c45b";
   }
