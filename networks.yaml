@@ -79,14 +79,14 @@ arbitrum-one:
       address: "4969dcCF5186e1c49411638fc8A2a020Fdab752E"
       startBlock: 5856338
     ticketBroker:
-      address: "7Beb84c52ce96DFd90431FAA97378994a8baa6df"
-      startBlock: 5856351
+      address: "a8bB618B1520E284046F3dFc448851A1Ff26e41B"
+      startBlock: 5856357
     pollCreator:
       address: "8bb50806D60c492c0004DAD5D9627DAA2d9732E6"
       startBlock: 5857075
     serviceRegistry:
-      address: "38093CDca43aeCd7bb474983519A246e93A3b0a7"
-      startBlock: 5856401
+      address: "C92d3A360b8f9e083bA64DE15d95Cf8180897431"
+      startBlock: 5860363
     l2Migrator:
       address: "148D5b6B4df9530c7C76A810bd1Cdf69EC4c2085"
       startBlock: 5864923
