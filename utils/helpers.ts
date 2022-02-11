@@ -313,7 +313,7 @@ export function getUniswapV2DaiEthPairAddress(network: string): string {
 
 export function getUniswapV3DaiEthPoolAddress(network: string): string {
   if (network == "arbitrum-one") {
-    return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
+    return "0xa961f0473da4864c5ed28e00fcc53a3aab056c1b";
   } else if (network == "arbitrum-rinkeby") {
     return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
   } else {
@@ -323,7 +323,7 @@ export function getUniswapV3DaiEthPoolAddress(network: string): string {
 
 export function getBondingManagerAddress(network: string): string {
   if (network == "arbitrum-one") {
-    return "68B463bcA7d561118636e9f028fF0F2e8398dd6a";
+    return "35Bcf3c30594191d53231E4FF333E8A770453e40";
   } else if (network == "arbitrum-rinkeby") {
     return "e42229d764F673EB3FB8B9a56016C2a4DA45ffd7";
   } else if (network == "mainnet") {
@@ -337,7 +337,7 @@ export function getBondingManagerAddress(network: string): string {
 
 export function getRoundsManagerAddress(network: string): string {
   if (network == "arbitrum-one") {
-    return "C40df4db2f99e7e235780A93B192F1a934f0c45b";
+    return "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
   } else if (network == "arbitrum-rinkeby") {
     return "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
   } else if (network == "mainnet") {
@@ -353,7 +353,7 @@ export function getBlockNum(): BigInt {
   let network = dataSource.network();
   let roundsManagerAddress = "";
   if (network == "arbitrum-one") {
-    roundsManagerAddress = "511bc4556d823ae99630ae8de28b9b80df90ea2e";
+    roundsManagerAddress = "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
   } else if (network == "arbitrum-rinkeby") {
     roundsManagerAddress = "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
   } else if (network == "mainnet") {
