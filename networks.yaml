@@ -58,6 +58,39 @@ rinkeby:
       address: "3a941e1094B9E33efABB26a9047a8ABb4b257907"
       startBlock: 10020312
   networkName: rinkeby
+arbitrum-one:
+  contracts:
+    controller:
+      address: "D8E8328501E9645d16Cf49539efC04f734606ee4"
+      startBlock: 5856334
+    bondingManager:
+      address: "35Bcf3c30594191d53231E4FF333E8A770453e40"
+      startBlock: 5856381
+    roundsManager:
+      address: "dd6f56DcC28D3F5f27084381fE8Df634985cc39f"
+      startBlock: 5856394
+    livepeerToken:
+      address: "289ba1701C2F088cf0faf8B3705246331cB8A839"
+      startBlock: 5856156
+    minterV1:
+      address: "4969dcCF5186e1c49411638fc8A2a020Fdab752E"
+      startBlock: 5856338
+    minter:
+      address: "4969dcCF5186e1c49411638fc8A2a020Fdab752E"
+      startBlock: 5856338
+    ticketBroker:
+      address: "7Beb84c52ce96DFd90431FAA97378994a8baa6df"
+      startBlock: 5856351
+    pollCreator:
+      address: "8bb50806D60c492c0004DAD5D9627DAA2d9732E6"
+      startBlock: 5857075
+    serviceRegistry:
+      address: "38093CDca43aeCd7bb474983519A246e93A3b0a7"
+      startBlock: 5856401
+    l2Migrator:
+      address: "148D5b6B4df9530c7C76A810bd1Cdf69EC4c2085"
+      startBlock: 5864923
+  networkName: arbitrum-one
 arbitrum-rinkeby:
   contracts:
     controller:
