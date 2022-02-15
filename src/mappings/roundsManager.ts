@@ -118,6 +118,7 @@ export function newRound(event: NewRound): void {
 
   protocol.lastInitializedRound = round.id;
   protocol.totalActiveStake = totalActiveStake;
+  protocol.currentRound = round.id;
 
   day.totalActiveStake = totalActiveStake;
   day.totalSupply = protocol.totalSupply;
