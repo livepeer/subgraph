@@ -57,7 +57,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
       BigInt.fromI32(18),
       BigInt.fromI32(18)
     );
-    ethPrice = prices[0];
+    ethPrice = prices[1];
   }
 
   if (dataSource.network() == "mainnet") {
