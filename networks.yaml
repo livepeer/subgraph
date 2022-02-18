@@ -13,8 +13,8 @@ arbitrum-one:
       address: "289ba1701C2F088cf0faf8B3705246331cB8A839"
       startBlock: 5856156
     minter:
-      address: "4969dcCF5186e1c49411638fc8A2a020Fdab752E"
-      startBlock: 5856338
+      address: "c20DE37170B45774e6CD3d2304017fc962f27252"
+      startBlock: 6253359
     ticketBroker:
       address: "a8bB618B1520E284046F3dFc448851A1Ff26e41B"
       startBlock: 5856357
