@@ -321,6 +321,16 @@ export function getRoundsManagerAddress(network: string): string {
   }
 }
 
+export function getMinterAddress(network: string): string {
+  if (network == "arbitrum-one") {
+    return "c20DE37170B45774e6CD3d2304017fc962f27252";
+  } else if (network == "arbitrum-rinkeby") {
+    return "E5bE54705D41DAaA33A043aa51dE472ED637C3d9";
+  } else {
+    return "c20DE37170B45774e6CD3d2304017fc962f27252";
+  }
+}
+
 export function getBlockNum(): BigInt {
   let network = dataSource.network();
   let roundsManagerAddress = "";
