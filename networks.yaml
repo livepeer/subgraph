@@ -12,6 +12,9 @@ arbitrum-one:
     livepeerToken:
       address: "289ba1701C2F088cf0faf8B3705246331cB8A839"
       startBlock: 5856156
+    minterV1:
+      address: "4969dcCF5186e1c49411638fc8A2a020Fdab752E"
+      startBlock: 5856338
     minter:
       address: "c20DE37170B45774e6CD3d2304017fc962f27252"
       startBlock: 6253359
