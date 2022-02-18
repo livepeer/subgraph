@@ -5,9 +5,7 @@ import {
   ReserveClaimed,
   Withdrawal,
 } from "../types/TicketBroker/TicketBroker";
-import { UniswapV2Pair } from "../types/TicketBroker/UniswapV2Pair";
 import { UniswapV3Pool } from "../types/TicketBroker/UniswapV3Pool";
-import { UniswapV1Exchange } from "../types/TicketBroker/UniswapV1Exchange";
 import {
   Transaction,
   Protocol,
@@ -26,8 +24,6 @@ import {
   createOrLoadTranscoder,
   createOrLoadTranscoderDay,
   getBlockNum,
-  getUniswapV1DaiEthExchangeAddress,
-  getUniswapV2DaiEthPairAddress,
   getUniswapV3DaiEthPoolAddress,
   makeEventId,
   sqrtPriceX96ToTokenPrices,
@@ -59,25 +55,6 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     );
     ethPrice = prices[1];
   }
-
-  if (dataSource.network() == "mainnet") {
-    // DAI-ETH V2 pair was created during this block
-    if (event.block.number.gt(BigInt.fromI32(10095742))) {
-      let address = getUniswapV2DaiEthPairAddress(dataSource.network());
-      let daiEthPair = UniswapV2Pair.bind(Address.fromString(address));
-      let daiEthPairReserves = daiEthPair.getReserves();
-      ethPrice = convertToDecimal(daiEthPairReserves.value0).div(
-        convertToDecimal(daiEthPairReserves.value1)
-      );
-    } else {
-      let address = getUniswapV1DaiEthExchangeAddress(dataSource.network());
-      let daiEthExchange = UniswapV1Exchange.bind(Address.fromString(address));
-      ethPrice = convertToDecimal(
-        daiEthExchange.getTokenToEthOutputPrice(BigInt.fromI32(10).pow(18))
-      );
-    }
-  }
-
   let tx =
     Transaction.load(event.transaction.hash.toHex()) ||
     new Transaction(event.transaction.hash.toHex());

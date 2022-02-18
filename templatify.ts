@@ -11,14 +11,9 @@ Handlebars.registerHelper("ifEquals", function(arg1, arg2, options) {
 
 function getNetworkNameForSubgraph() {
   switch (process.env.SUBGRAPH) {
-    case undefined:
-    case "livepeer/livepeer":
-      return "mainnet";
-    case "livepeer/rinkeby":
-      return "rinkeby";
+    case "livepeer/arbitrum-one":
+      return "arbitrum-one";
     case "livepeer/arbitrum-rinkeby":
-      return "arbitrum-rinkeby";
-    case "livepeer/arbitrum":
       return "arbitrum-rinkeby";
     default:
       return null;
