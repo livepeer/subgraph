@@ -200,68 +200,6 @@ export function updatePollTallyOnRebond(event: Rebond): void {
   updatePollTally(event);
 }
 
-export function updatePollTallyOnEarningsClaimed(event: EarningsClaimed): void {
-  // After LIP-36 the pending stake of other delegators does not change
-  // after earnings are claimed so after the LIP-36 mainnet upgrade block
-  // we stop updating all voters vote weight on each EarningsClaimed event
-  if (
-    dataSource.network() != "mainnet" ||
-    event.block.number.gt(BigInt.fromI32(10972586))
-  ) {
-    return;
-  }
-
-  let voterAddress = dataSource.context().getString("voter");
-  let delegator = Delegator.load(voterAddress) as Delegator;
-
-  // Return if the voter doesn't share the same delegate as the delegator that claimed earnings
-  if (
-    delegator == null ||
-    delegator.delegate != event.params.delegate.toHex()
-  ) {
-    return;
-  }
-
-  let pollAddress = dataSource.context().getString("poll");
-  let poll = Poll.load(pollAddress) as Poll;
-
-  // Return if poll is no longer active
-  if (poll.endBlock.lt(event.block.number)) {
-    return;
-  }
-
-  let round = createOrLoadRound(getBlockNum());
-  let voteId = makeVoteId(voterAddress, pollAddress);
-  let vote = Vote.load(voteId);
-  let transcoder = Transcoder.load(voterAddress);
-
-  if (transcoder.status == "Registered") {
-    vote.voteStake = transcoder.totalStake as BigDecimal;
-  } else {
-    let bondingManager = BondingManager.bind(event.address);
-    let pendingStake = convertToDecimal(
-      bondingManager.pendingStake(
-        Address.fromString(voterAddress),
-        integer.fromString(round.id)
-      )
-    );
-
-    let delegateVoteId = makeVoteId(event.params.delegate.toHex(), poll.id);
-    let delegateVote = Vote.load(delegateVoteId) || new Vote(delegateVoteId);
-    delegateVote.voter = event.params.delegate.toHex();
-
-    // update delegate nonVoteStake
-    delegateVote.nonVoteStake = delegateVote.nonVoteStake
-      .minus(vote.voteStake as BigDecimal)
-      .plus(pendingStake);
-    delegateVote.save();
-    // update voteStake
-    vote.voteStake = pendingStake;
-  }
-  vote.save();
-  tallyVotes(poll);
-}
-
 function updatePollTally<T extends Rebond>(event: T): void {
   let pollAddress = dataSource.context().getString("poll");
   let poll = Poll.load(pollAddress) as Poll;
