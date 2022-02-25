@@ -52,6 +52,7 @@ import {
   MAXIMUM_VALUE_UINT256,
   createOrLoadProtocol,
   getBlockNum,
+  ZERO_BI,
 } from "../../utils/helpers";
 
 export function bond(event: Bond): void {
@@ -72,7 +73,9 @@ export function bond(event: Bond): void {
 
   // Changing delegate
   if (
-    event.params.oldDelegate.toHex() != EMPTY_ADDRESS.toHex() &&
+    event.params.bondedAmount
+      .minus(event.params.additionalAmount)
+      .gt(ZERO_BI) &&
     event.params.oldDelegate.toHex() != event.params.newDelegate.toHex()
   ) {
     let oldTranscoder = Transcoder.load(event.params.oldDelegate.toHex());
