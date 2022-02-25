@@ -45,6 +45,9 @@ arbitrum-rinkeby:
     livepeerToken:
       address: "743b8469e5f54cD765F1954604cD4dfA67b64bF6"
       startBlock: 8700932
+    minterV1:
+      address: "C10525f660F2A0a71E46340e8ee8cc7b1cD26Dd4"
+      startBlock: 8911969
     minter:
       address: "C10525f660F2A0a71E46340e8ee8cc7b1cD26Dd4"
       startBlock: 8911969

@@ -430,7 +430,8 @@ export function withdrawFees(event: WithdrawFees): void {
   withdrawFeesEvent.transaction = event.transaction.hash.toHex();
   withdrawFeesEvent.timestamp = event.block.timestamp.toI32();
   withdrawFeesEvent.round = round.id;
-  withdrawFeesEvent.amount = delegator.fees;
+  withdrawFeesEvent.amount = convertToDecimal(event.params.amount);
+  withdrawFeesEvent.recipient = event.params.recipient.toHex();
   withdrawFeesEvent.delegator = event.params.delegator.toHex();
   withdrawFeesEvent.save();
 
