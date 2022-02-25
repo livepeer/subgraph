@@ -22,6 +22,7 @@ import {
   convertToDecimal,
   createOrLoadRound,
   getBlockNum,
+  ZERO_BI,
 } from "../../utils/helpers";
 import { tallyVotes } from "./poll";
 import { integer } from "@protofire/subgraph-toolkit";
@@ -93,7 +94,9 @@ export function updatePollTallyOnBond(event: Bond): void {
   let voterAddress = dataSource.context().getString("voter");
   let updateTally = false;
   let isSwitchingDelegates =
-    event.params.oldDelegate.toHex() != EMPTY_ADDRESS.toHex() &&
+    event.params.bondedAmount
+      .minus(event.params.additionalAmount)
+      .gt(ZERO_BI) &&
     event.params.oldDelegate.toHex() != event.params.newDelegate.toHex();
   let oldDelegateVoteId = makeVoteId(
     event.params.oldDelegate.toHex(),
