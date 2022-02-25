@@ -60,7 +60,7 @@ dataSources:
           handler: withdrawStake
         - event: Reward(indexed address,uint256)
           handler: reward
-        - event: WithdrawFees(indexed address)
+        - event: WithdrawFees(indexed address,address,uint256)
           handler: withdrawFees
         - event: ParameterUpdate(string)
           handler: parameterUpdate

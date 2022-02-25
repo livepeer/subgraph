@@ -622,6 +622,8 @@ type WithdrawFeesEvent implements Event @entity {
   delegator: Delegator!
   "Amount of fees withdrawn"
   amount: BigDecimal!
+  "Address belonging to the receiver of fees"
+  recipient: String!
 }
 
 """
