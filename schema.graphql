@@ -8,9 +8,6 @@ type Protocol @entity {
   inflation: BigInt!
   "Change in inflation rate per round until the target bonding rate is achieved"
   inflationChange: BigInt!
-  "Max number of rounds that a caller can claim earnings for at once"
-  maxEarningsClaimsRounds: Int!
-    @deprecated(reason: "This constraint of was removed as of LIP-52")
   "Total active transcoders"
   numActiveTranscoders: Int!
   "True if the protocol is paused"
@@ -218,6 +215,8 @@ type UnbondingLock @entity {
   amount: BigDecimal!
   "Round number when the unbonding amount will be available for withdrawal"
   withdrawRound: BigInt!
+  "Account that initiates the transaction that creates the unbonding lock"
+  sender: String!
 }
 
 """
@@ -366,7 +365,7 @@ type BondEvent implements Event @entity {
   "Reference to the Delegator's new delegate"
   newDelegate: Transcoder!
   "Reference to the Delegator's old delegate"
-  oldDelegate: Transcoder!
+  oldDelegate: Transcoder
   "Reference to the Delegator that bonded"
   delegator: Delegator!
 }
@@ -412,6 +411,25 @@ type RebondEvent implements Event @entity {
   delegate: Transcoder!
   amount: BigDecimal!
   unbondingLockId: Int!
+}
+
+"""
+TransferBond entities are created for every emitted TransferBond event.
+"""
+type TransferBondEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occured in"
+  round: Round!
+  amount: BigDecimal!
+  newDelegator: Delegator!
+  oldDelegator: Delegator!
+  newUnbondingLockId: Int!
+  oldUnbondingLockId: Int!
 }
 
 """
@@ -604,6 +622,8 @@ type WithdrawFeesEvent implements Event @entity {
   delegator: Delegator!
   "Amount of fees withdrawn"
   amount: BigDecimal!
+  "Address belonging to the receiver of fees"
+  recipient: String!
 }
 
 """
@@ -884,4 +904,42 @@ type BurnEvent implements Event @entity {
   round: Round!
   "Amount of tokens burned"
   value: BigDecimal!
+}
+
+"""
+MigrateDelegatorFinalizedEvent entities are created for every emitted WithdrawStake event.
+"""
+type MigrateDelegatorFinalizedEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occured in"
+  round: Round!
+  l1Addr: String!
+  l2Addr: String!
+  stake: BigDecimal!
+  delegatedStake: BigDecimal!
+  fees: BigDecimal!
+  delegate: String!
+}
+
+"""
+StakeClaimedEvent entities are created for every emitted StakeClaimed event.
+"""
+type StakeClaimedEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occured in"
+  round: Round!
+  delegator: String!
+  delegate: String!
+  stake: BigDecimal!
+  fees: BigDecimal!
 }

@@ -5,11 +5,12 @@ import { Transaction, ServiceURIUpdateEvent } from "../types/schema";
 import {
   createOrLoadRound,
   createOrLoadTranscoder,
+  getBlockNum,
   makeEventId,
 } from "../../utils/helpers";
 
 export function serviceURIUpdate(event: ServiceURIUpdate): void {
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let transcoder = createOrLoadTranscoder(event.params.addr.toHex());
   transcoder.serviceURI = event.params.serviceURI;
   transcoder.save();

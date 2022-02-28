@@ -1,4 +1,10 @@
-import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts";
+import {
+  Address,
+  BigDecimal,
+  BigInt,
+  Bytes,
+  dataSource,
+} from "@graphprotocol/graph-ts";
 import { integer } from "@protofire/subgraph-toolkit";
 import {
   Day,
@@ -8,6 +14,7 @@ import {
   Transcoder,
   TranscoderDay,
 } from "../src/types/schema";
+import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 
 let x = BigInt.fromI32(2);
 let y = 255 as u8;
@@ -83,34 +90,6 @@ export function percPoints(_fracNum: BigInt, _fracDenom: BigInt): BigInt {
   return _fracNum.times(BigInt.fromI32(PERC_DIVISOR)).div(_fracDenom);
 }
 
-export function getBondingManagerAddress(network: string): string {
-  if (network == "mainnet") {
-    return "511bc4556d823ae99630ae8de28b9b80df90ea2e";
-  } else if (network == "rinkeby") {
-    return "e75a5DccfFe8939F7f16CC7f63EB252bB542FE95";
-  } else {
-    return "A94B7f0465E98609391C623d0560C5720a3f2D33";
-  }
-}
-
-export function getLivepeerTokenAddress(network: string): string {
-  if (network == "mainnet") {
-    return "58b6a8a3302369daec383334672404ee733ab239";
-  } else if (network == "rinkeby") {
-    return "23b814a57D53b1a7A860194F53401D0D639abED7";
-  } else {
-    return "D833215cBcc3f914bD1C9ece3EE7BF8B14f841bb";
-  }
-}
-
-export function getUniswapV1DaiEthExchangeAddress(): string {
-  return "2a1530C4C41db0B0b2bB646CB5Eb1A67b7158667";
-}
-
-export function getUniswapV2DaiEthPairAddress(): string {
-  return "a478c2975ab1ea89e8196811f51a7b7ade33eb11";
-}
-
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   let bd = BigDecimal.fromString("1");
   for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
@@ -144,7 +123,6 @@ export function createOrLoadProtocol(): Protocol {
     protocol.totalVolumeETH = ZERO_BD;
     protocol.totalVolumeUSD = ZERO_BD;
     protocol.unbondingPeriod = ZERO_BI;
-    protocol.maxEarningsClaimsRounds = 0;
     protocol.numActiveTranscoders = 0;
     protocol.winningTicketCount = 0;
     protocol.roundCount = 0;
@@ -239,36 +217,28 @@ export function createOrLoadRound(blockNumber: BigInt): Round {
   let roundsSinceLastUpdate = blockNumber
     .minus(protocol.lastRoundLengthUpdateStartBlock)
     .div(protocol.roundLength);
-  let round: Round;
 
-  // true if we need to create
-  // it is checking if at least 1 round has passed since the last creation
-  let needsCreating = roundsSinceLastUpdate.gt(
-    integer
-      .fromString(protocol.currentRound)
-      .minus(integer.fromString(protocol.lastRoundLengthUpdateRound))
-  );
+  let newRound = integer
+    .fromString(protocol.lastRoundLengthUpdateRound)
+    .plus(roundsSinceLastUpdate);
 
-  if (needsCreating) {
-    let newRound = integer
-      .fromString(protocol.lastRoundLengthUpdateRound)
-      .plus(roundsSinceLastUpdate);
-
-    // Need to get the start block according to the contracts, not just the start block this
-    // entity was created in the subgraph
-    let startBlock = protocol.lastRoundLengthUpdateStartBlock.plus(
-      roundsSinceLastUpdate.times(protocol.roundLength)
-    );
-    round = createRound(startBlock, protocol.roundLength, newRound);
-    protocol.roundCount = protocol.roundCount + 1;
-    protocol.currentRound = newRound.toString();
-    protocol.save();
-
-    // If there is no need to create a new round, just return the current one
-  } else {
-    round = Round.load(protocol.currentRound) as Round;
+  let round = Round.load(newRound.toString()) as Round;
+  if (round) {
+    // We are already aware of this round so just return it without creating a new one
+    return round;
   }
-  return round;
+
+  // Need to get the start block according to the contracts, not just the start block this
+  // entity was created in the subgraph
+  let startBlock = protocol.lastRoundLengthUpdateStartBlock.plus(
+    roundsSinceLastUpdate.times(protocol.roundLength)
+  );
+  // We are not aware of this round so create and return it
+  protocol.roundCount = protocol.roundCount + 1;
+  protocol.currentRound = newRound.toString();
+  protocol.save();
+
+  return createRound(startBlock, protocol.roundLength, newRound);
 }
 
 export function createRound(
@@ -293,4 +263,87 @@ export function createRound(
   round.newStake = ZERO_BD;
   round.save();
   return round;
+}
+
+// return 0 if denominator is 0 in division
+export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
+  if (amount1.equals(ZERO_BD)) {
+    return ZERO_BD;
+  } else {
+    return amount0.div(amount1);
+  }
+}
+
+let Q192 = 2 ** 192;
+export function sqrtPriceX96ToTokenPrices(
+  sqrtPriceX96: BigInt,
+  token0Decimals: BigInt,
+  token1Decimals: BigInt
+): BigDecimal[] {
+  let num = sqrtPriceX96.times(sqrtPriceX96).toBigDecimal();
+  let denom = BigDecimal.fromString(Q192.toString());
+  let price1 = num
+    .div(denom)
+    .times(exponentToBigDecimal(token0Decimals))
+    .div(exponentToBigDecimal(token1Decimals));
+
+  let price0 = safeDiv(BigDecimal.fromString("1"), price1);
+  return [price0, price1];
+}
+
+export function getUniswapV3DaiEthPoolAddress(network: string): string {
+  if (network == "arbitrum-one") {
+    return "0xa961f0473da4864c5ed28e00fcc53a3aab056c1b";
+  } else if (network == "arbitrum-rinkeby") {
+    return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
+  } else {
+    return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
+  }
+}
+
+export function getBondingManagerAddress(network: string): string {
+  if (network == "arbitrum-one") {
+    return "35Bcf3c30594191d53231E4FF333E8A770453e40";
+  } else if (network == "arbitrum-rinkeby") {
+    return "e42229d764F673EB3FB8B9a56016C2a4DA45ffd7";
+  } else {
+    return "A94B7f0465E98609391C623d0560C5720a3f2D33";
+  }
+}
+
+export function getRoundsManagerAddress(network: string): string {
+  if (network == "arbitrum-one") {
+    return "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
+  } else if (network == "arbitrum-rinkeby") {
+    return "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
+  } else {
+    return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
+  }
+}
+
+export function getMinterAddress(network: string): string {
+  if (network == "arbitrum-one") {
+    return "c20DE37170B45774e6CD3d2304017fc962f27252";
+  } else if (network == "arbitrum-rinkeby") {
+    return "E5bE54705D41DAaA33A043aa51dE472ED637C3d9";
+  } else {
+    return "c20DE37170B45774e6CD3d2304017fc962f27252";
+  }
+}
+
+export function getBlockNum(): BigInt {
+  let network = dataSource.network();
+  let roundsManagerAddress = "";
+  if (network == "arbitrum-one") {
+    roundsManagerAddress = "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
+  } else if (network == "arbitrum-rinkeby") {
+    roundsManagerAddress = "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
+  } else {
+    roundsManagerAddress = "C40df4db2f99e7e235780A93B192F1a934f0c45b";
+  }
+
+  let roundsManager = RoundsManager.bind(
+    Address.fromString(roundsManagerAddress)
+  );
+  return roundsManager.blockNum();
 }

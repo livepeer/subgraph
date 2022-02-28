@@ -1,4 +1,4 @@
-import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 
 // Import event types from the registrar contract ABIs
 import {
@@ -28,8 +28,10 @@ import {
   createOrLoadRound,
   PERC_DIVISOR,
   createRound,
+  getBlockNum,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
+import { decimal } from "@protofire/subgraph-toolkit";
 
 // Handler for NewRound events
 export function newRound(event: NewRound): void {
@@ -37,11 +39,30 @@ export function newRound(event: NewRound): void {
   let bondingManager = BondingManager.bind(
     Address.fromString(bondingManagerAddress)
   );
-  let round = createOrLoadRound(event.block.number);
+  let roundsManager = RoundsManager.bind(event.address);
+  let blockNum = roundsManager.blockNum();
+  let round = createOrLoadRound(blockNum);
   let day = createOrLoadDay(event.block.timestamp.toI32());
-  let currentTranscoder = bondingManager.getFirstTranscoderInPool();
-  let transcoder = Transcoder.load(currentTranscoder.toHex());
-  let totalActiveStake = convertToDecimal(bondingManager.getTotalBonded());
+  let currentTranscoder = EMPTY_ADDRESS;
+  let totalActiveStake = decimal.ZERO;
+  let transcoder: Transcoder;
+
+  // will revert if there are no transcoders in pool
+  let callResult = bondingManager.try_getFirstTranscoderInPool();
+  if (callResult.reverted) {
+    log.info("getFirstTranscoderInPool reverted", []);
+  } else {
+    currentTranscoder = callResult.value;
+    transcoder = Transcoder.load(currentTranscoder.toHex()) as Transcoder;
+  }
+
+  // will revert if there is no LPT bonded
+  let getTotalBondedCallResult = bondingManager.try_getTotalBonded();
+  if (getTotalBondedCallResult.reverted) {
+    log.info("getTotalBonded reverted", []);
+  } else {
+    totalActiveStake = convertToDecimal(getTotalBondedCallResult.value);
+  }
 
   round.initialized = true;
   round.totalActiveStake = totalActiveStake;
@@ -79,12 +100,9 @@ export function newRound(event: NewRound): void {
     // reward() for a given round, we store its reward tokens inside this Pool
     // entry in a field called "rewardTokens". If "rewardTokens" is null for a
     // given transcoder and round then we know the transcoder failed to call reward()
-    poolId = makePoolId(
-      currentTranscoder.toHex(),
-      event.params.round.toString()
-    );
+    poolId = makePoolId(currentTranscoder.toHex(), round.id);
     pool = new Pool(poolId);
-    pool.round = event.params.round.toString();
+    pool.round = round.id;
     pool.delegate = currentTranscoder.toHex();
     pool.totalStake = transcoder.totalStake;
     pool.rewardCut = transcoder.rewardCut as BigInt;
@@ -95,11 +113,12 @@ export function newRound(event: NewRound): void {
       currentTranscoder
     );
 
-    transcoder = Transcoder.load(currentTranscoder.toHex());
+    transcoder = Transcoder.load(currentTranscoder.toHex()) as Transcoder;
   }
 
-  protocol.lastInitializedRound = event.params.round.toString();
+  protocol.lastInitializedRound = round.id;
   protocol.totalActiveStake = totalActiveStake;
+  protocol.currentRound = round.id;
 
   day.totalActiveStake = totalActiveStake;
   day.totalSupply = protocol.totalSupply;
@@ -131,7 +150,7 @@ export function newRound(event: NewRound): void {
   );
   newRoundEvent.transaction = event.transaction.hash.toHex();
   newRoundEvent.timestamp = event.block.timestamp.toI32();
-  newRoundEvent.round = event.params.round.toString();
+  newRoundEvent.round = round.id;
   newRoundEvent.blockHash = event.params.blockHash.toHexString();
   newRoundEvent.save();
 }
@@ -147,7 +166,7 @@ export function parameterUpdate(event: ParameterUpdate): void {
     let lastRoundLengthUpdateRound = roundsManager.lastRoundLengthUpdateRound();
 
     if (protocol.roundLength.toI32() == 0) {
-      createRound(event.block.number, roundLength, currentRound);
+      createRound(getBlockNum(), roundLength, currentRound);
     }
     protocol.roundLength = roundLength;
     protocol.lastRoundLengthUpdateStartBlock = lastRoundLengthUpdateStartBlock;

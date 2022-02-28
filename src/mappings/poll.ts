@@ -18,6 +18,7 @@ import {
   ONE_BI,
   makeEventId,
   createOrLoadRound,
+  getBlockNum,
 } from "../../utils/helpers";
 import {
   DataSourceContext,
@@ -36,7 +37,7 @@ export function vote(event: VoteEventParam): void {
   ) {
     return;
   }
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   let poll = Poll.load(event.address.toHex()) as Poll;
   let voteId = makeVoteId(event.params.voter.toHex(), poll.id);
 

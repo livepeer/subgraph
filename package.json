@@ -1,22 +1,21 @@
 {
   "name": "@livepeer/subgraph",
-  "private": true,
-  "version": "1.0.1-alpha.0",
+  "version": "1.0.0",
   "license": "MIT",
   "scripts": {
     "create:local": "graph create livepeer/livepeer --node http://127.0.0.1:8020",
     "create:docker": "graph create livepeer/livepeer --node http://graph-node:8020",
     "codegen": "graph codegen --debug --output-dir src/types/",
     "build": "graph build --debug",
-    "prepare": "yarn prepare:mainnet && yarn codegen",
+    "prepare": "yarn prepare:arbitrum-one && yarn codegen",
     "deploy": "graph deploy $SUBGRAPH --debug --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
     "deploy:local": "graph deploy livepeer/livepeer --debug --ipfs http://127.0.0.1:5001 --node http://127.0.0.1:8020",
     "deploy:docker": "graph deploy livepeer/livepeer --debug --ipfs http://ipfs:5001 --node http://graph-node:8020",
-    "deploy:mainnet": "yarn prepare:mainnet && SUBGRAPH=livepeer/livepeer yarn deploy",
-    "deploy:rinkeby": "yarn prepare:rinkeby && SUBGRAPH=livepeer/livepeer-rinkeby yarn deploy",
-    "prepare:mainnet": "NETWORK_NAME=mainnet node ./templatify.js",
-    "prepare:rinkeby": "NETWORK_NAME=rinkeby node ./templatify.js",
-    "prepare:development": "NETWORK_NAME=development node ./templatify.js",
+    "deploy:arbitrum-one": "yarn prepare:arbitrum-one && SUBGRAPH=livepeer/arbitrum-one yarn deploy",
+    "deploy:arbitrum-rinkeby": "yarn prepare:rinkeby && SUBGRAPH=livepeer/arbitrum-rinkeby yarn deploy",
+    "prepare:arbitrum-one": "NETWORK_NAME=arbitrum-one ts-node ./templatify.ts",
+    "prepare:arbitrum-rinkeby": "NETWORK_NAME=arbitrum-rinkeby ts-node ./templatify.ts",
+    "prepare:development": "prepare:yaml NETWORK_NAME=development ts-node ./templatify.ts",
     "docker:build": "docker build --cache-from livepeer/subgraph:latest -t livepeer/subgraph:latest .",
     "test:docker": "DOCKER=true npx truffle test --network=docker",
     "test:development": "npx truffle test --network=development",
@@ -24,15 +23,6 @@
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.19.0"
-  },
-  "workspaces": {
-    "packages": [
-      "packages/*"
-    ],
-    "nohoist": [
-      "@graphprotocol/graph-cli",
-      "@graphprotocol/graph-ts"
-    ]
   },
   "dependencies": {
     "@graphprotocol/graph-ts": "^0.19.0",
@@ -44,6 +34,9 @@
     "handlebars": "^4.5.2",
     "js-yaml": "^3.13.1",
     "truffle": "^5.1.24",
-    "typy": "^3.3.0"
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.5",
+    "typy": "^3.3.0",
+    "yaml-convert": "^1.0.1"
   }
 }

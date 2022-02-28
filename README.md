@@ -11,7 +11,7 @@ indexing and querying Livepeer data from the Ethereum blockchain using
 
 ```bash
 $ yarn
-$ yarn prepare:mainnet
+$ yarn prepare:arbitrum-one
 ```
 
 The first command installs all external dependencies, while the latter generates
@@ -19,7 +19,7 @@ the `subgraph.yaml` file, which is required by The Graph.
 
 We use [Handlebars](https://github.com/wycats/handlebars.js/) to compile a
 [template subgraph](./subgraph.template.yaml) and add the parameters specific to
-each network (Mainnet and Rinkeby). The network can be changed via the
+each network (arbitrum-one and arbitrum-rinkeby). The network can be changed via the
 `NETWORK_NAME` environment variable or directly by choosing a different
 "prepare" script. See [package.json](./package.json) for all options.
 
@@ -49,3 +49,7 @@ Follow the instructions documented
 After downloading the latest blocks from Ethereum, you should begin to see
 Livepeer smart contract events flying in. Open a GraphiQL browser at
 localhost:8000 to query the Graph Node.
+
+## Mainnet
+
+To deploy the old Livepeer subgraph on mainnet checkout commit `b02006b5f7cf27e0c307a8e12b6b065b942f4dab`

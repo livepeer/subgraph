@@ -72,3 +72,5 @@ data/
 
 # subgraph.yaml templatify output
 subgraph.yaml
+
+build/

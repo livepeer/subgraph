@@ -1,18 +1,36 @@
+import { Address, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadDay,
+  createOrLoadProtocol,
   createOrLoadRound,
+  getBlockNum,
+  getMinterAddress,
   makeEventId,
   ZERO_BD,
 } from "../../utils/helpers";
 import { Mint, Burn } from "../types/LivepeerToken/LivepeerToken";
-import { Transaction, MintEvent, BurnEvent, Protocol } from "../types/schema";
+import { Minter } from "../types/Minter/Minter";
+import { Transaction, MintEvent, BurnEvent } from "../types/schema";
 
 export function mint(event: Mint): void {
+  let protocol = createOrLoadProtocol();
   let day = createOrLoadDay(event.block.timestamp.toI32());
-  let protocol = Protocol.load("0");
   let amount = convertToDecimal(event.params.amount);
-  let totalSupply = protocol.totalSupply.plus(amount);
+  let minterAddress = getMinterAddress(dataSource.network());
+  let minter = Minter.bind(Address.fromString(minterAddress));
+  let callResult = minter.try_getGlobalTotalSupply();
+  let totalSupply = ZERO_BD;
+
+  // getGlobalTotalSupply will revert until block #6253359 when the new minter was deployed
+  if (callResult.reverted) {
+    log.info("getGlobalTotalSupply reverted", []);
+    totalSupply = protocol.totalSupply.plus(
+      convertToDecimal(event.params.amount)
+    );
+  } else {
+    totalSupply = convertToDecimal(callResult.value);
+  }
 
   protocol.totalSupply = totalSupply;
 
@@ -25,7 +43,7 @@ export function mint(event: Mint): void {
     day.participationRate = protocol.participationRate;
   }
 
-  let round = createOrLoadRound(event.block.number);
+  let round = createOrLoadRound(getBlockNum());
   round.totalSupply = totalSupply;
   round.participationRate = protocol.participationRate;
   round.save();
@@ -56,11 +74,25 @@ export function mint(event: Mint): void {
 }
 
 export function burn(event: Burn): void {
-  let round = createOrLoadRound(event.block.number);
+  let protocol = createOrLoadProtocol();
+  let round = createOrLoadRound(getBlockNum());
   let day = createOrLoadDay(event.block.timestamp.toI32());
-  let protocol = Protocol.load("0");
   let value = convertToDecimal(event.params.value);
-  let totalSupply = protocol.totalSupply.minus(value);
+  let minterAddress = getMinterAddress(dataSource.network());
+  let minter = Minter.bind(Address.fromString(minterAddress));
+
+  let callResult = minter.try_getGlobalTotalSupply();
+  let totalSupply = ZERO_BD;
+
+  // getGlobalTotalSupply will revert until block #6253359 when the new minter was deployed
+  if (callResult.reverted) {
+    log.info("getGlobalTotalSupply reverted", []);
+    totalSupply = protocol.totalSupply.minus(
+      convertToDecimal(event.params.value)
+    );
+  } else {
+    totalSupply = convertToDecimal(callResult.value);
+  }
 
   protocol.totalSupply = totalSupply;
 
