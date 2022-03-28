@@ -1,4 +1,4 @@
-import { store } from "@graphprotocol/graph-ts";
+import { BigInt, store } from "@graphprotocol/graph-ts";
 
 // Import event types from the registrar contract ABIs
 import {
@@ -211,6 +211,9 @@ export function transferBond(event: TransferBond): void {
   transferBondEvent.newUnbondingLockId = event.params.newUnbondingLockId.toI32();
   transferBondEvent.oldUnbondingLockId = event.params.oldUnbondingLockId.toI32();
   transferBondEvent.save();
+
+  // Remove UnbondEvent as the unbondingLock is immediately processed and event is no longer valid
+  store.remove("UnbondEvent", makeEventId(event.transaction.hash, event.logIndex.minus(BigInt.fromI32(1))));
 }
 
 // Handler for Unbond events
