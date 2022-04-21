@@ -5,10 +5,11 @@ import {
   Bytes,
   dataSource,
 } from "@graphprotocol/graph-ts";
-import { integer } from "@protofire/subgraph-toolkit";
+import { integer, ZERO_ADDRESS } from "@protofire/subgraph-toolkit";
 import {
   Day,
   Delegator,
+  LivepeerAccount,
   Protocol,
   Round,
   Transcoder,
@@ -153,6 +154,11 @@ export function createOrLoadTranscoder(id: string): Transcoder {
     transcoder.totalVolumeUSD = ZERO_BD;
     transcoder.save();
   }
+
+  let account = createOrUpdateLivepeerAccount(id);
+  account.delegate = transcoder.id;
+  account.save();
+
   return transcoder as Transcoder;
 }
 
@@ -169,7 +175,23 @@ export function createOrLoadDelegator(id: string): Delegator {
     delegator.delegatedAmount = ZERO_BD;
     delegator.save();
   }
+
+  let account = createOrUpdateLivepeerAccount(id);
+  account.delegator = delegator.id;
+  account.save();
+
   return delegator as Delegator;
+}
+
+export function createOrUpdateLivepeerAccount(id: string): LivepeerAccount {
+  let account = LivepeerAccount.load(id);
+  if (account == null) {
+    account = new LivepeerAccount(id);
+    account.delegator = ZERO_ADDRESS;
+    account.delegate = ZERO_ADDRESS;
+    account.save();
+  }
+  return account as LivepeerAccount;
 }
 
 export function createOrLoadDay(timestamp: i32): Day {
