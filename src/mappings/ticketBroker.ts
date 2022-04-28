@@ -15,8 +15,9 @@ import {
   ReserveClaimedEvent,
   DepositFundedEvent,
   WithdrawalEvent,
+  Pool,
 } from "../types/schema";
-import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadDay,
@@ -26,6 +27,7 @@ import {
   getBlockNum,
   getUniswapV3DaiEthPoolAddress,
   makeEventId,
+  makePoolId,
   sqrtPriceX96ToTokenPrices,
   ZERO_BD,
 } from "../../utils/helpers";
@@ -36,6 +38,8 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let winningTicketRedeemedEvent = new WinningTicketRedeemedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
   );
+  let poolId = makePoolId(event.params.recipient.toHex(), round.id);
+  let pool = Pool.load(poolId);
   let protocol = Protocol.load("0");
   let faceValue = convertToDecimal(event.params.faceValue);
   let ethPrice = ZERO_BD;
@@ -119,6 +123,9 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     faceValue.times(ethPrice)
   );
   transcoderDay.save();
+
+  pool.fees = pool.fees.plus(faceValue);
+  pool.save();
 
   // Update fee volume for this round
   round.volumeETH = round.volumeETH.plus(faceValue);
