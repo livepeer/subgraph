@@ -8,6 +8,7 @@ import {
   getBlockNum,
   makeEventId,
   convertToDecimal,
+  createOrLoadTransactionFromEvent,
 } from "../../utils/helpers";
 import {
   MigrateDelegatorFinalized,
@@ -19,16 +20,7 @@ export function migrateDelegatorFinalized(
 ): void {
   let round = createOrLoadRound(getBlockNum());
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let migrateDelegatorFinalizedEvent = new MigrateDelegatorFinalizedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -54,16 +46,7 @@ export function migrateDelegatorFinalized(
 export function stakeClaimed(event: StakeClaimed): void {
   let round = createOrLoadRound(getBlockNum());
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let stakeClaimedEvent = new StakeClaimedEvent(
     makeEventId(event.transaction.hash, event.logIndex)

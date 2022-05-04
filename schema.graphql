@@ -29,11 +29,11 @@ type Protocol @entity {
   "Ratio of total active stake to total supply"
   participationRate: BigDecimal!
   "Current round the protocol is in"
-  currentRound: Round
+  currentRound: Round!
   "Round that was last initialized"
-  lastInitializedRound: Round
+  lastInitializedRound: Round!
   "Round when round length was last updated"
-  lastRoundLengthUpdateRound: Round
+  lastRoundLengthUpdateRound: Round!
   "Round length in blocks"
   roundLength: BigInt!
   "Block when round length was last updated"
@@ -246,9 +246,9 @@ type PollTally @entity {
   "Poll address"
   id: ID!
   "Stake voted yes"
-  yes: BigDecimal
+  yes: BigDecimal!
   "Stake voted no"
-  no: BigDecimal
+  no: BigDecimal!
 }
 
 """
@@ -260,9 +260,9 @@ type Vote @entity {
   "Vote caster"
   voter: String!
   "Stake weighted vote"
-  voteStake: BigDecimal
+  voteStake: BigDecimal!
   "This will be non-zero if voter is an transcoder and any of the its delegators voted"
-  nonVoteStake: BigDecimal
+  nonVoteStake: BigDecimal!
   "Vote choice"
   choiceID: PollChoice
   "Poll associated with this vote"
@@ -334,7 +334,7 @@ type Transaction @entity {
   blockNumber: BigInt!
   "Timestamp for transaction"
   timestamp: Int!
-  "Amount of gas used in the transaction"
+  "Actually is the limit of gas in the transaction, pending update in downstream projects"
   gasUsed: BigInt!
   "Cost per unit of gas specified for the transaction"
   gasPrice: BigInt!

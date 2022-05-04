@@ -62,7 +62,7 @@ const exec = (cmd) => {
 };
 
 const waitForSubgraphToBeSynced = async () =>
-  new Promise((resolve, reject) => {
+  new Promise<void>((resolve, reject) => {
     // Wait for up to four minutes
     const deadline = Date.now() + 240 * 1000;
     // Function to check if the subgraph is synced

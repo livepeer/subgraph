@@ -4,6 +4,7 @@ import { ServiceURIUpdate } from "../types/ServiceRegistry/ServiceRegistry";
 import { Transaction, ServiceURIUpdateEvent } from "../types/schema";
 import {
   createOrLoadRound,
+  createOrLoadTransactionFromEvent,
   createOrLoadTranscoder,
   getBlockNum,
   makeEventId,
@@ -15,16 +16,7 @@ export function serviceURIUpdate(event: ServiceURIUpdate): void {
   transcoder.serviceURI = event.params.serviceURI;
   transcoder.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let serviceURIUpdateEvent = new ServiceURIUpdateEvent(
     makeEventId(event.transaction.hash, event.logIndex)

@@ -53,6 +53,7 @@ import {
   createOrLoadProtocol,
   getBlockNum,
   ZERO_BI,
+  createOrLoadTransactionFromEvent,
 } from "../../utils/helpers";
 
 export function bond(event: Bond): void {
@@ -63,7 +64,7 @@ export function bond(event: Bond): void {
   let transcoder = createOrLoadTranscoder(event.params.newDelegate.toHex());
   let delegate = createOrLoadDelegator(event.params.newDelegate.toHex());
   let delegator = createOrLoadDelegator(event.params.delegator.toHex());
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
 
   // If self delegating, set status and assign reference to self
   if (event.params.delegator.toHex() == event.params.newDelegate.toHex()) {
@@ -78,8 +79,8 @@ export function bond(event: Bond): void {
       .gt(ZERO_BI) &&
     event.params.oldDelegate.toHex() != event.params.newDelegate.toHex()
   ) {
-    let oldTranscoder = Transcoder.load(event.params.oldDelegate.toHex());
-    let oldDelegate = Delegator.load(event.params.oldDelegate.toHex());
+    let oldTranscoder = createOrLoadTranscoder(event.params.oldDelegate.toHex());
+    let oldDelegate = createOrLoadDelegator(event.params.oldDelegate.toHex());
     let oldDelegateData = bondingManager.getDelegator(event.params.oldDelegate);
 
     // if previous delegate was itself, set status and unassign reference to self
@@ -126,16 +127,7 @@ export function bond(event: Bond): void {
   transcoder.save();
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let bondEvent = new BondEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -171,10 +163,15 @@ export function transferBond(event: TransferBond): void {
   delegator.save();
 
   // Add unbonding lock for new delegator since it was transferred from the old delegator
-  let newUnbondingLock =
-    UnbondingLock.load(newUniqueUnbondingLockId) ||
-    new UnbondingLock(newUniqueUnbondingLockId);
-  let oldUnbondingLock = UnbondingLock.load(oldUniqueUnbondingLockId);
+  let newUnbondingLock = UnbondingLock.load(newUniqueUnbondingLockId)
+  if (newUnbondingLock === null) {
+    newUnbondingLock = new UnbondingLock(newUniqueUnbondingLockId);
+  }
+
+  let oldUnbondingLock = UnbondingLock.load(oldUniqueUnbondingLockId)
+  if (oldUnbondingLock === null) {
+    oldUnbondingLock = new UnbondingLock(oldUniqueUnbondingLockId);
+  }
 
   newUnbondingLock.unbondingLockId = event.params.newUnbondingLockId.toI32();
   newUnbondingLock.delegator = event.params.newDelegator.toHex();
@@ -188,17 +185,7 @@ export function transferBond(event: TransferBond): void {
   // Remove unbonding lock for old delegator since it has been transferred to the new delegator
   store.remove("UnbondingLock", oldUniqueUnbondingLockId);
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
-
+  createOrLoadTransactionFromEvent(event);
   let transferBondEvent = new TransferBondEvent(
     makeEventId(event.transaction.hash, event.logIndex)
   );
@@ -222,15 +209,16 @@ export function unbond(event: Unbond): void {
   );
   let withdrawRound = event.params.withdrawRound;
   let amount = convertToDecimal(event.params.amount);
-  let delegator = Delegator.load(event.params.delegator.toHex());
+  let delegator = createOrLoadDelegator(event.params.delegator.toHex());
   let delegateData = bondingManager.getDelegator(event.params.delegate);
   let round = createOrLoadRound(getBlockNum());
   let transcoder = createOrLoadTranscoder(event.params.delegate.toHex());
   let delegate = createOrLoadDelegator(event.params.delegate.toHex());
-  let unbondingLock =
-    UnbondingLock.load(uniqueUnbondingLockId) ||
-    new UnbondingLock(uniqueUnbondingLockId);
-  let protocol = Protocol.load("0");
+  let unbondingLock = UnbondingLock.load(uniqueUnbondingLockId)
+  if (unbondingLock === null) {
+    unbondingLock = new UnbondingLock(uniqueUnbondingLockId);
+  }
+  let protocol = createOrLoadProtocol();
 
   delegate.delegatedAmount = convertToDecimal(delegateData.value3);
   transcoder.totalStake = convertToDecimal(delegateData.value3);
@@ -272,16 +260,7 @@ export function unbond(event: Unbond): void {
   delegator.save();
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let unbondEvent = new UnbondEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -305,7 +284,7 @@ export function rebond(event: Rebond): void {
   let delegate = createOrLoadDelegator(event.params.delegate.toHex());
   let delegator = createOrLoadDelegator(event.params.delegator.toHex());
   let delegateData = bondingManager.getDelegator(event.params.delegate);
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   let uniqueUnbondingLockId = makeUnbondingLockId(
     event.params.delegator,
     event.params.unbondingLockId
@@ -333,7 +312,7 @@ export function rebond(event: Rebond): void {
   // we know that this is an unbonding lock the delegator created by calling
   // unbond() and if it is not then we know that this is an unbonding lock created
   // by transferBond(). In the latter case, we wouldn't need to subtract from unbonded.
-  if (unbondingLock.sender == event.params.delegator.toHex()) {
+  if (unbondingLock && unbondingLock.sender == event.params.delegator.toHex()) {
     delegator.unbonded = delegator.unbonded.minus(
       convertToDecimal(event.params.amount)
     );
@@ -353,16 +332,7 @@ export function rebond(event: Rebond): void {
     store.remove("UnbondingLock", uniqueUnbondingLockId);
   }
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let rebondEvent = new RebondEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -387,16 +357,7 @@ export function withdrawStake(event: WithdrawStake): void {
   );
   store.remove("UnbondingLock", uniqueUnbondingLockId);
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let withdrawStakeEvent = new WithdrawStakeEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -412,20 +373,11 @@ export function withdrawStake(event: WithdrawStake): void {
 
 export function withdrawFees(event: WithdrawFees): void {
   let bondingManager = BondingManager.bind(event.address);
-  let delegator = Delegator.load(event.params.delegator.toHex());
+  let delegator = createOrLoadDelegator(event.params.delegator.toHex());
   let delegatorData = bondingManager.getDelegator(event.params.delegator);
   let round = createOrLoadRound(getBlockNum());
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let withdrawFeesEvent = new WithdrawFeesEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -463,16 +415,7 @@ export function parameterUpdate(event: ParameterUpdate): void {
 
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let parameterUpdateEvent = new ParameterUpdateEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -486,20 +429,20 @@ export function parameterUpdate(event: ParameterUpdate): void {
 
 // Handler for Reward events
 export function reward(event: Reward): void {
-  let transcoder = Transcoder.load(event.params.transcoder.toHex());
-  let delegate = Delegator.load(event.params.transcoder.toHex());
+  let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
+  let delegate = createOrLoadDelegator(event.params.transcoder.toHex());
   let round = createOrLoadRound(getBlockNum());
   let poolId = makePoolId(event.params.transcoder.toHex(), round.id);
   let pool = Pool.load(poolId);
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
 
   delegate.delegatedAmount = delegate.delegatedAmount.plus(
     convertToDecimal(event.params.amount)
   );
 
-  pool.rewardTokens = convertToDecimal(event.params.amount);
-  pool.feeShare = transcoder.feeShare;
-  pool.rewardCut = transcoder.rewardCut;
+  pool!.rewardTokens = convertToDecimal(event.params.amount);
+  pool!.feeShare = transcoder.feeShare;
+  pool!.rewardCut = transcoder.rewardCut;
 
   transcoder.totalStake = transcoder.totalStake.plus(
     convertToDecimal(event.params.amount)
@@ -508,19 +451,10 @@ export function reward(event: Reward): void {
 
   transcoder.save();
   delegate.save();
-  pool.save();
+  pool!.save();
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let rewardEvent = new RewardEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -535,7 +469,7 @@ export function reward(event: Reward): void {
 
 // Handler for TranscoderSlashed events
 export function transcoderSlashed(event: TranscoderSlashed): void {
-  let transcoder = Transcoder.load(event.params.transcoder.toHex());
+  let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
   let bondingManager = BondingManager.bind(event.address);
   let round = createOrLoadRound(getBlockNum());
   let delegateData = bondingManager.getDelegator(event.params.transcoder);
@@ -546,16 +480,7 @@ export function transcoderSlashed(event: TranscoderSlashed): void {
   // Apply store updates
   transcoder.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let transcoderSlashedEvent = new TranscoderSlashedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -574,16 +499,7 @@ export function transcoderUpdate(event: TranscoderUpdate): void {
   transcoder.feeShare = event.params.feeShare;
   transcoder.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let transcoderUpdateEvent = new TranscoderUpdateEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -600,7 +516,7 @@ export function transcoderUpdate(event: TranscoderUpdate): void {
 export function transcoderActivated(event: TranscoderActivated): void {
   let round = createOrLoadRound(getBlockNum());
   let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
 
   transcoder.lastActiveStakeUpdateRound = event.params.activationRound;
   transcoder.activationRound = event.params.activationRound;
@@ -621,16 +537,7 @@ export function transcoderActivated(event: TranscoderActivated): void {
   protocol.pendingActivation = pendingActivation;
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let transcoderActivatedEvent = new TranscoderActivatedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -644,9 +551,9 @@ export function transcoderActivated(event: TranscoderActivated): void {
 }
 
 export function transcoderDeactivated(event: TranscoderDeactivated): void {
-  let transcoder = Transcoder.load(event.params.transcoder.toHex());
+  let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
   let round = createOrLoadRound(getBlockNum());
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
 
   transcoder.deactivationRound = event.params.deactivationRound;
   transcoder.save();
@@ -665,16 +572,7 @@ export function transcoderDeactivated(event: TranscoderDeactivated): void {
   protocol.pendingDeactivation = pendingDeactivation;
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let transcoderDeactivatedEvent = new TranscoderDeactivatedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -697,16 +595,7 @@ export function earningsClaimed(event: EarningsClaimed): void {
   delegator.fees = delegator.fees.plus(convertToDecimal(event.params.fees));
   delegator.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let earningsClaimedEvent = new EarningsClaimedEvent(
     makeEventId(event.transaction.hash, event.logIndex)

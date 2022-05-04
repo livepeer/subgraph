@@ -4,17 +4,20 @@ import {
   BigInt,
   Bytes,
   dataSource,
+  ethereum,
 } from "@graphprotocol/graph-ts";
-import { integer } from "@protofire/subgraph-toolkit";
+import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 import {
+  Broadcaster,
   Day,
   Delegator,
   Protocol,
   Round,
+  Transaction,
   Transcoder,
   TranscoderDay,
+  Vote,
 } from "../src/types/schema";
-import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 
 let x = BigInt.fromI32(2);
 let y = 255 as u8;
@@ -102,8 +105,30 @@ export function convertToDecimal(eth: BigInt): BigDecimal {
   return eth.toBigDecimal().div(exponentToBigDecimal(BI_18));
 }
 
+export function createOrLoadTransactionFromEvent<T extends ethereum.Event>(
+  event: T
+): Transaction {
+  let tx = Transaction.load(event.transaction.hash.toHex());
+  if (tx == null) {
+    tx = new Transaction(event.transaction.hash.toHex());
+
+    tx.blockNumber = event.block.number;
+    tx.gasUsed = event.transaction.gasLimit;
+    tx.gasPrice = event.transaction.gasPrice;
+    tx.timestamp = event.block.timestamp.toI32();
+    tx.from = event.transaction.from.toHex();
+
+    if (event.transaction.to) {
+      tx.to = event.transaction.to!.toHex();
+    }
+
+    tx.save();
+  }
+  return tx as Transaction;
+}
+
 export function createOrLoadProtocol(): Protocol {
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   if (protocol == null) {
     protocol = new Protocol("0");
     protocol.paused = false;
@@ -131,6 +156,39 @@ export function createOrLoadProtocol(): Protocol {
     protocol.save();
   }
   return protocol as Protocol;
+}
+
+export function createOrLoadBroadcaster(id: string): Broadcaster {
+  let broadcaster = Broadcaster.load(id);
+
+  if (broadcaster == null) {
+    broadcaster = new Broadcaster(id);
+    broadcaster.deposit = ZERO_BD;
+    broadcaster.reserve = ZERO_BD;
+
+    broadcaster.save();
+  }
+
+  return broadcaster as Broadcaster;
+}
+
+
+export function createOrLoadVote(id: string): Vote {
+  let vote = Vote.load(id);
+
+  if (vote == null) {
+    vote = new Vote(id);
+    vote.voter = EMPTY_ADDRESS.toHexString();
+    vote.voteStake = ZERO_BD;
+    vote.nonVoteStake = ZERO_BD;
+
+    // bool types must be set to something before they can accessed
+    vote.registeredTranscoder = false;
+
+    vote.save();
+  }
+
+  return vote as Vote;
 }
 
 export function createOrLoadTranscoder(id: string): Transcoder {
@@ -213,14 +271,14 @@ export function createOrLoadTranscoderDay(
 }
 
 export function createOrLoadRound(blockNumber: BigInt): Round {
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   let roundsSinceLastUpdate = blockNumber
     .minus(protocol.lastRoundLengthUpdateStartBlock)
     .div(protocol.roundLength);
 
-  let newRound = integer
-    .fromString(protocol.lastRoundLengthUpdateRound)
-    .plus(roundsSinceLastUpdate);
+  let newRound = integerFromString(protocol.lastRoundLengthUpdateRound).plus(
+    roundsSinceLastUpdate
+  );
 
   let round = Round.load(newRound.toString()) as Round;
   if (round) {
@@ -246,7 +304,7 @@ export function createRound(
   roundLength: BigInt,
   roundNumber: BigInt
 ): Round {
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   let round = new Round(roundNumber.toString());
   round.startBlock = startBlock;
   round.endBlock = startBlock.plus(roundLength);
@@ -289,6 +347,10 @@ export function sqrtPriceX96ToTokenPrices(
 
   let price0 = safeDiv(BigDecimal.fromString("1"), price1);
   return [price0, price1];
+}
+
+export function integerFromString(s: string): BigInt {
+  return BigInt.fromString(s);
 }
 
 export function getUniswapV3DaiEthPoolAddress(network: string): string {

@@ -11,7 +11,9 @@ import {
 } from "../types/schema";
 import {
   convertToDecimal,
+  createOrLoadProtocol,
   createOrLoadRound,
+  createOrLoadTransactionFromEvent,
   getBlockNum,
   makeEventId,
 } from "../../utils/helpers";
@@ -19,7 +21,7 @@ import {
 export function setCurrentRewardTokens(event: SetCurrentRewardTokens): void {
   let minter = Minter.bind(event.address);
   let round = createOrLoadRound(getBlockNum());
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
 
   round.mintableTokens = convertToDecimal(event.params.currentMintableTokens);
   round.save();
@@ -32,17 +34,7 @@ export function setCurrentRewardTokens(event: SetCurrentRewardTokens): void {
   protocol.inflation = minter.inflation();
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
-
+  createOrLoadTransactionFromEvent(event);
   let setCurrentRewardTokensEvent = new SetCurrentRewardTokensEvent(
     makeEventId(event.transaction.hash, event.logIndex)
   );
@@ -59,7 +51,7 @@ export function setCurrentRewardTokens(event: SetCurrentRewardTokens): void {
 export function parameterUpdate(event: ParameterUpdate): void {
   let minter = Minter.bind(event.address);
   let round = createOrLoadRound(getBlockNum());
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
 
   if (event.params.param == "targetBondingRate") {
     protocol.targetBondingRate = minter.targetBondingRate();
@@ -71,17 +63,7 @@ export function parameterUpdate(event: ParameterUpdate): void {
 
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
-
+  createOrLoadTransactionFromEvent(event);
   let parameterUpdateEvent = new ParameterUpdateEvent(
     makeEventId(event.transaction.hash, event.logIndex)
   );

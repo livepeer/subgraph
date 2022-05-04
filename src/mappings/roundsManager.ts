@@ -1,4 +1,4 @@
-import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 
 // Import event types from the registrar contract ABIs
 import {
@@ -29,9 +29,11 @@ import {
   PERC_DIVISOR,
   createRound,
   getBlockNum,
+  createOrLoadTransactionFromEvent,
+  createOrLoadProtocol,
+  createOrLoadTranscoder,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
-import { decimal } from "@protofire/subgraph-toolkit";
 
 // Handler for NewRound events
 export function newRound(event: NewRound): void {
@@ -44,8 +46,8 @@ export function newRound(event: NewRound): void {
   let round = createOrLoadRound(blockNum);
   let day = createOrLoadDay(event.block.timestamp.toI32());
   let currentTranscoder = EMPTY_ADDRESS;
-  let totalActiveStake = decimal.ZERO;
-  let transcoder: Transcoder;
+  let totalActiveStake = BigDecimal.zero();
+  let transcoder: Transcoder | null = null;
 
   // will revert if there are no transcoders in pool
   let callResult = bondingManager.try_getFirstTranscoderInPool();
@@ -53,7 +55,7 @@ export function newRound(event: NewRound): void {
     log.info("getFirstTranscoderInPool reverted", []);
   } else {
     currentTranscoder = callResult.value;
-    transcoder = Transcoder.load(currentTranscoder.toHex()) as Transcoder;
+    transcoder = createOrLoadTranscoder(currentTranscoder.toHex());
   }
 
   // will revert if there is no LPT bonded
@@ -70,13 +72,13 @@ export function newRound(event: NewRound): void {
 
   let poolId: string;
   let pool: Pool;
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
 
   // Activate all transcoders pending activation
   let pendingActivation = protocol.pendingActivation;
   if (pendingActivation.length) {
     for (let index = 0; index < pendingActivation.length; index++) {
-      let t = Transcoder.load(pendingActivation[index]);
+      let t = createOrLoadTranscoder(pendingActivation[index]);
       t.active = true;
       t.save();
     }
@@ -87,7 +89,7 @@ export function newRound(event: NewRound): void {
   let pendingDeactivation = protocol.pendingDeactivation;
   if (pendingDeactivation.length) {
     for (let index = 0; index < pendingDeactivation.length; index++) {
-      let t = Transcoder.load(pendingDeactivation[index]);
+      let t = createOrLoadTranscoder(pendingDeactivation[index]);
       t.active = false;
       t.save();
     }
@@ -104,9 +106,11 @@ export function newRound(event: NewRound): void {
     pool = new Pool(poolId);
     pool.round = round.id;
     pool.delegate = currentTranscoder.toHex();
-    pool.totalStake = transcoder.totalStake;
-    pool.rewardCut = transcoder.rewardCut as BigInt;
-    pool.feeShare = transcoder.feeShare as BigInt;
+    if (transcoder) {
+      pool.totalStake = transcoder.totalStake;
+      pool.rewardCut = transcoder.rewardCut as BigInt;
+      pool.feeShare = transcoder.feeShare as BigInt;
+    }
     pool.save();
 
     currentTranscoder = bondingManager.getNextTranscoderInPool(
@@ -134,16 +138,7 @@ export function newRound(event: NewRound): void {
   protocol.save();
   day.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let newRoundEvent = new NewRoundEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -157,7 +152,7 @@ export function newRound(event: NewRound): void {
 
 export function parameterUpdate(event: ParameterUpdate): void {
   let roundsManager = RoundsManager.bind(event.address);
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   let currentRound = roundsManager.currentRound();
 
   if (event.params.param == "roundLength") {
@@ -184,16 +179,7 @@ export function parameterUpdate(event: ParameterUpdate): void {
 
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let parameterUpdateEvent = new ParameterUpdateEvent(
     makeEventId(event.transaction.hash, event.logIndex)

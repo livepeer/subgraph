@@ -1,31 +1,23 @@
+import { Address, BigDecimal, dataSource } from "@graphprotocol/graph-ts";
 import {
-  Address,
-  BigDecimal,
-  BigInt,
-  dataSource,
-} from "@graphprotocol/graph-ts";
-
-import {
-  BondingManager,
-  Reward,
-  Bond,
-  Unbond,
-  Rebond,
-  EarningsClaimed,
-} from "../types/BondingManager/BondingManager";
-
-import { Delegator, Poll, Vote, Transcoder } from "../types/schema";
-
-import {
-  makeVoteId,
-  EMPTY_ADDRESS,
   convertToDecimal,
   createOrLoadRound,
+  createOrLoadTranscoder,
+  createOrLoadVote,
   getBlockNum,
+  integerFromString,
+  makeVoteId,
   ZERO_BI,
 } from "../../utils/helpers";
+import {
+  Bond,
+  BondingManager,
+  Rebond,
+  Reward,
+  Unbond,
+} from "../types/BondingManager/BondingManager";
+import { Delegator, Poll, Transcoder, Vote } from "../types/schema";
 import { tallyVotes } from "./poll";
-import { integer } from "@protofire/subgraph-toolkit";
 
 export function updatePollTallyOnReward(event: Reward): void {
   let voterAddress = dataSource.context().getString("voter");
@@ -33,7 +25,7 @@ export function updatePollTallyOnReward(event: Reward): void {
 
   // Return if transcoder that called reward isn't voter's delegate
   if (
-    delegator == null ||
+    delegator === null ||
     delegator.delegate != event.params.transcoder.toHex()
   ) {
     return;
@@ -49,8 +41,8 @@ export function updatePollTallyOnReward(event: Reward): void {
 
   let round = createOrLoadRound(getBlockNum());
   let voteId = makeVoteId(delegator.id, poll.id);
-  let vote = Vote.load(voteId);
-  let transcoder = Transcoder.load(event.params.transcoder.toHex());
+  let vote = createOrLoadVote(voteId);
+  let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
 
   // update vote stakes
   if (voterAddress == event.params.transcoder.toHex()) {
@@ -60,12 +52,12 @@ export function updatePollTallyOnReward(event: Reward): void {
     let pendingStake = convertToDecimal(
       bondingManager.pendingStake(
         Address.fromString(voterAddress),
-        integer.fromString(round.id)
+        integerFromString(round.id)
       )
     );
 
     let delegateVoteId = makeVoteId(event.params.transcoder.toHex(), poll.id);
-    let delegateVote = Vote.load(delegateVoteId) || new Vote(delegateVoteId);
+    let delegateVote = createOrLoadVote(delegateVoteId);
     delegateVote.voter = event.params.transcoder.toHex();
 
     // update nonVoteStake
@@ -102,16 +94,16 @@ export function updatePollTallyOnBond(event: Bond): void {
     event.params.oldDelegate.toHex(),
     pollAddress
   );
-  let oldDelegateVote = Vote.load(oldDelegateVoteId);
-  let oldDelegate = Transcoder.load(event.params.oldDelegate.toHex());
+  let oldDelegateVote = createOrLoadVote(oldDelegateVoteId);
+  let oldDelegate = createOrLoadTranscoder(event.params.oldDelegate.toHex());
   let newDelegateVoteId = makeVoteId(
     event.params.newDelegate.toHex(),
     pollAddress
   );
-  let newDelegateVote = Vote.load(newDelegateVoteId);
-  let newDelegate = Transcoder.load(event.params.newDelegate.toHex());
+  let newDelegateVote = createOrLoadVote(newDelegateVoteId);
+  let newDelegate = createOrLoadTranscoder(event.params.newDelegate.toHex());
   let voteId = makeVoteId(voterAddress, pollAddress);
-  let vote = Vote.load(voteId);
+  let vote = createOrLoadVote(voteId);
   let bondedAmount = convertToDecimal(event.params.bondedAmount);
 
   if (oldDelegateVote) {
@@ -216,10 +208,10 @@ function updatePollTally<T extends Rebond>(event: T): void {
   let round = createOrLoadRound(getBlockNum());
   let voterAddress = dataSource.context().getString("voter");
   let voteId = makeVoteId(voterAddress, pollAddress);
-  let vote = Vote.load(voteId);
+  let vote = createOrLoadVote(voteId);
   let delegateVoteId = makeVoteId(event.params.delegate.toHex(), pollAddress);
-  let delegateVote = Vote.load(delegateVoteId);
-  let delegate = Transcoder.load(event.params.delegate.toHex());
+  let delegateVote = createOrLoadVote(delegateVoteId);
+  let delegate = createOrLoadTranscoder(event.params.delegate.toHex());
   let bondingManager = BondingManager.bind(event.address);
 
   if (delegateVote) {
@@ -235,7 +227,7 @@ function updatePollTally<T extends Rebond>(event: T): void {
         delegateVote.voteStake = convertToDecimal(
           bondingManager.pendingStake(
             event.params.delegate,
-            integer.fromString(round.id)
+            integerFromString(round.id)
           )
         );
       }
@@ -252,7 +244,7 @@ function updatePollTally<T extends Rebond>(event: T): void {
     let pendingStake = convertToDecimal(
       bondingManager.pendingStake(
         Address.fromString(voterAddress),
-        integer.fromString(round.id)
+        integerFromString(round.id)
       )
     );
 

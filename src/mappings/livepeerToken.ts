@@ -4,6 +4,7 @@ import {
   createOrLoadDay,
   createOrLoadProtocol,
   createOrLoadRound,
+  createOrLoadTransactionFromEvent,
   getBlockNum,
   getMinterAddress,
   makeEventId,
@@ -51,16 +52,7 @@ export function mint(event: Mint): void {
   protocol.save();
   day.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let mintEvent = new MintEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -111,16 +103,7 @@ export function burn(event: Burn): void {
   protocol.save();
   day.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let burnEvent = new BurnEvent(
     makeEventId(event.transaction.hash, event.logIndex)

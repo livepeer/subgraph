@@ -1,33 +1,28 @@
-import { BigDecimal } from "@graphprotocol/graph-ts";
-import { Vote as VoteEventParam } from "../types/templates/Poll/Poll";
 import {
-  Transaction,
-  Poll,
-  PollTally,
-  Vote,
-  Delegator,
-  Transcoder,
-  VoteEvent,
-} from "../types/schema";
+  Address,
+  BigDecimal,
+  dataSource,
+  DataSourceContext,
+} from "@graphprotocol/graph-ts";
 import {
-  makeVoteId,
-  getBondingManagerAddress,
   convertToDecimal,
+  createOrLoadRound,
+  createOrLoadTransactionFromEvent,
+  createOrLoadTranscoder,
+  createOrLoadVote,
+  getBlockNum,
+  getBondingManagerAddress,
+  integerFromString,
+  makeEventId,
+  makeVoteId,
+  ONE_BI,
   ZERO_BD,
   ZERO_BI,
-  ONE_BI,
-  makeEventId,
-  createOrLoadRound,
-  getBlockNum,
 } from "../../utils/helpers";
-import {
-  DataSourceContext,
-  Address,
-  dataSource,
-} from "@graphprotocol/graph-ts";
-import { PollTallyTemplate } from "../types/templates";
 import { BondingManager } from "../types/BondingManager/BondingManager";
-import { integer } from "@protofire/subgraph-toolkit";
+import { Delegator, Poll, PollTally, Vote, VoteEvent } from "../types/schema";
+import { PollTallyTemplate } from "../types/templates";
+import { Vote as VoteEventParam } from "../types/templates/Poll/Poll";
 
 export function vote(event: VoteEventParam): void {
   // Vote must be a "Yes" or "No"
@@ -41,12 +36,7 @@ export function vote(event: VoteEventParam): void {
   let poll = Poll.load(event.address.toHex()) as Poll;
   let voteId = makeVoteId(event.params.voter.toHex(), poll.id);
 
-  let v = Vote.load(voteId);
-  if (v == null) {
-    v = new Vote(voteId);
-    // bool types must be set to something before they can accessed
-    v.registeredTranscoder = false;
-  }
+  let v = createOrLoadVote(voteId);
 
   let firstTimeVoter = v.choiceID == null;
 
@@ -61,15 +51,15 @@ export function vote(event: VoteEventParam): void {
     v.poll = poll.id;
 
     // add vote to poll
-    let pollVotes = poll.votes ? poll.votes : new Array<string>();
+    let pollVotes = (poll.votes ? poll.votes : new Array<string>()) as string[];
     pollVotes.push(voteId);
     poll.votes = pollVotes;
     poll.save();
 
     // if voter is a delegator
     let delegator = Delegator.load(event.params.voter.toHex());
-    if (delegator) {
-      let delegate = Transcoder.load(delegator.delegate) as Transcoder;
+    if (delegator && delegator.delegate !== null) {
+      let delegate = createOrLoadTranscoder(delegator.delegate!);
 
       // If voter is a registered transcoder
       if (event.params.voter.toHex() == delegator.delegate) {
@@ -85,7 +75,7 @@ export function vote(event: VoteEventParam): void {
         let pendingStake = convertToDecimal(
           bondingManager.pendingStake(
             event.params.voter,
-            integer.fromString(round.id)
+            integerFromString(round.id)
           )
         );
         v.voteStake = pendingStake;
@@ -93,8 +83,7 @@ export function vote(event: VoteEventParam): void {
 
         // update delegate's vote
         let delegateVoteId = makeVoteId(delegate.id, poll.id);
-        let delegateVote =
-          Vote.load(delegateVoteId) || new Vote(delegateVoteId);
+        let delegateVote = createOrLoadVote(delegateVoteId);
         if (delegate.status == "Registered") {
           delegateVote.registeredTranscoder = true;
         } else {
@@ -128,16 +117,7 @@ export function vote(event: VoteEventParam): void {
     tallyVotes(poll);
   }
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let voteEvent = new VoteEvent(
     makeEventId(event.transaction.hash, event.logIndex)

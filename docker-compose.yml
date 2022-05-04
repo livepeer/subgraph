@@ -1,7 +1,7 @@
 version: "3"
 services:
   graph-node:
-    image: graphprotocol/graph-node:v0.18.0
+    image: graphprotocol/graph-node
     container_name: graph-node
     ports:
       - "8000:8000"
@@ -13,12 +13,13 @@ services:
       - ipfs
       - postgres
     environment:
-      postgres_host: postgres:5432
+      postgres_host: postgres
       postgres_user: graph-node
       postgres_pass: let-me-in
       postgres_db: graph-node
       ipfs: "ipfs:5001"
       ethereum: "development:http://host.docker.internal:8545"
+      GRAPH_LOG: info
   ipfs:
     image: ipfs/go-ipfs:v0.4.23
     container_name: ipfs

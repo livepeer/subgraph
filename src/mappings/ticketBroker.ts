@@ -19,8 +19,11 @@ import {
 import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
+  createOrLoadBroadcaster,
   createOrLoadDay,
+  createOrLoadProtocol,
   createOrLoadRound,
+  createOrLoadTransactionFromEvent,
   createOrLoadTranscoder,
   createOrLoadTranscoderDay,
   getBlockNum,
@@ -36,7 +39,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let winningTicketRedeemedEvent = new WinningTicketRedeemedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
   );
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   let faceValue = convertToDecimal(event.params.faceValue);
   let ethPrice = ZERO_BD;
 
@@ -55,16 +58,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     );
     ethPrice = prices[1];
   }
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   winningTicketRedeemedEvent.transaction = event.transaction.hash.toHex();
   winningTicketRedeemedEvent.timestamp = event.block.timestamp.toI32();
@@ -79,7 +73,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   winningTicketRedeemedEvent.auxData = event.params.auxData;
   winningTicketRedeemedEvent.save();
 
-  let broadcaster = Broadcaster.load(event.params.sender.toHex());
+  let broadcaster = createOrLoadBroadcaster(event.params.sender.toHex());
   if (faceValue.gt(broadcaster.deposit)) {
     broadcaster.deposit = ZERO_BD;
   } else {
@@ -128,29 +122,14 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 
 export function depositFunded(event: DepositFunded): void {
   let round = createOrLoadRound(getBlockNum());
-  let broadcaster = Broadcaster.load(event.params.sender.toHex());
-
-  if (broadcaster == null) {
-    broadcaster = new Broadcaster(event.params.sender.toHex());
-    broadcaster.deposit = ZERO_BD;
-    broadcaster.reserve = ZERO_BD;
-  }
+  let broadcaster = createOrLoadBroadcaster(event.params.sender.toHex());
 
   broadcaster.deposit = broadcaster.deposit.plus(
     convertToDecimal(event.params.amount)
   );
   broadcaster.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let depositFundedEvent = new DepositFundedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -165,29 +144,14 @@ export function depositFunded(event: DepositFunded): void {
 
 export function reserveFunded(event: ReserveFunded): void {
   let round = createOrLoadRound(getBlockNum());
-  let broadcaster = Broadcaster.load(event.params.reserveHolder.toHex());
-
-  if (broadcaster == null) {
-    broadcaster = new Broadcaster(event.params.reserveHolder.toHex());
-    broadcaster.deposit = ZERO_BD;
-    broadcaster.reserve = ZERO_BD;
-  }
+  let broadcaster = createOrLoadBroadcaster(event.params.reserveHolder.toHex());
 
   broadcaster.reserve = broadcaster.reserve.plus(
     convertToDecimal(event.params.amount)
   );
   broadcaster.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let reserveFundedEvent = new ReserveFundedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -202,22 +166,13 @@ export function reserveFunded(event: ReserveFunded): void {
 
 export function reserveClaimed(event: ReserveClaimed): void {
   let round = createOrLoadRound(getBlockNum());
-  let broadcaster = Broadcaster.load(event.params.reserveHolder.toHex());
+  let broadcaster = createOrLoadBroadcaster(event.params.reserveHolder.toHex());
   broadcaster.reserve = broadcaster.reserve.minus(
     convertToDecimal(event.params.amount)
   );
   broadcaster.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let reserveClaimedEvent = new ReserveClaimedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -233,21 +188,12 @@ export function reserveClaimed(event: ReserveClaimed): void {
 
 export function withdrawal(event: Withdrawal): void {
   let round = createOrLoadRound(getBlockNum());
-  let broadcaster = Broadcaster.load(event.params.sender.toHex());
+  let broadcaster = createOrLoadBroadcaster(event.params.sender.toHex());
   broadcaster.deposit = ZERO_BD;
   broadcaster.reserve = ZERO_BD;
   broadcaster.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let withdrawalEvent = new WithdrawalEvent(
     makeEventId(event.transaction.hash, event.logIndex)

@@ -2,6 +2,7 @@ import { PollCreated } from "../types/PollCreator/PollCreator";
 import { Transaction, Poll, PollCreatedEvent } from "../types/schema";
 import {
   createOrLoadRound,
+  createOrLoadTransactionFromEvent,
   getBlockNum,
   makeEventId,
 } from "../../utils/helpers";
@@ -21,16 +22,7 @@ export function pollCreated(event: PollCreated): void {
   // Instantiate data source template
   PollTemplate.create(event.params.poll);
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let pollCreatedEvent = new PollCreatedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
