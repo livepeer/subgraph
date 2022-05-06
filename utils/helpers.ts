@@ -19,8 +19,6 @@ import {
   Vote,
 } from "../src/types/schema";
 
-import { log } from "@graphprotocol/graph-ts";
-
 let x = BigInt.fromI32(2);
 let y = 255 as u8;
 let z = BigInt.fromI32(1);
@@ -284,17 +282,9 @@ export function createOrLoadRound(blockNumber: BigInt): Round {
     roundsSinceLastUpdate
   );
 
-  log.info("createOrrrr: {}", [
-    blockNumber.toString(),
-    protocol.lastRoundLengthUpdateStartBlock.toString(),
-    protocol.roundLength.toString(),
-    newRound.toString(),
-  ]);
-
   let round = Round.load(newRound.toString());
 
   if (round) {
-    log.info("roundddd: {}", [round.id.toString()]);
     // We are already aware of this round so just return it without creating a new one
     return round;
   }

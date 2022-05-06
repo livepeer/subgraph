@@ -68,32 +68,32 @@ development:
   contracts:
     controller:
       address: "77A0865438f2EfD65667362D4a8937537CA7a5EF"
-      startBlock: 150
+      startBlock: 0
     bondingManager:
       address: "f71AA2E1DE77E8eE9cbB88A91Dbd228FF3160635"
-      startBlock: 150
+      startBlock: 0
     roundsManager:
       address: "4D3620B1d9146116707d763AEbFe3dF59E00a883"
-      startBlock: 150
+      startBlock: 0
     livepeerToken:
       address: "b822E7f01dA0A84b5E0df314B05A7f20F95a2b34"
-      startBlock: 150
+      startBlock: 0
     minterV1:
       address: "4969dcCF5186e1c49411638fc8A2a020Fdab752E"
-      startBlock: 150
+      startBlock: 0
     minter:
       address: "3Eb31D0b427e40F01FA3d38F627fE928a33DA0E3"
-      startBlock: 150
+      startBlock: 0
     ticketBroker:
       address: "B2B2aFbf10E322Ee7dFb6E6EB8a909b9397686bA"
-      startBlock: 150
+      startBlock: 0
     pollCreator:
       address: "8bb50806D60c492c0004DAD5D9627DAA2d9732E6"
-      startBlock: 150
+      startBlock: 0
     serviceRegistry:
       address: "489dD183D8Ec068084e40931FB854b4Afb789a0D"
-      startBlock: 150
+      startBlock: 0
     l2Migrator:
       address: "148D5b6B4df9530c7C76A810bd1Cdf69EC4c2085"
-      startBlock: 150
+      startBlock: 0
   networkName: development

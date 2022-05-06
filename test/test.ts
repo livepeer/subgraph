@@ -12,7 +12,6 @@ import {
   LivepeerToken,
   BondingManager,
   PollCreator,
-  Poll,
 } from "../typechain-types";
 import { createApolloFetch } from "apollo-fetch";
 import * as path from "path";
@@ -63,12 +62,14 @@ const waitForSubgraphToBeSynced = async () =>
             protocol(id: "0") {
               id
               roundCount
+              totalSupply
             }
           }
         `,
         });
         const roundCount = parseInt(result?.data?.protocol?.roundCount ?? 0);
-        if (roundCount > 0) {
+        const totalSupply = parseInt(result?.data?.protocol?.totalSupply ?? 0);
+        if (roundCount > 0 && totalSupply > 0) {
           resolve();
         } else {
           throw new Error("reject or retry");

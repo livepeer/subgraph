@@ -19,6 +19,8 @@ COPY subgraph.template.yaml /subgraph/subgraph.template.yaml
 COPY templatify.js /subgraph/templatify.js
 COPY hardhat.config.ts /subgraph/hardhat.config.ts
 COPY tsconfig.json /subgraph/tsconfig.json
+COPY tsconfig.hardhat.json /subgraph/tsconfig.hardhat.json
+COPY typechain-types /subgraph/typechain-types
 
 # Install dependencies
 RUN yarn
