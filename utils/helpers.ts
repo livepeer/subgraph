@@ -369,7 +369,7 @@ export function getBondingManagerAddress(network: string): string {
   } else if (network == "arbitrum-rinkeby") {
     return "e42229d764F673EB3FB8B9a56016C2a4DA45ffd7";
   } else {
-    return "A94B7f0465E98609391C623d0560C5720a3f2D33";
+    return "f71AA2E1DE77E8eE9cbB88A91Dbd228FF3160635";
   }
 }
 
@@ -379,7 +379,7 @@ export function getRoundsManagerAddress(network: string): string {
   } else if (network == "arbitrum-rinkeby") {
     return "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
   } else {
-    return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
+    return "4D3620B1d9146116707d763AEbFe3dF59E00a883";
   }
 }
 
@@ -389,7 +389,7 @@ export function getMinterAddress(network: string): string {
   } else if (network == "arbitrum-rinkeby") {
     return "E5bE54705D41DAaA33A043aa51dE472ED637C3d9";
   } else {
-    return "c20DE37170B45774e6CD3d2304017fc962f27252";
+    return "3Eb31D0b427e40F01FA3d38F627fE928a33DA0E3";
   }
 }
 
@@ -401,7 +401,7 @@ export function getBlockNum(): BigInt {
   } else if (network == "arbitrum-rinkeby") {
     roundsManagerAddress = "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
   } else {
-    roundsManagerAddress = "C40df4db2f99e7e235780A93B192F1a934f0c45b";
+    roundsManagerAddress = "4D3620B1d9146116707d763AEbFe3dF59E00a883";
   }
 
   let roundsManager = RoundsManager.bind(

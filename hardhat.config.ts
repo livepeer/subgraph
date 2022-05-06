@@ -1,32 +1,35 @@
-import { HardhatUserConfig } from 'hardhat/types';
+import { HardhatUserConfig } from "hardhat/types";
 
-import '@nomiclabs/hardhat-ethers';
-import '@nomiclabs/hardhat-waffle';
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-waffle";
 
 const config: HardhatUserConfig = {
-  defaultNetwork: 'hardhat',
+  defaultNetwork: "hardhat",
+  mocha: {
+    timeout: 100000000
+  },
   solidity: {
     compilers: [
       {
-        version: '0.8.7'
-      }
-    ]
+        version: "0.8.7",
+      },
+    ],
   },
   networks: {
     hardhat: {
-      chainId: 1337
+      chainId: 1337,
+      gasPrice: 1000000,
     },
-    development: {
+    localhost: {
       url: "http://localhost:8545",
-      forking: {
-        url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY ?? ""}`,
-        blockNumber: 14090042
-      }
+      accounts: "remote",
+      gas: 1000000,
     },
     docker: {
-      url: "http://geth:8545"
-    }
-  }
+      url: "http://geth:8545",
+      gasPrice: 1000000,
+    },
+  },
 };
 
 export default config;

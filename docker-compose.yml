@@ -1,5 +1,10 @@
 version: "3"
 services:
+  geth:
+    image: livepeer/geth-with-livepeer-protocol:streamflow
+    container_name: geth
+    ports:
+      - "8545:8545"
   graph-node:
     image: graphprotocol/graph-node
     container_name: graph-node
@@ -10,6 +15,7 @@ services:
       - "8030:8030"
       - "8040:8040"
     depends_on:
+      - geth
       - ipfs
       - postgres
     environment:
@@ -18,7 +24,7 @@ services:
       postgres_pass: let-me-in
       postgres_db: graph-node
       ipfs: "ipfs:5001"
-      ethereum: "development:http://host.docker.internal:8545"
+      ethereum: "development:http://geth:8545"
       GRAPH_LOG: info
   ipfs:
     image: ipfs/go-ipfs:v0.4.23
