@@ -335,14 +335,14 @@ export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
   }
 }
 
-let Q192 = 2 ** 192;
+let Q192 = "6277101735386680763835789423207666416102355444464034512896"; // 2 ** 192
 export function sqrtPriceX96ToTokenPrices(
   sqrtPriceX96: BigInt,
   token0Decimals: BigInt,
   token1Decimals: BigInt
 ): BigDecimal[] {
   let num = sqrtPriceX96.times(sqrtPriceX96).toBigDecimal();
-  let denom = BigDecimal.fromString(Q192.toString());
+  let denom = BigDecimal.fromString(Q192);
   let price1 = num
     .div(denom)
     .times(exponentToBigDecimal(token0Decimals))
@@ -360,11 +360,11 @@ export function getUniswapV3DaiEthPoolAddress(): string {
   const network = dataSource.network();
 
   if (network == "arbitrum-one") {
-    return "0xa961f0473da4864c5ed28e00fcc53a3aab056c1b";
+    return "a961f0473da4864c5ed28e00fcc53a3aab056c1b";
   } else if (network == "arbitrum-rinkeby") {
     return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
   } else {
-    return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
+    return "0xffa7ee1c08416565d054b2cf3e336dcfe21591e5";
   }
 }
 
