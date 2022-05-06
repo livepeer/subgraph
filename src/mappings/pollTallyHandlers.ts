@@ -1,76 +1,68 @@
+import { Address, BigDecimal, dataSource } from "@graphprotocol/graph-ts";
 import {
-  Address,
-  BigDecimal,
-  BigInt,
-  dataSource,
-} from "@graphprotocol/graph-ts";
-
-import {
-  BondingManager,
-  Reward,
-  Bond,
-  Unbond,
-  Rebond,
-  EarningsClaimed,
-} from "../types/BondingManager/BondingManager";
-
-import { Delegator, Poll, Vote, Transcoder } from "../types/schema";
-
-import {
-  makeVoteId,
-  EMPTY_ADDRESS,
   convertToDecimal,
   createOrLoadRound,
+  createOrLoadTranscoder,
+  createOrLoadVote,
   getBlockNum,
+  integerFromString,
+  makeVoteId,
   ZERO_BI,
 } from "../../utils/helpers";
+import {
+  Bond,
+  BondingManager,
+  Rebond,
+  Reward,
+  Unbond,
+} from "../types/BondingManager/BondingManager";
+import { Delegator, Poll, Vote } from "../types/schema";
 import { tallyVotes } from "./poll";
-import { integer } from "@protofire/subgraph-toolkit";
 
 export function updatePollTallyOnReward(event: Reward): void {
   let voterAddress = dataSource.context().getString("voter");
-  let delegator = Delegator.load(voterAddress) as Delegator;
+  let delegator = Delegator.load(voterAddress);
 
   // Return if transcoder that called reward isn't voter's delegate
   if (
-    delegator == null ||
+    delegator === null ||
     delegator.delegate != event.params.transcoder.toHex()
   ) {
     return;
   }
 
   let pollAddress = dataSource.context().getString("poll");
-  let poll = Poll.load(pollAddress) as Poll;
+  let poll = Poll.load(pollAddress);
 
   // Return if poll is no longer active
-  if (poll.endBlock.lt(event.block.number)) {
+  if (!poll || poll.endBlock.lt(event.block.number)) {
     return;
   }
 
   let round = createOrLoadRound(getBlockNum());
   let voteId = makeVoteId(delegator.id, poll.id);
-  let vote = Vote.load(voteId);
-  let transcoder = Transcoder.load(event.params.transcoder.toHex());
+  let vote = createOrLoadVote(voteId);
+  let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
 
   // update vote stakes
   if (voterAddress == event.params.transcoder.toHex()) {
-    vote.voteStake = transcoder.totalStake as BigDecimal;
+    vote.voteStake = transcoder.totalStake;
   } else {
     let bondingManager = BondingManager.bind(event.address);
     let pendingStake = convertToDecimal(
       bondingManager.pendingStake(
         Address.fromString(voterAddress),
-        integer.fromString(round.id)
+        integerFromString(round.id)
       )
     );
 
     let delegateVoteId = makeVoteId(event.params.transcoder.toHex(), poll.id);
-    let delegateVote = Vote.load(delegateVoteId) || new Vote(delegateVoteId);
+    let delegateVote = createOrLoadVote(delegateVoteId);
     delegateVote.voter = event.params.transcoder.toHex();
 
     // update nonVoteStake
     delegateVote.nonVoteStake = delegateVote.nonVoteStake
-      .minus(vote.voteStake as BigDecimal)
+      .minus(vote.voteStake)
       .plus(pendingStake);
 
     delegateVote.save();
@@ -84,10 +76,10 @@ export function updatePollTallyOnReward(event: Reward): void {
 
 export function updatePollTallyOnBond(event: Bond): void {
   let pollAddress = dataSource.context().getString("poll");
-  let poll = Poll.load(pollAddress) as Poll;
+  let poll = Poll.load(pollAddress);
 
   // Return if poll is no longer active
-  if (poll.endBlock.lt(event.block.number)) {
+  if (!poll || poll.endBlock.lt(event.block.number)) {
     return;
   }
 
@@ -102,16 +94,16 @@ export function updatePollTallyOnBond(event: Bond): void {
     event.params.oldDelegate.toHex(),
     pollAddress
   );
-  let oldDelegateVote = Vote.load(oldDelegateVoteId);
-  let oldDelegate = Transcoder.load(event.params.oldDelegate.toHex());
+  let oldDelegateVote = createOrLoadVote(oldDelegateVoteId);
+  let oldDelegate = createOrLoadTranscoder(event.params.oldDelegate.toHex());
   let newDelegateVoteId = makeVoteId(
     event.params.newDelegate.toHex(),
     pollAddress
   );
-  let newDelegateVote = Vote.load(newDelegateVoteId);
-  let newDelegate = Transcoder.load(event.params.newDelegate.toHex());
+  let newDelegateVote = createOrLoadVote(newDelegateVoteId);
+  let newDelegate = createOrLoadTranscoder(event.params.newDelegate.toHex());
   let voteId = makeVoteId(voterAddress, pollAddress);
-  let vote = Vote.load(voteId);
+  let vote = createOrLoadVote(voteId);
   let bondedAmount = convertToDecimal(event.params.bondedAmount);
 
   if (oldDelegateVote) {
@@ -124,7 +116,7 @@ export function updatePollTallyOnBond(event: Bond): void {
     if (isSwitchingDelegates) {
       // if old delegate voted, update its vote stake
       if (oldDelegateVote.choiceID != null) {
-        oldDelegateVote.voteStake = oldDelegate.totalStake as BigDecimal;
+        oldDelegateVote.voteStake = oldDelegate.totalStake;
       }
 
       // if caller is voter, remove its nonVoteStake from old delegate
@@ -142,7 +134,7 @@ export function updatePollTallyOnBond(event: Bond): void {
     if (newDelegate.status == "Registered") {
       newDelegateVote.registeredTranscoder = true;
       if (newDelegateVote.choiceID != null) {
-        newDelegateVote.voteStake = newDelegate.totalStake as BigDecimal;
+        newDelegateVote.voteStake = newDelegate.totalStake;
       }
     } else {
       newDelegateVote.registeredTranscoder = false;
@@ -173,12 +165,11 @@ export function updatePollTallyOnBond(event: Bond): void {
     // if switching, add stake to new delegate's nonVoteStake, otherwise update
     // new delegate's nonVoteStake
     if (isSwitchingDelegates) {
-      newDelegateVote.nonVoteStake = newDelegateVote.nonVoteStake.plus(
-        bondedAmount
-      );
+      newDelegateVote.nonVoteStake =
+        newDelegateVote.nonVoteStake.plus(bondedAmount);
     } else {
       newDelegateVote.nonVoteStake = newDelegateVote.nonVoteStake
-        .minus(vote.voteStake as BigDecimal)
+        .minus(vote.voteStake)
         .plus(bondedAmount);
     }
 
@@ -205,21 +196,21 @@ export function updatePollTallyOnRebond(event: Rebond): void {
 
 function updatePollTally<T extends Rebond>(event: T): void {
   let pollAddress = dataSource.context().getString("poll");
-  let poll = Poll.load(pollAddress) as Poll;
+  let poll = Poll.load(pollAddress);
   let updateTally = false;
 
   // Return if poll is no longer active
-  if (poll.endBlock.lt(event.block.number)) {
+  if (!poll || poll.endBlock.lt(event.block.number)) {
     return;
   }
 
   let round = createOrLoadRound(getBlockNum());
   let voterAddress = dataSource.context().getString("voter");
   let voteId = makeVoteId(voterAddress, pollAddress);
-  let vote = Vote.load(voteId);
+  let vote = createOrLoadVote(voteId);
   let delegateVoteId = makeVoteId(event.params.delegate.toHex(), pollAddress);
-  let delegateVote = Vote.load(delegateVoteId);
-  let delegate = Transcoder.load(event.params.delegate.toHex());
+  let delegateVote = createOrLoadVote(delegateVoteId);
+  let delegate = createOrLoadTranscoder(event.params.delegate.toHex());
   let bondingManager = BondingManager.bind(event.address);
 
   if (delegateVote) {
@@ -227,7 +218,7 @@ function updatePollTally<T extends Rebond>(event: T): void {
     if (delegate.status == "Registered") {
       delegateVote.registeredTranscoder = true;
       if (delegateVote.choiceID != null) {
-        delegateVote.voteStake = delegate.totalStake as BigDecimal;
+        delegateVote.voteStake = delegate.totalStake;
       }
     } else {
       delegateVote.registeredTranscoder = false;
@@ -235,7 +226,7 @@ function updatePollTally<T extends Rebond>(event: T): void {
         delegateVote.voteStake = convertToDecimal(
           bondingManager.pendingStake(
             event.params.delegate,
-            integer.fromString(round.id)
+            integerFromString(round.id)
           )
         );
       }
@@ -252,7 +243,7 @@ function updatePollTally<T extends Rebond>(event: T): void {
     let pendingStake = convertToDecimal(
       bondingManager.pendingStake(
         Address.fromString(voterAddress),
-        integer.fromString(round.id)
+        integerFromString(round.id)
       )
     );
 
@@ -261,7 +252,7 @@ function updatePollTally<T extends Rebond>(event: T): void {
     }
     delegateVote.voter = event.params.delegate.toHex();
     delegateVote.nonVoteStake = delegateVote.nonVoteStake
-      .minus(vote.voteStake as BigDecimal)
+      .minus(vote.voteStake)
       .plus(pendingStake);
     if (delegate.status == "Registered") {
       delegateVote.registeredTranscoder = true;

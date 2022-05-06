@@ -67,27 +67,33 @@ arbitrum-rinkeby:
 development:
   contracts:
     controller:
-      address: "C89Ce4735882C9F0f0FE26686c53074E09B0D550"
+      address: "77A0865438f2EfD65667362D4a8937537CA7a5EF"
       startBlock: 0
     bondingManager:
-      address: "A94B7f0465E98609391C623d0560C5720a3f2D33"
+      address: "f71AA2E1DE77E8eE9cbB88A91Dbd228FF3160635"
       startBlock: 0
     roundsManager:
-      address: "5f8e26fAcC23FA4cbd87b8d9Dbbd33D5047abDE1"
+      address: "4D3620B1d9146116707d763AEbFe3dF59E00a883"
       startBlock: 0
     livepeerToken:
-      address: "D833215cBcc3f914bD1C9ece3EE7BF8B14f841bb"
+      address: "b822E7f01dA0A84b5E0df314B05A7f20F95a2b34"
+      startBlock: 0
+    minterV1:
+      address: "4969dcCF5186e1c49411638fc8A2a020Fdab752E"
       startBlock: 0
     minter:
-      address: "e982E462b094850F12AF94d21D470e21bE9D0E9C"
+      address: "3Eb31D0b427e40F01FA3d38F627fE928a33DA0E3"
       startBlock: 0
     ticketBroker:
-      address: "A57B8a5584442B467b4689F1144D269d096A3daF"
+      address: "B2B2aFbf10E322Ee7dFb6E6EB8a909b9397686bA"
       startBlock: 0
     pollCreator:
-      address: "4bf3A7dFB3b76b5B3E169ACE65f888A4b4FCa5Ee"
+      address: "8bb50806D60c492c0004DAD5D9627DAA2d9732E6"
       startBlock: 0
     serviceRegistry:
-      address: "aD888d0Ade988EbEe74B8D4F39BF29a8d0fe8A8D"
+      address: "489dD183D8Ec068084e40931FB854b4Afb789a0D"
+      startBlock: 0
+    l2Migrator:
+      address: "148D5b6B4df9530c7C76A810bd1Cdf69EC4c2085"
       startBlock: 0
   networkName: development

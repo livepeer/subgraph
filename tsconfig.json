@@ -1,7 +1,4 @@
 {
-  "compilerOptions": {
-    "types": ["@graphprotocol/graph-ts", "node"],
-    "resolveJsonModule": true,
-    "moduleResolution": "node"
-  }
+  "extends": "./node_modules/@graphprotocol/graph-ts/types/tsconfig.base.json",
+  "include": ["./src"]
 }

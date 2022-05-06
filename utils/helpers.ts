@@ -4,17 +4,20 @@ import {
   BigInt,
   Bytes,
   dataSource,
+  ethereum,
 } from "@graphprotocol/graph-ts";
-import { integer } from "@protofire/subgraph-toolkit";
+import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 import {
+  Broadcaster,
   Day,
   Delegator,
   Protocol,
   Round,
+  Transaction,
   Transcoder,
   TranscoderDay,
+  Vote,
 } from "../src/types/schema";
-import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 
 let x = BigInt.fromI32(2);
 let y = 255 as u8;
@@ -92,7 +95,7 @@ export function percPoints(_fracNum: BigInt, _fracDenom: BigInt): BigInt {
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   let bd = BigDecimal.fromString("1");
-  for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
+  for (let i = ZERO_BI; i.lt(decimals); i = i.plus(ONE_BI)) {
     bd = bd.times(BigDecimal.fromString("10"));
   }
   return bd;
@@ -100,6 +103,28 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
 
 export function convertToDecimal(eth: BigInt): BigDecimal {
   return eth.toBigDecimal().div(exponentToBigDecimal(BI_18));
+}
+
+export function createOrLoadTransactionFromEvent<T extends ethereum.Event>(
+  event: T
+): Transaction {
+  let tx = Transaction.load(event.transaction.hash.toHex());
+  if (tx == null) {
+    tx = new Transaction(event.transaction.hash.toHex());
+
+    tx.blockNumber = event.block.number;
+    tx.gasUsed = event.transaction.gasLimit;
+    tx.gasPrice = event.transaction.gasPrice;
+    tx.timestamp = event.block.timestamp.toI32();
+    tx.from = event.transaction.from.toHex();
+
+    if (event.transaction.to) {
+      tx.to = event.transaction.to!.toHex();
+    }
+
+    tx.save();
+  }
+  return tx;
 }
 
 export function createOrLoadProtocol(): Protocol {
@@ -114,7 +139,10 @@ export function createOrLoadProtocol(): Protocol {
     protocol.inflationChange = ZERO_BI;
     protocol.lastRoundLengthUpdateStartBlock = ZERO_BI;
     protocol.lockPeriod = ZERO_BI;
-    protocol.roundLength = ZERO_BI;
+    let roundsManager = RoundsManager.bind(
+      Address.fromString(getRoundsManagerAddress())
+    );
+    protocol.roundLength = roundsManager.roundLength();
     protocol.roundLockAmount = ZERO_BI;
     protocol.targetBondingRate = ZERO_BI;
     protocol.totalActiveStake = ZERO_BD;
@@ -130,7 +158,39 @@ export function createOrLoadProtocol(): Protocol {
     protocol.pendingDeactivation = [];
     protocol.save();
   }
-  return protocol as Protocol;
+  return protocol;
+}
+
+export function createOrLoadBroadcaster(id: string): Broadcaster {
+  let broadcaster = Broadcaster.load(id);
+
+  if (broadcaster == null) {
+    broadcaster = new Broadcaster(id);
+    broadcaster.deposit = ZERO_BD;
+    broadcaster.reserve = ZERO_BD;
+
+    broadcaster.save();
+  }
+
+  return broadcaster;
+}
+
+export function createOrLoadVote(id: string): Vote {
+  let vote = Vote.load(id);
+
+  if (vote == null) {
+    vote = new Vote(id);
+    vote.voter = EMPTY_ADDRESS.toHexString();
+    vote.voteStake = ZERO_BD;
+    vote.nonVoteStake = ZERO_BD;
+
+    // bool types must be set to something before they can accessed
+    vote.registeredTranscoder = false;
+
+    vote.save();
+  }
+
+  return vote;
 }
 
 export function createOrLoadTranscoder(id: string): Transcoder {
@@ -153,7 +213,7 @@ export function createOrLoadTranscoder(id: string): Transcoder {
     transcoder.totalVolumeUSD = ZERO_BD;
     transcoder.save();
   }
-  return transcoder as Transcoder;
+  return transcoder;
 }
 
 export function createOrLoadDelegator(id: string): Delegator {
@@ -169,7 +229,7 @@ export function createOrLoadDelegator(id: string): Delegator {
     delegator.delegatedAmount = ZERO_BD;
     delegator.save();
   }
-  return delegator as Delegator;
+  return delegator;
 }
 
 export function createOrLoadDay(timestamp: i32): Day {
@@ -187,7 +247,7 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.participationRate = ZERO_BD;
     day.save();
   }
-  return day as Day;
+  return day;
 }
 
 export function createOrLoadTranscoderDay(
@@ -209,20 +269,21 @@ export function createOrLoadTranscoderDay(
     transcoderDay.volumeETH = ZERO_BD;
     transcoderDay.save();
   }
-  return transcoderDay as TranscoderDay;
+  return transcoderDay;
 }
 
 export function createOrLoadRound(blockNumber: BigInt): Round {
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   let roundsSinceLastUpdate = blockNumber
     .minus(protocol.lastRoundLengthUpdateStartBlock)
     .div(protocol.roundLength);
 
-  let newRound = integer
-    .fromString(protocol.lastRoundLengthUpdateRound)
-    .plus(roundsSinceLastUpdate);
+  let newRound = integerFromString(protocol.lastRoundLengthUpdateRound).plus(
+    roundsSinceLastUpdate
+  );
 
-  let round = Round.load(newRound.toString()) as Round;
+  let round = Round.load(newRound.toString());
+
   if (round) {
     // We are already aware of this round so just return it without creating a new one
     return round;
@@ -246,7 +307,7 @@ export function createRound(
   roundLength: BigInt,
   roundNumber: BigInt
 ): Round {
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   let round = new Round(roundNumber.toString());
   round.startBlock = startBlock;
   round.endBlock = startBlock.plus(roundLength);
@@ -274,14 +335,14 @@ export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
   }
 }
 
-let Q192 = 2 ** 192;
+let Q192 = "6277101735386680763835789423207666416102355444464034512896"; // 2 ** 192
 export function sqrtPriceX96ToTokenPrices(
   sqrtPriceX96: BigInt,
   token0Decimals: BigInt,
   token1Decimals: BigInt
 ): BigDecimal[] {
   let num = sqrtPriceX96.times(sqrtPriceX96).toBigDecimal();
-  let denom = BigDecimal.fromString(Q192.toString());
+  let denom = BigDecimal.fromString(Q192);
   let price1 = num
     .div(denom)
     .times(exponentToBigDecimal(token0Decimals))
@@ -291,56 +352,60 @@ export function sqrtPriceX96ToTokenPrices(
   return [price0, price1];
 }
 
-export function getUniswapV3DaiEthPoolAddress(network: string): string {
+export function integerFromString(s: string): BigInt {
+  return BigInt.fromString(s);
+}
+
+export function getUniswapV3DaiEthPoolAddress(): string {
+  const network = dataSource.network();
+
   if (network == "arbitrum-one") {
-    return "0xa961f0473da4864c5ed28e00fcc53a3aab056c1b";
+    return "a961f0473da4864c5ed28e00fcc53a3aab056c1b";
   } else if (network == "arbitrum-rinkeby") {
     return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
   } else {
-    return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
+    return "0xffa7ee1c08416565d054b2cf3e336dcfe21591e5";
   }
 }
 
-export function getBondingManagerAddress(network: string): string {
+export function getBondingManagerAddress(): string {
+  const network = dataSource.network();
+
   if (network == "arbitrum-one") {
     return "35Bcf3c30594191d53231E4FF333E8A770453e40";
   } else if (network == "arbitrum-rinkeby") {
     return "e42229d764F673EB3FB8B9a56016C2a4DA45ffd7";
   } else {
-    return "A94B7f0465E98609391C623d0560C5720a3f2D33";
+    return "f71AA2E1DE77E8eE9cbB88A91Dbd228FF3160635";
   }
 }
 
-export function getRoundsManagerAddress(network: string): string {
+export function getRoundsManagerAddress(): string {
+  const network = dataSource.network();
+
   if (network == "arbitrum-one") {
     return "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
   } else if (network == "arbitrum-rinkeby") {
     return "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
   } else {
-    return "a3Aa52cE79e85a21d9cCdA705C57e426B160112c";
+    return "4D3620B1d9146116707d763AEbFe3dF59E00a883";
   }
 }
 
-export function getMinterAddress(network: string): string {
+export function getMinterAddress(): string {
+  const network = dataSource.network();
+
   if (network == "arbitrum-one") {
     return "c20DE37170B45774e6CD3d2304017fc962f27252";
   } else if (network == "arbitrum-rinkeby") {
     return "E5bE54705D41DAaA33A043aa51dE472ED637C3d9";
   } else {
-    return "c20DE37170B45774e6CD3d2304017fc962f27252";
+    return "3Eb31D0b427e40F01FA3d38F627fE928a33DA0E3";
   }
 }
 
 export function getBlockNum(): BigInt {
-  let network = dataSource.network();
-  let roundsManagerAddress = "";
-  if (network == "arbitrum-one") {
-    roundsManagerAddress = "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
-  } else if (network == "arbitrum-rinkeby") {
-    roundsManagerAddress = "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
-  } else {
-    roundsManagerAddress = "C40df4db2f99e7e235780A93B192F1a934f0c45b";
-  }
+  let roundsManagerAddress = getRoundsManagerAddress();
 
   let roundsManager = RoundsManager.bind(
     Address.fromString(roundsManagerAddress)
