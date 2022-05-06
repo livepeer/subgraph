@@ -1,17 +1,15 @@
 import {
-  Transaction,
-  Protocol,
-  PauseEvent,
-  UnpauseEvent,
-} from "../types/schema";
-import {
   createOrLoadProtocol,
   createOrLoadRound,
   createOrLoadTransactionFromEvent,
   getBlockNum,
-  makeEventId,
+  makeEventId
 } from "../../utils/helpers";
 import { Pause, Unpause } from "../types/Controller/Controller";
+import {
+  PauseEvent,
+  UnpauseEvent
+} from "../types/schema";
 
 export function pause(event: Pause): void {
   let round = createOrLoadRound(getBlockNum());

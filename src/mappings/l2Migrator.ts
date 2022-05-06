@@ -1,19 +1,15 @@
 import {
-  Transaction,
-  MigrateDelegatorFinalizedEvent,
-  StakeClaimedEvent,
-} from "../types/schema";
-import {
-  createOrLoadRound,
-  getBlockNum,
-  makeEventId,
-  convertToDecimal,
-  createOrLoadTransactionFromEvent,
+  convertToDecimal, createOrLoadRound, createOrLoadTransactionFromEvent, getBlockNum,
+  makeEventId
 } from "../../utils/helpers";
 import {
   MigrateDelegatorFinalized,
-  StakeClaimed,
+  StakeClaimed
 } from "../types/L2Migrator/L2Migrator";
+import {
+  MigrateDelegatorFinalizedEvent,
+  StakeClaimedEvent
+} from "../types/schema";
 
 export function migrateDelegatorFinalized(
   event: MigrateDelegatorFinalized

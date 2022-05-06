@@ -1,14 +1,14 @@
-import { ServiceURIUpdate } from "../types/ServiceRegistry/ServiceRegistry";
-
-// Import entity types generated from the GraphQL schema
-import { Transaction, ServiceURIUpdateEvent } from "../types/schema";
 import {
   createOrLoadRound,
   createOrLoadTransactionFromEvent,
   createOrLoadTranscoder,
   getBlockNum,
-  makeEventId,
+  makeEventId
 } from "../../utils/helpers";
+// Import entity types generated from the GraphQL schema
+import { ServiceURIUpdateEvent } from "../types/schema";
+import { ServiceURIUpdate } from "../types/ServiceRegistry/ServiceRegistry";
+
 
 export function serviceURIUpdate(event: ServiceURIUpdate): void {
   let round = createOrLoadRound(getBlockNum());

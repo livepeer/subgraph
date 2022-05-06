@@ -10,15 +10,15 @@ import {
   makeEventId,
   ZERO_BD,
 } from "../../utils/helpers";
-import { Mint, Burn } from "../types/LivepeerToken/LivepeerToken";
+import { Burn, Mint } from "../types/LivepeerToken/LivepeerToken";
 import { Minter } from "../types/Minter/Minter";
-import { Transaction, MintEvent, BurnEvent } from "../types/schema";
+import { BurnEvent, MintEvent } from "../types/schema";
 
 export function mint(event: Mint): void {
   let protocol = createOrLoadProtocol();
   let day = createOrLoadDay(event.block.timestamp.toI32());
   let amount = convertToDecimal(event.params.amount);
-  let minterAddress = getMinterAddress(dataSource.network());
+  let minterAddress = getMinterAddress();
   let minter = Minter.bind(Address.fromString(minterAddress));
   let callResult = minter.try_getGlobalTotalSupply();
   let totalSupply = ZERO_BD;
@@ -70,7 +70,7 @@ export function burn(event: Burn): void {
   let round = createOrLoadRound(getBlockNum());
   let day = createOrLoadDay(event.block.timestamp.toI32());
   let value = convertToDecimal(event.params.value);
-  let minterAddress = getMinterAddress(dataSource.network());
+  let minterAddress = getMinterAddress();
   let minter = Minter.bind(Address.fromString(minterAddress));
 
   let callResult = minter.try_getGlobalTotalSupply();

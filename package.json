@@ -18,9 +18,8 @@
     "prepare:arbitrum-rinkeby": "NETWORK_NAME=arbitrum-rinkeby node ./templatify.js",
     "prepare:development": "NETWORK_NAME=development node ./templatify.js",
     "docker:build": "docker build --cache-from livepeer/subgraph:latest -t livepeer/subgraph:latest .",
-    "start": "yarn hardhat node",
-    "test:docker": "DOCKER=true hardhat test --network=docker",
-    "test:development": "npx hardhat test --network=development",
+    "test:docker": "DOCKER=true TS_NODE_PROJECT='./tsconfig.hardhat.json' yarn hardhat test --network docker",
+    "test:development": "TS_NODE_PROJECT='./tsconfig.hardhat.json' yarn hardhat test --network localhost",
     "test": "yarn docker:build && docker-compose -f test/integration/docker-compose.yaml up --abort-on-container-exit"
   },
   "devDependencies": {

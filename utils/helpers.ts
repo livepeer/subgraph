@@ -19,6 +19,8 @@ import {
   Vote,
 } from "../src/types/schema";
 
+import { log } from "@graphprotocol/graph-ts";
+
 let x = BigInt.fromI32(2);
 let y = 255 as u8;
 let z = BigInt.fromI32(1);
@@ -95,7 +97,7 @@ export function percPoints(_fracNum: BigInt, _fracDenom: BigInt): BigInt {
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   let bd = BigDecimal.fromString("1");
-  for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
+  for (let i = ZERO_BI; i.lt(decimals); i = i.plus(ONE_BI)) {
     bd = bd.times(BigDecimal.fromString("10"));
   }
   return bd;
@@ -124,11 +126,11 @@ export function createOrLoadTransactionFromEvent<T extends ethereum.Event>(
 
     tx.save();
   }
-  return tx as Transaction;
+  return tx;
 }
 
 export function createOrLoadProtocol(): Protocol {
-  let protocol = createOrLoadProtocol();
+  let protocol = Protocol.load("0");
   if (protocol == null) {
     protocol = new Protocol("0");
     protocol.paused = false;
@@ -139,7 +141,10 @@ export function createOrLoadProtocol(): Protocol {
     protocol.inflationChange = ZERO_BI;
     protocol.lastRoundLengthUpdateStartBlock = ZERO_BI;
     protocol.lockPeriod = ZERO_BI;
-    protocol.roundLength = ZERO_BI;
+    let roundsManager = RoundsManager.bind(
+      Address.fromString(getRoundsManagerAddress())
+    );
+    protocol.roundLength = roundsManager.roundLength();
     protocol.roundLockAmount = ZERO_BI;
     protocol.targetBondingRate = ZERO_BI;
     protocol.totalActiveStake = ZERO_BD;
@@ -155,7 +160,7 @@ export function createOrLoadProtocol(): Protocol {
     protocol.pendingDeactivation = [];
     protocol.save();
   }
-  return protocol as Protocol;
+  return protocol;
 }
 
 export function createOrLoadBroadcaster(id: string): Broadcaster {
@@ -169,9 +174,8 @@ export function createOrLoadBroadcaster(id: string): Broadcaster {
     broadcaster.save();
   }
 
-  return broadcaster as Broadcaster;
+  return broadcaster;
 }
-
 
 export function createOrLoadVote(id: string): Vote {
   let vote = Vote.load(id);
@@ -188,7 +192,7 @@ export function createOrLoadVote(id: string): Vote {
     vote.save();
   }
 
-  return vote as Vote;
+  return vote;
 }
 
 export function createOrLoadTranscoder(id: string): Transcoder {
@@ -211,7 +215,7 @@ export function createOrLoadTranscoder(id: string): Transcoder {
     transcoder.totalVolumeUSD = ZERO_BD;
     transcoder.save();
   }
-  return transcoder as Transcoder;
+  return transcoder;
 }
 
 export function createOrLoadDelegator(id: string): Delegator {
@@ -227,7 +231,7 @@ export function createOrLoadDelegator(id: string): Delegator {
     delegator.delegatedAmount = ZERO_BD;
     delegator.save();
   }
-  return delegator as Delegator;
+  return delegator;
 }
 
 export function createOrLoadDay(timestamp: i32): Day {
@@ -245,7 +249,7 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.participationRate = ZERO_BD;
     day.save();
   }
-  return day as Day;
+  return day;
 }
 
 export function createOrLoadTranscoderDay(
@@ -267,7 +271,7 @@ export function createOrLoadTranscoderDay(
     transcoderDay.volumeETH = ZERO_BD;
     transcoderDay.save();
   }
-  return transcoderDay as TranscoderDay;
+  return transcoderDay;
 }
 
 export function createOrLoadRound(blockNumber: BigInt): Round {
@@ -280,8 +284,17 @@ export function createOrLoadRound(blockNumber: BigInt): Round {
     roundsSinceLastUpdate
   );
 
-  let round = Round.load(newRound.toString()) as Round;
+  log.info("createOrrrr: {}", [
+    blockNumber.toString(),
+    protocol.lastRoundLengthUpdateStartBlock.toString(),
+    protocol.roundLength.toString(),
+    newRound.toString(),
+  ]);
+
+  let round = Round.load(newRound.toString());
+
   if (round) {
+    log.info("roundddd: {}", [round.id.toString()]);
     // We are already aware of this round so just return it without creating a new one
     return round;
   }
@@ -353,7 +366,9 @@ export function integerFromString(s: string): BigInt {
   return BigInt.fromString(s);
 }
 
-export function getUniswapV3DaiEthPoolAddress(network: string): string {
+export function getUniswapV3DaiEthPoolAddress(): string {
+  const network = dataSource.network();
+
   if (network == "arbitrum-one") {
     return "0xa961f0473da4864c5ed28e00fcc53a3aab056c1b";
   } else if (network == "arbitrum-rinkeby") {
@@ -363,7 +378,9 @@ export function getUniswapV3DaiEthPoolAddress(network: string): string {
   }
 }
 
-export function getBondingManagerAddress(network: string): string {
+export function getBondingManagerAddress(): string {
+  const network = dataSource.network();
+
   if (network == "arbitrum-one") {
     return "35Bcf3c30594191d53231E4FF333E8A770453e40";
   } else if (network == "arbitrum-rinkeby") {
@@ -373,7 +390,9 @@ export function getBondingManagerAddress(network: string): string {
   }
 }
 
-export function getRoundsManagerAddress(network: string): string {
+export function getRoundsManagerAddress(): string {
+  const network = dataSource.network();
+
   if (network == "arbitrum-one") {
     return "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
   } else if (network == "arbitrum-rinkeby") {
@@ -383,7 +402,9 @@ export function getRoundsManagerAddress(network: string): string {
   }
 }
 
-export function getMinterAddress(network: string): string {
+export function getMinterAddress(): string {
+  const network = dataSource.network();
+
   if (network == "arbitrum-one") {
     return "c20DE37170B45774e6CD3d2304017fc962f27252";
   } else if (network == "arbitrum-rinkeby") {
@@ -394,15 +415,7 @@ export function getMinterAddress(network: string): string {
 }
 
 export function getBlockNum(): BigInt {
-  let network = dataSource.network();
-  let roundsManagerAddress = "";
-  if (network == "arbitrum-one") {
-    roundsManagerAddress = "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
-  } else if (network == "arbitrum-rinkeby") {
-    roundsManagerAddress = "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
-  } else {
-    roundsManagerAddress = "4D3620B1d9146116707d763AEbFe3dF59E00a883";
-  }
+  let roundsManagerAddress = getRoundsManagerAddress();
 
   let roundsManager = RoundsManager.bind(
     Address.fromString(roundsManagerAddress)

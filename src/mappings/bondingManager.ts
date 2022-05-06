@@ -1,60 +1,30 @@
 import { store } from "@graphprotocol/graph-ts";
-
+import {
+  convertToDecimal, createOrLoadDelegator, createOrLoadProtocol, createOrLoadRound, createOrLoadTransactionFromEvent, createOrLoadTranscoder, getBlockNum, makeEventId, makePoolId, makeUnbondingLockId, MAXIMUM_VALUE_UINT256, ZERO_BI
+} from "../../utils/helpers";
 // Import event types from the registrar contract ABIs
 import {
-  BondingManager,
-  WithdrawStake,
-  Bond,
-  TransferBond,
-  Unbond,
-  Rebond,
-  WithdrawFees,
-  Reward,
-  TranscoderSlashed,
-  TranscoderUpdate,
-  TranscoderActivated,
-  TranscoderDeactivated,
-  EarningsClaimed,
-  ParameterUpdate,
+  Bond, BondingManager, EarningsClaimed,
+  ParameterUpdate, Rebond, Reward, TranscoderActivated,
+  TranscoderDeactivated, TranscoderSlashed,
+  TranscoderUpdate, TransferBond,
+  Unbond, WithdrawFees, WithdrawStake
 } from "../types/BondingManager/BondingManager";
-
 import {
-  BondEvent,
-  TransferBondEvent,
-  Delegator,
-  EarningsClaimedEvent,
+  BondEvent, EarningsClaimedEvent,
   ParameterUpdateEvent,
-  Pool,
-  Protocol,
-  RebondEvent,
-  RewardEvent,
-  Transaction,
-  Transcoder,
-  TranscoderActivatedEvent,
+  Pool, RebondEvent,
+  RewardEvent, TranscoderActivatedEvent,
   TranscoderDeactivatedEvent,
   TranscoderSlashedEvent,
-  TranscoderUpdateEvent,
-  UnbondEvent,
+  TranscoderUpdateEvent, TransferBondEvent, UnbondEvent,
   UnbondingLock,
   WithdrawFeesEvent,
-  WithdrawStakeEvent,
+  WithdrawStakeEvent
 } from "../types/schema";
 
-import {
-  makeUnbondingLockId,
-  makeEventId,
-  EMPTY_ADDRESS,
-  convertToDecimal,
-  createOrLoadTranscoder,
-  createOrLoadDelegator,
-  createOrLoadRound,
-  makePoolId,
-  MAXIMUM_VALUE_UINT256,
-  createOrLoadProtocol,
-  getBlockNum,
-  ZERO_BI,
-  createOrLoadTransactionFromEvent,
-} from "../../utils/helpers";
+
+
 
 export function bond(event: Bond): void {
   let bondingManager = BondingManager.bind(event.address);

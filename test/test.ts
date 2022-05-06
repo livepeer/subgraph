@@ -33,9 +33,6 @@ if (process.env.DOCKER) {
   graphNodeIP = "graph-node";
 }
 
-const fetchSubgraphs = createApolloFetch({
-  uri: `http://${graphNodeIP}:8000/subgraphs`,
-});
 const fetchSubgraph = createApolloFetch({
   uri: `http://${graphNodeIP}:8000/subgraphs/name/livepeer/livepeer`,
 });
@@ -61,35 +58,20 @@ const waitForSubgraphToBeSynced = async () =>
       try {
         console.log("Checking if subgraph is synced...");
 
-        const result = await fetchSubgraphs({
+        const result = await fetchSubgraph({
           query: `{
-            subgraphDeployments {
-              synced
-              failed
-              latestEthereumBlockNumber
-              ethereumHeadBlockNumber
+            protocol(id: "0") {
+              id
+              roundCount
             }
           }
         `,
         });
-        const latestEthereumBlockNumber = parseInt(
-          result.data.subgraphDeployments[0].latestEthereumBlockNumber
-        );
-        const ethereumHeadBlockNumber = parseInt(
-          result.data.subgraphDeployments[0].ethereumHeadBlockNumber
-        );
-        if (
-          latestEthereumBlockNumber === ethereumHeadBlockNumber &&
-          !result.data.subgraphDeployments[0].failed
-        ) {
+        const roundCount = parseInt(result?.data?.protocol?.roundCount ?? 0);
+        if (roundCount > 0) {
           resolve();
-        } else if (
-          latestEthereumBlockNumber < ethereumHeadBlockNumber &&
-          !result.data.subgraphDeployments[0].failed
-        ) {
-          throw new Error("reject or retry");
         } else {
-          reject(new Error("Subgraph failed"));
+          throw new Error("reject or retry");
         }
       } catch (e) {
         if (Date.now() > deadline) {

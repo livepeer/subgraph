@@ -1,11 +1,11 @@
-import { PollCreated } from "../types/PollCreator/PollCreator";
-import { Transaction, Poll, PollCreatedEvent } from "../types/schema";
 import {
   createOrLoadRound,
   createOrLoadTransactionFromEvent,
   getBlockNum,
-  makeEventId,
+  makeEventId
 } from "../../utils/helpers";
+import { PollCreated } from "../types/PollCreator/PollCreator";
+import { Poll, PollCreatedEvent } from "../types/schema";
 import { Poll as PollTemplate } from "../types/templates";
 
 export function pollCreated(event: PollCreated): void {
@@ -17,6 +17,7 @@ export function pollCreated(event: PollCreated): void {
   poll.endBlock = event.params.endBlock;
   poll.quorum = event.params.quorum;
   poll.quota = event.params.quota;
+  poll.votes = [];
   poll.save();
 
   // Instantiate data source template

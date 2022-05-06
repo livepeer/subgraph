@@ -236,7 +236,7 @@ type Poll @entity {
   "Poll tally"
   tally: PollTally
   "Votes belonging to a poll"
-  votes: [Vote!]
+  votes: [Vote!]!
 }
 
 """

@@ -1,43 +1,44 @@
-import { Address, BigDecimal, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
-
+import {
+  Address,
+  BigDecimal,
+  BigInt,
+  dataSource,
+  log,
+} from "@graphprotocol/graph-ts";
+import {
+  convertToDecimal,
+  createOrLoadDay,
+  createOrLoadProtocol,
+  createOrLoadRound,
+  createOrLoadTransactionFromEvent,
+  createOrLoadTranscoder,
+  createRound,
+  EMPTY_ADDRESS,
+  getBlockNum,
+  getBondingManagerAddress,
+  makeEventId,
+  makePoolId,
+  PERC_DIVISOR,
+  ZERO_BD,
+} from "../../utils/helpers";
+import { BondingManager } from "../types/BondingManager/BondingManager";
 // Import event types from the registrar contract ABIs
 import {
   NewRound,
   ParameterUpdate,
   RoundsManager,
 } from "../types/RoundsManager/RoundsManager";
-
 // Import entity types generated from the GraphQL schema
 import {
-  Transaction,
-  Transcoder,
-  Pool,
   NewRoundEvent,
-  Protocol,
   ParameterUpdateEvent,
+  Pool,
+  Transcoder,
 } from "../types/schema";
-
-import {
-  makePoolId,
-  getBondingManagerAddress,
-  makeEventId,
-  EMPTY_ADDRESS,
-  convertToDecimal,
-  ZERO_BD,
-  createOrLoadDay,
-  createOrLoadRound,
-  PERC_DIVISOR,
-  createRound,
-  getBlockNum,
-  createOrLoadTransactionFromEvent,
-  createOrLoadProtocol,
-  createOrLoadTranscoder,
-} from "../../utils/helpers";
-import { BondingManager } from "../types/BondingManager/BondingManager";
 
 // Handler for NewRound events
 export function newRound(event: NewRound): void {
-  let bondingManagerAddress = getBondingManagerAddress(dataSource.network());
+  let bondingManagerAddress = getBondingManagerAddress();
   let bondingManager = BondingManager.bind(
     Address.fromString(bondingManagerAddress)
   );
@@ -108,16 +109,15 @@ export function newRound(event: NewRound): void {
     pool.delegate = currentTranscoder.toHex();
     if (transcoder) {
       pool.totalStake = transcoder.totalStake;
-      pool.rewardCut = transcoder.rewardCut as BigInt;
-      pool.feeShare = transcoder.feeShare as BigInt;
+      pool.rewardCut = transcoder.rewardCut;
+      pool.feeShare = transcoder.feeShare;
     }
     pool.save();
 
-    currentTranscoder = bondingManager.getNextTranscoderInPool(
-      currentTranscoder
-    );
+    currentTranscoder =
+      bondingManager.getNextTranscoderInPool(currentTranscoder);
 
-    transcoder = Transcoder.load(currentTranscoder.toHex()) as Transcoder;
+    transcoder = Transcoder.load(currentTranscoder.toHex());
   }
 
   protocol.lastInitializedRound = round.id;
@@ -127,7 +127,10 @@ export function newRound(event: NewRound): void {
   day.totalActiveStake = totalActiveStake;
   day.totalSupply = protocol.totalSupply;
 
-  if (protocol.totalActiveStake.gt(ZERO_BD)) {
+  if (
+    protocol.totalActiveStake.gt(ZERO_BD) &&
+    protocol.totalSupply.gt(ZERO_BD)
+  ) {
     protocol.participationRate = protocol.totalActiveStake.div(
       protocol.totalSupply
     );
@@ -157,7 +160,8 @@ export function parameterUpdate(event: ParameterUpdate): void {
 
   if (event.params.param == "roundLength") {
     let roundLength = roundsManager.roundLength();
-    let lastRoundLengthUpdateStartBlock = roundsManager.lastRoundLengthUpdateStartBlock();
+    let lastRoundLengthUpdateStartBlock =
+      roundsManager.lastRoundLengthUpdateStartBlock();
     let lastRoundLengthUpdateRound = roundsManager.lastRoundLengthUpdateRound();
 
     if (protocol.roundLength.toI32() == 0) {

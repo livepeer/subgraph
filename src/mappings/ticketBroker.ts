@@ -1,22 +1,4 @@
-import {
-  WinningTicketRedeemed,
-  ReserveFunded,
-  DepositFunded,
-  ReserveClaimed,
-  Withdrawal,
-} from "../types/TicketBroker/TicketBroker";
-import { UniswapV3Pool } from "../types/TicketBroker/UniswapV3Pool";
-import {
-  Transaction,
-  Protocol,
-  Broadcaster,
-  WinningTicketRedeemedEvent,
-  ReserveFundedEvent,
-  ReserveClaimedEvent,
-  DepositFundedEvent,
-  WithdrawalEvent,
-} from "../types/schema";
-import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadBroadcaster,
@@ -30,8 +12,16 @@ import {
   getUniswapV3DaiEthPoolAddress,
   makeEventId,
   sqrtPriceX96ToTokenPrices,
-  ZERO_BD,
+  ZERO_BD
 } from "../../utils/helpers";
+import {
+  DepositFundedEvent, ReserveClaimedEvent, ReserveFundedEvent, WinningTicketRedeemedEvent, WithdrawalEvent
+} from "../types/schema";
+import {
+  DepositFunded,
+  ReserveClaimed, ReserveFunded, WinningTicketRedeemed, Withdrawal
+} from "../types/TicketBroker/TicketBroker";
+import { UniswapV3Pool } from "../types/TicketBroker/UniswapV3Pool";
 
 export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let round = createOrLoadRound(getBlockNum());
@@ -47,7 +37,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     dataSource.network() == "arbitrum-one" ||
     dataSource.network() == "arbitrum-rinkeby"
   ) {
-    let address = getUniswapV3DaiEthPoolAddress(dataSource.network());
+    let address = getUniswapV3DaiEthPoolAddress();
     let daiEthPool = UniswapV3Pool.bind(Address.fromString(address));
     let slot0 = daiEthPool.slot0();
     let sqrtPriceX96 = slot0.value0;

@@ -1,15 +1,4 @@
 import {
-  Minter,
-  SetCurrentRewardTokens,
-  ParameterUpdate,
-} from "../types/Minter/Minter";
-import {
-  Transaction,
-  Protocol,
-  ParameterUpdateEvent,
-  SetCurrentRewardTokensEvent,
-} from "../types/schema";
-import {
   convertToDecimal,
   createOrLoadProtocol,
   createOrLoadRound,
@@ -17,14 +6,19 @@ import {
   getBlockNum,
   makeEventId,
 } from "../../utils/helpers";
+import {
+  Minter,
+  ParameterUpdate,
+  SetCurrentRewardTokens,
+} from "../types/Minter/Minter";
+import {
+  ParameterUpdateEvent,
+  SetCurrentRewardTokensEvent,
+} from "../types/schema";
 
 export function setCurrentRewardTokens(event: SetCurrentRewardTokens): void {
   let minter = Minter.bind(event.address);
-  let round = createOrLoadRound(getBlockNum());
   let protocol = createOrLoadProtocol();
-
-  round.mintableTokens = convertToDecimal(event.params.currentMintableTokens);
-  round.save();
 
   // The variables targetBondingRate, inflationChange, and inflation are
   // initially set inside the Minter's constructor, however constructors are
@@ -33,6 +27,11 @@ export function setCurrentRewardTokens(event: SetCurrentRewardTokens): void {
   protocol.inflationChange = minter.inflationChange();
   protocol.inflation = minter.inflation();
   protocol.save();
+
+  let round = createOrLoadRound(getBlockNum());
+
+  round.mintableTokens = convertToDecimal(event.params.currentMintableTokens);
+  round.save();
 
   createOrLoadTransactionFromEvent(event);
   let setCurrentRewardTokensEvent = new SetCurrentRewardTokensEvent(
