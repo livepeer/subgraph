@@ -18,6 +18,7 @@
     "prepare:arbitrum-rinkeby": "TS_NODE_PROJECT='./tsconfig.hardhat.json' NETWORK_NAME=arbitrum-rinkeby ts-node ./templatify.ts",
     "prepare:development": "TS_NODE_PROJECT='./tsconfig.hardhat.json' NETWORK_NAME=development ts-node ./templatify.ts",
     "prepare": "yarn prepare:arbitrum-one && yarn codegen && yarn codegen:typechain",
+    "start": "docker-compose up",
     "test:development": "TS_NODE_PROJECT='./tsconfig.hardhat.json' yarn hardhat test --network localhost",
     "test:docker": "DOCKER=true TS_NODE_PROJECT='./tsconfig.hardhat.json' yarn hardhat test --network docker",
     "test": "yarn docker:build && docker-compose -f docker-compose.test.yml up --abort-on-container-exit"
