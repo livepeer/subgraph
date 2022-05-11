@@ -4,20 +4,21 @@ import {
   createOrLoadDay,
   createOrLoadProtocol,
   createOrLoadRound,
+  createOrLoadTransactionFromEvent,
   getBlockNum,
   getMinterAddress,
   makeEventId,
   ZERO_BD,
 } from "../../utils/helpers";
-import { Mint, Burn } from "../types/LivepeerToken/LivepeerToken";
+import { Burn, Mint } from "../types/LivepeerToken/LivepeerToken";
 import { Minter } from "../types/Minter/Minter";
-import { Transaction, MintEvent, BurnEvent } from "../types/schema";
+import { BurnEvent, MintEvent } from "../types/schema";
 
 export function mint(event: Mint): void {
   let protocol = createOrLoadProtocol();
   let day = createOrLoadDay(event.block.timestamp.toI32());
   let amount = convertToDecimal(event.params.amount);
-  let minterAddress = getMinterAddress(dataSource.network());
+  let minterAddress = getMinterAddress();
   let minter = Minter.bind(Address.fromString(minterAddress));
   let callResult = minter.try_getGlobalTotalSupply();
   let totalSupply = ZERO_BD;
@@ -51,16 +52,7 @@ export function mint(event: Mint): void {
   protocol.save();
   day.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let mintEvent = new MintEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -78,7 +70,7 @@ export function burn(event: Burn): void {
   let round = createOrLoadRound(getBlockNum());
   let day = createOrLoadDay(event.block.timestamp.toI32());
   let value = convertToDecimal(event.params.value);
-  let minterAddress = getMinterAddress(dataSource.network());
+  let minterAddress = getMinterAddress();
   let minter = Minter.bind(Address.fromString(minterAddress));
 
   let callResult = minter.try_getGlobalTotalSupply();
@@ -111,16 +103,7 @@ export function burn(event: Burn): void {
   protocol.save();
   day.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let burnEvent = new BurnEvent(
     makeEventId(event.transaction.hash, event.logIndex)
