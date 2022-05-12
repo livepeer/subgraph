@@ -1,4 +1,4 @@
-import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadBroadcaster,
@@ -12,14 +12,21 @@ import {
   getUniswapV3DaiEthPoolAddress,
   makeEventId,
   sqrtPriceX96ToTokenPrices,
-  ZERO_BD
+  ZERO_BD,
 } from "../../utils/helpers";
 import {
-  DepositFundedEvent, ReserveClaimedEvent, ReserveFundedEvent, WinningTicketRedeemedEvent, WithdrawalEvent
+  DepositFundedEvent,
+  ReserveClaimedEvent,
+  ReserveFundedEvent,
+  WinningTicketRedeemedEvent,
+  WithdrawalEvent,
 } from "../types/schema";
 import {
   DepositFunded,
-  ReserveClaimed, ReserveFunded, WinningTicketRedeemed, Withdrawal
+  ReserveClaimed,
+  ReserveFunded,
+  WinningTicketRedeemed,
+  Withdrawal,
 } from "../types/TicketBroker/TicketBroker";
 import { UniswapV3Pool } from "../types/TicketBroker/UniswapV3Pool";
 
@@ -63,9 +70,22 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   winningTicketRedeemedEvent.auxData = event.params.auxData;
   winningTicketRedeemedEvent.save();
 
+  // The faceValue of the ticket will be subtracted from the ticket sender (broadcaster) deposit.
+  // In case the deposit is insufficient to cover the faceValue, the difference will be subtracted from the reserve.
   let broadcaster = createOrLoadBroadcaster(event.params.sender.toHex());
   if (faceValue.gt(broadcaster.deposit)) {
     broadcaster.deposit = ZERO_BD;
+
+    let difference = faceValue.minus(broadcaster.deposit);
+    if (difference.gt(broadcaster.reserve)) {
+      // we have an error here, broadcaster reserves have been fully depleted
+      log.error("Broadcaster reserves have been depleted to zero for ID: {}", [
+        broadcaster.id,
+      ]);
+      broadcaster.reserve = ZERO_BD;
+    } else {
+      broadcaster.reserve = broadcaster.reserve.minus(difference);
+    }
   } else {
     broadcaster.deposit = broadcaster.deposit.minus(faceValue);
   }

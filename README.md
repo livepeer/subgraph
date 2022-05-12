@@ -52,7 +52,7 @@ We rely on Docker Compose to test the subgraph against our contracts. To run the
 This will use the dependencies in Docker and run the tests locally in Hardhat. This is the recommended flow for developing tests.
 
 ```bash
-docker-compose up # in first terminal
+yarn start # in first terminal
 ```
 
 In another terminal window, create the subgraph and deploy it, then run tests against it:

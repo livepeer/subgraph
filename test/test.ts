@@ -1,5 +1,11 @@
 import { ethers } from "hardhat";
-import { BigNumber, Overrides } from "ethers";
+import {
+  BigNumber,
+  BigNumberish,
+  BytesLike,
+  constants,
+  Overrides,
+} from "ethers";
 import { expect } from "chai";
 import {
   RoundsManager__factory as RoundsManagerFactory,
@@ -8,10 +14,12 @@ import {
   PollCreator__factory as PollCreatorFactory,
   Poll__factory as PollFactory,
   Controller__factory as ControllerFactory,
+  TicketBroker__factory as TicketBrokerFactory,
   RoundsManager,
   LivepeerToken,
   BondingManager,
   PollCreator,
+  TicketBroker,
 } from "../typechain-types";
 import { createApolloFetch } from "apollo-fetch";
 import * as path from "path";
@@ -22,6 +30,8 @@ const controllerAddress = "0x77A0865438f2EfD65667362D4a8937537CA7a5EF";
 
 const PERC_DIVISOR = 1000000;
 const PERC_MULTIPLIER = PERC_DIVISOR / 100;
+
+const ONE_ETHER = ethers.utils.parseEther("1");
 
 const defaults: Overrides = { gasLimit: 1000000 };
 
@@ -35,6 +45,16 @@ if (process.env.DOCKER) {
 const fetchSubgraph = createApolloFetch({
   uri: `http://${graphNodeIP}:8000/subgraphs/name/livepeer/livepeer`,
 });
+
+type Ticket = {
+  recipient: string;
+  sender: string;
+  faceValue: BigNumberish;
+  winProb: BigNumberish;
+  senderNonce: BigNumberish;
+  recipientRandHash: BytesLike;
+  auxData: BytesLike;
+};
 
 const contractId = (contractName) => {
   return ethers.utils.solidityKeccak256(["string"], [contractName]);
@@ -92,8 +112,7 @@ describe("Token contract", function () {
   let BondingManager: BondingManager;
   let Token: LivepeerToken;
   let PollCreator: PollCreator;
-  let owner: SignerWithAddress;
-  let accounts: SignerWithAddress[];
+  let TicketBroker: TicketBroker;
 
   let roundsManagerAddress: string;
   let bondingManagerAddress: string;
@@ -103,6 +122,7 @@ describe("Token contract", function () {
   const TOKEN_UNIT = BigNumber.from("10").pow(18);
   const voteMap = ["Yes", "No"];
 
+  let broadcaster: SignerWithAddress;
   let transcoder1: SignerWithAddress;
   let transcoder2: SignerWithAddress;
   let delegator1: SignerWithAddress;
@@ -147,6 +167,36 @@ describe("Token contract", function () {
     const mineAndInitializeRound = async (_roundLength) => {
       await mineBlocks(parseInt(_roundLength));
       await RoundsManager.initializeRound();
+    };
+
+    const createWinningTicket = async (
+      recipient: SignerWithAddress,
+      sender: SignerWithAddress,
+      recipientRand: number,
+      faceValue: BigNumberish = 0
+    ) => {
+      const recipientRandHash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(["uint256"], [recipientRand])
+      );
+      const currentRound = await RoundsManager.currentRound();
+      const currentRoundBlockHash = await RoundsManager.blockHashForRound(
+        currentRound
+      );
+
+      const ticket: Ticket = {
+        recipient: recipient.address,
+        sender: sender.address,
+        faceValue,
+        winProb: constants.MaxUint256.toString(),
+        senderNonce: 0,
+        recipientRandHash,
+        auxData: ethers.utils.defaultAbiCoder.encode(
+          ["uint256", "bytes32"],
+          [currentRound.toNumber(), currentRoundBlockHash]
+        ),
+      };
+
+      return ticket;
     };
 
     const getStake = async (addr) => {
@@ -211,11 +261,9 @@ describe("Token contract", function () {
     };
 
     before(async () => {
-      [owner, ...accounts] = await ethers.getSigners();
+      [broadcaster, transcoder1, transcoder2, delegator1] =
+        await ethers.getSigners();
 
-      transcoder1 = accounts[0];
-      transcoder2 = accounts[1];
-      delegator1 = accounts[2];
       // delegator2 = accounts[3];
       // delegator3 = accounts[4];
       // delegator4 = accounts[5];
@@ -224,7 +272,7 @@ describe("Token contract", function () {
 
       const Controller = await ControllerFactory.connect(
         controllerAddress,
-        owner
+        broadcaster
       );
 
       const getContractAddress = async (contractName: string) =>
@@ -233,6 +281,7 @@ describe("Token contract", function () {
       roundsManagerAddress = await getContractAddress("RoundsManager");
       bondingManagerAddress = await getContractAddress("BondingManager");
       livepeerTokenAddress = await getContractAddress("LivepeerToken");
+      const ticketBrokerAddress = await getContractAddress("TicketBroker");
       // TODO add poll creator address
 
       // for (const contractName of [
@@ -253,13 +302,20 @@ describe("Token contract", function () {
 
       RoundsManager = await RoundsManagerFactory.connect(
         roundsManagerAddress,
-        owner
+        broadcaster
       );
       BondingManager = await BondingManagerFactory.connect(
         bondingManagerAddress,
-        owner
+        broadcaster
       );
-      Token = await LivepeerTokenFactory.connect(livepeerTokenAddress, owner);
+      Token = await LivepeerTokenFactory.connect(
+        livepeerTokenAddress,
+        broadcaster
+      );
+      TicketBroker = await TicketBrokerFactory.connect(
+        ticketBrokerAddress,
+        broadcaster
+      );
 
       await RoundsManager.setRoundLength(20);
 
@@ -276,6 +332,13 @@ describe("Token contract", function () {
       // await Token.transfer(delegator4.address, transferAmount);
       // await Token.transfer(delegator5.address, transferAmount);
       // await Token.transfer(delegator6.address, transferAmount);
+
+      // fund the broadcaster reserve and deposit
+      await TicketBroker.connect(broadcaster).fundDepositAndReserve(
+        ONE_ETHER,
+        ONE_ETHER,
+        { ...defaults, value: ONE_ETHER.mul(2) }
+      );
 
       await mineAndInitializeRound(roundLength);
 
@@ -373,6 +436,64 @@ describe("Token contract", function () {
       await waitForSubgraphToBeSynced();
     });
 
+    it("correctly updates the broadcaster deposit when ticket value is less than deposit", async () => {
+      const faceValue = ethers.utils.parseEther(".2");
+
+      const ticket = await createWinningTicket(
+        transcoder1,
+        broadcaster,
+        1,
+        faceValue
+      );
+      const ticketHash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          [
+            "address",
+            "address",
+            "uint256",
+            "uint256",
+            "uint256",
+            "string",
+            "uint256",
+          ],
+          [
+            ticket.recipient,
+            ticket.sender,
+            ticket.faceValue,
+            ticket.winProb,
+            ticket.senderNonce,
+            ticket.recipientRandHash,
+            ticket.auxData,
+          ]
+        )
+      );
+
+      const signedTicketHash = await broadcaster.signMessage(ticketHash);
+
+      await expect(
+        TicketBroker.connect(transcoder1).redeemWinningTicket(
+          ticket,
+          signedTicketHash,
+          1,
+          defaults
+        )
+      ).to.emit(TicketBroker, "WinningTicketRedeemed");
+
+      const winningTicketRedeemedEvents = await fetchSubgraph({
+        query: `{
+          winningTicketRedeemedEvents {
+             sender {
+              id
+            }
+            id
+            faceValue
+          }
+        }`,
+      });
+
+      console.log({ winningTicketRedeemedEvents });
+    });
+
     it.skip("creates a poll", async () => {
       const createPollAndCheckResult = async () => {
         const hash = ethers.utils.formatBytes32String(
@@ -399,7 +520,7 @@ describe("Token contract", function () {
       });
       const pollAddress = subgraphPollData.data.polls[0].id;
 
-      const Poll = await PollFactory.connect(pollAddress, owner);
+      const Poll = await PollFactory.connect(pollAddress, broadcaster);
 
       voters = {
         [transcoder1.address]: {
@@ -625,7 +746,7 @@ describe("Token contract", function () {
         query: `{ polls { id } }`,
       });
       const pollAddress = subgraphPollData.data.polls[0].id;
-      const Poll = await PollFactory.connect(pollAddress, owner);
+      const Poll = await PollFactory.connect(pollAddress, broadcaster);
 
       await Poll.connect(delegator5).vote(1);
       voters[delegator5.address] = {
@@ -681,7 +802,7 @@ describe("Token contract", function () {
         query: `{ polls { id } }`,
       });
       const pollAddress = subgraphPollData.data.polls[0].id;
-      const Poll = await PollFactory.connect(pollAddress, owner);
+      const Poll = await PollFactory.connect(pollAddress, broadcaster);
 
       await Poll.connect(delegator6).vote(1);
       await waitForSubgraphToBeSynced();
