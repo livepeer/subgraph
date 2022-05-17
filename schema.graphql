@@ -139,6 +139,8 @@ type Round @entity {
   startBlock: BigInt!
   "End block for the round"
   endBlock: BigInt!
+  "The calendar date when the round started"
+  startDate: CalendarDate
   "Pools associated with the round"
   pools: [Pool!] @derivedFrom(field: "round")
   "Mintable tokens for the round"
@@ -284,6 +286,8 @@ type Day @entity {
   id: ID!
   "The date beginning at 12:00am UTC"
   date: Int!
+  "The calendar date"
+  calendarDate: CalendarDate!
   "Fees generated this day in ETH"
   volumeETH: BigDecimal!
   "Fees generated this day in USD"
@@ -304,12 +308,28 @@ type TranscoderDay @entity {
   id: ID!
   "The date beginning at 12:00am UTC"
   date: Int!
+  "The calendar date"
+  calendarDate: CalendarDate!
   "Fees generated this day in ETH"
   volumeETH: BigDecimal!
   "Fees generated this day in USD"
   volumeUSD: BigDecimal!
   "Transcoder associated with the day"
   transcoder: Transcoder!
+}
+
+"""
+Calendar date used for mapping timestamps to day/month/year
+"""
+type CalendarDate @entity(immutable: true) {
+  "Combination of day-month-year"
+  id: ID!
+  "The day of the month"
+  day: Int!
+  "The month of this date"
+  month: Int!
+  "The year this date occurred"
+  year: Int!
 }
 
 ###############################################################################

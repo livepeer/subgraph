@@ -9,6 +9,7 @@ import {
 import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 import {
   Broadcaster,
+  CalendarDate,
   Day,
   Delegator,
   Protocol,
@@ -245,6 +246,10 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.totalSupply = ZERO_BD;
     day.totalActiveStake = ZERO_BD;
     day.participationRate = ZERO_BD;
+
+    let calendarDate = createOrLoadCalendarDate(timestamp);
+    day.calendarDate = calendarDate.id;
+
     day.save();
   }
   return day;
@@ -267,6 +272,10 @@ export function createOrLoadTranscoderDay(
     transcoderDay.transcoder = transcoderAddress;
     transcoderDay.volumeUSD = ZERO_BD;
     transcoderDay.volumeETH = ZERO_BD;
+
+    let calendarDate = createOrLoadCalendarDate(timestamp);
+    transcoderDay.calendarDate = calendarDate.id;
+
     transcoderDay.save();
   }
   return transcoderDay;
@@ -322,8 +331,44 @@ export function createRound(
   round.volumeUSD = ZERO_BD;
   round.movedStake = ZERO_BD;
   round.newStake = ZERO_BD;
+
   round.save();
   return round;
+}
+
+// Derived from https://github.com/knownorigin/known-origin-subgraph/blob/master/src/utils/DateConverter.ts
+export function createOrLoadCalendarDate(timestamp: i32): CalendarDate {
+  let daysSinceEpochStart = timestamp / 86400;
+  daysSinceEpochStart = daysSinceEpochStart + 719468;
+
+  let era =
+    (daysSinceEpochStart >= 0
+      ? daysSinceEpochStart
+      : daysSinceEpochStart - 146096) / 146097;
+  let dayOfEra = daysSinceEpochStart - era * 146097; // [0, 146096]
+  let yearOfEra =
+    (dayOfEra - dayOfEra / 1460 + dayOfEra / 36524 - dayOfEra / 146096) / 365; // [0, 399]
+
+  let year = yearOfEra + era * 400;
+  let dayOfYear =
+    dayOfEra - (365 * yearOfEra + yearOfEra / 4 - yearOfEra / 100); // [0, 365]
+  let monthZeroIndexed = (5 * dayOfYear + 2) / 153; // [0, 11]
+  let day = dayOfYear - (153 * monthZeroIndexed + 2) / 5 + 1; // [1, 31]
+  let month = monthZeroIndexed + (monthZeroIndexed < 10 ? 3 : -9); // [1, 12]
+
+  year = month <= 2 ? year + 1 : year;
+
+  let id = `${day}-${month}-${year}`;
+
+  let calendarDate = CalendarDate.load(id);
+  if (calendarDate == null) {
+    calendarDate = new CalendarDate(id);
+    calendarDate.day = day;
+    calendarDate.month = month;
+    calendarDate.year = year;
+    calendarDate.save();
+  }
+  return calendarDate;
 }
 
 // return 0 if denominator is 0 in division

@@ -23,9 +23,6 @@ import {
   WithdrawStakeEvent
 } from "../types/schema";
 
-
-
-
 export function bond(event: Bond): void {
   let bondingManager = BondingManager.bind(event.address);
   let delegateData = bondingManager.getDelegator(event.params.newDelegate);
