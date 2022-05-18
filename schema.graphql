@@ -1,4 +1,18 @@
 """
+Calendar date used for mapping timestamps to day/month/year
+"""
+interface CalendarDate {
+  "Combination of year-month-day"
+  calendarDate: String!
+  "The day of the month"
+  day: Int!
+  "The month of this date"
+  month: Int!
+  "The year this date occurred"
+  year: Int!
+}
+
+"""
 Livepeer protocol global parameters
 """
 type Protocol @entity {
@@ -96,6 +110,8 @@ type Transcoder @entity {
   delegator: Delegator
   "Service URI endpoint that can be used to send off-chain requests"
   serviceURI: String
+  "Days which the transcoder earned fees"
+  transcoderDays: [TranscoderDay!] @derivedFrom(field: "transcoder")
 }
 
 enum TranscoderStatus @entity {
@@ -128,7 +144,7 @@ type Pool @entity {
 """
 The Livepeer protocol is round based and each round is represented by some number of Ethereum blocks.
 """
-type Round @entity {
+type Round implements CalendarDate @entity {
   "Round number"
   id: ID!
   "Whether the round was initialized"
@@ -139,8 +155,6 @@ type Round @entity {
   startBlock: BigInt!
   "End block for the round"
   endBlock: BigInt!
-  "The calendar date when the round started"
-  startDate: CalendarDate
   "Pools associated with the round"
   pools: [Pool!] @derivedFrom(field: "round")
   "Mintable tokens for the round"
@@ -159,6 +173,14 @@ type Round @entity {
   movedStake: BigDecimal!
   "Total amount of new stake introduced during the round"
   newStake: BigDecimal!
+  "Start date as a combination of year-month-day"
+  calendarDate: String!
+  "The day of the month of the start date"
+  day: Int!
+  "The month of the start date"
+  month: Int!
+  "The year the start date occurred"
+  year: Int!
 }
 
 """
@@ -281,13 +303,11 @@ enum PollChoice @entity {
 """
 Protocol data accumulated and condensed into day stats
 """
-type Day @entity {
+type Day implements CalendarDate @entity {
   "Timestamp rounded to current day by dividing by 86400"
   id: ID!
   "The date beginning at 12:00am UTC"
   date: Int!
-  "The calendar date"
-  calendarDate: CalendarDate!
   "Fees generated this day in ETH"
   volumeETH: BigDecimal!
   "Fees generated this day in USD"
@@ -298,32 +318,32 @@ type Day @entity {
   totalSupply: BigDecimal!
   "Participation rate during the day (totalActiveStake/totalSupply)"
   participationRate: BigDecimal!
+  "Combination of year-month-day"
+  calendarDate: String!
+  "The day of the month"
+  day: Int!
+  "The month of this date"
+  month: Int!
+  "The year this date occurred"
+  year: Int!
 }
 
 """
 Transcoder data accumulated and condensed into day stats
 """
-type TranscoderDay @entity {
+type TranscoderDay implements CalendarDate @entity {
   "Combination of the transcoder address and the timestamp rounded to current day by dividing by 86400"
   id: ID!
   "The date beginning at 12:00am UTC"
   date: Int!
-  "The calendar date"
-  calendarDate: CalendarDate!
   "Fees generated this day in ETH"
   volumeETH: BigDecimal!
   "Fees generated this day in USD"
   volumeUSD: BigDecimal!
   "Transcoder associated with the day"
   transcoder: Transcoder!
-}
-
-"""
-Calendar date used for mapping timestamps to day/month/year
-"""
-type CalendarDate @entity(immutable: true) {
-  "Combination of day-month-year"
-  id: ID!
+  "Combination of year-month-day"
+  calendarDate: String!
   "The day of the month"
   day: Int!
   "The month of this date"

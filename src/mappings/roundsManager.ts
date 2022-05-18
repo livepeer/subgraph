@@ -7,7 +7,7 @@ import {
 } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
-  createOrLoadCalendarDate,
+  getCalendarDate,
   createOrLoadDay,
   createOrLoadProtocol,
   createOrLoadRound,
@@ -68,8 +68,11 @@ export function newRound(event: NewRound): void {
     totalActiveStake = convertToDecimal(getTotalBondedCallResult.value);
   }
 
-  let calendarDate = createOrLoadCalendarDate(event.block.timestamp.toI32());
-  round.startDate = calendarDate.id;
+  let date = getCalendarDate(event.block.timestamp.toI32());
+  round.calendarDate = date.calendarDate;
+  round.day = date.day;
+  round.month = date.month;
+  round.year = date.year;
 
   round.initialized = true;
   round.totalActiveStake = totalActiveStake;

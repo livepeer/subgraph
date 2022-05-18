@@ -9,7 +9,6 @@ import {
 import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 import {
   Broadcaster,
-  CalendarDate,
   Day,
   Delegator,
   Protocol,
@@ -247,8 +246,11 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.totalActiveStake = ZERO_BD;
     day.participationRate = ZERO_BD;
 
-    let calendarDate = createOrLoadCalendarDate(timestamp);
-    day.calendarDate = calendarDate.id;
+    let date = getCalendarDate(timestamp);
+    day.calendarDate = date.calendarDate;
+    day.day = date.day;
+    day.month = date.month;
+    day.year = date.year;
 
     day.save();
   }
@@ -273,8 +275,11 @@ export function createOrLoadTranscoderDay(
     transcoderDay.volumeUSD = ZERO_BD;
     transcoderDay.volumeETH = ZERO_BD;
 
-    let calendarDate = createOrLoadCalendarDate(timestamp);
-    transcoderDay.calendarDate = calendarDate.id;
+    let date = getCalendarDate(timestamp);
+    transcoderDay.calendarDate = date.calendarDate;
+    transcoderDay.day = date.day;
+    transcoderDay.month = date.month;
+    transcoderDay.year = date.year;
 
     transcoderDay.save();
   }
@@ -337,7 +342,12 @@ export function createRound(
 }
 
 // Derived from https://github.com/knownorigin/known-origin-subgraph/blob/master/src/utils/DateConverter.ts
-export function createOrLoadCalendarDate(timestamp: i32): CalendarDate {
+export function getCalendarDate(timestamp: i32): {
+  calendarDate: string;
+  day: number;
+  month: number;
+  year: number;
+} {
   let daysSinceEpochStart = timestamp / 86400;
   daysSinceEpochStart = daysSinceEpochStart + 719468;
 
@@ -358,17 +368,12 @@ export function createOrLoadCalendarDate(timestamp: i32): CalendarDate {
 
   year = month <= 2 ? year + 1 : year;
 
-  let id = `${day}-${month}-${year}`;
-
-  let calendarDate = CalendarDate.load(id);
-  if (calendarDate == null) {
-    calendarDate = new CalendarDate(id);
-    calendarDate.day = day;
-    calendarDate.month = month;
-    calendarDate.year = year;
-    calendarDate.save();
-  }
-  return calendarDate;
+  return {
+    calendarDate: `${year}-${month}-${day}`,
+    day,
+    month,
+    year,
+  };
 }
 
 // return 0 if denominator is 0 in division
