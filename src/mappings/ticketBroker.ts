@@ -9,9 +9,8 @@ import {
   createOrLoadTranscoder,
   createOrLoadTranscoderDay,
   getBlockNum,
-  getUniswapV3DaiEthPoolAddress,
+  getEthPriceUsd,
   makeEventId,
-  sqrtPriceX96ToTokenPrices,
   ZERO_BD,
 } from "../../utils/helpers";
 import {
@@ -28,7 +27,6 @@ import {
   WinningTicketRedeemed,
   Withdrawal,
 } from "../types/TicketBroker/TicketBroker";
-import { UniswapV3Pool } from "../types/TicketBroker/UniswapV3Pool";
 
 export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let round = createOrLoadRound(getBlockNum());
@@ -38,23 +36,8 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   );
   let protocol = createOrLoadProtocol();
   let faceValue = convertToDecimal(event.params.faceValue);
-  let ethPrice = ZERO_BD;
+  let ethPrice = getEthPriceUsd();
 
-  if (
-    dataSource.network() == "arbitrum-one" ||
-    dataSource.network() == "arbitrum-rinkeby"
-  ) {
-    let address = getUniswapV3DaiEthPoolAddress();
-    let daiEthPool = UniswapV3Pool.bind(Address.fromString(address));
-    let slot0 = daiEthPool.slot0();
-    let sqrtPriceX96 = slot0.value0;
-    let prices = sqrtPriceX96ToTokenPrices(
-      sqrtPriceX96,
-      BigInt.fromI32(18),
-      BigInt.fromI32(18)
-    );
-    ethPrice = prices[1];
-  }
   createOrLoadTransactionFromEvent(event);
 
   winningTicketRedeemedEvent.transaction = event.transaction.hash.toHex();
@@ -96,7 +79,6 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   transcoder.totalVolumeUSD = transcoder.totalVolumeUSD.plus(
     faceValue.times(ethPrice)
   );
-  transcoder.save();
 
   // Update total protocol fee volume
   protocol.totalVolumeETH = protocol.totalVolumeETH.plus(faceValue);
@@ -123,6 +105,14 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     faceValue.times(ethPrice)
   );
   transcoderDay.save();
+
+  // Manually manage the array of transcoder days (add newest to the beginning of the list)
+  let transcoderDays = transcoder.transcoderDays;
+  if (!transcoderDays.includes(transcoderDay.id)) {
+    transcoderDays.unshift(transcoderDay.id);
+    transcoder.transcoderDays = transcoderDays;
+  }
+  transcoder.save();
 
   // Update fee volume for this round
   round.volumeETH = round.volumeETH.plus(faceValue);
