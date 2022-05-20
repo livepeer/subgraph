@@ -200,6 +200,7 @@ export function createOrLoadTranscoder(id: string): Transcoder {
   let transcoder = Transcoder.load(id);
   if (transcoder == null) {
     transcoder = new Transcoder(id);
+    transcoder.activationTimestamp = 0;
     transcoder.activationRound = ZERO_BI;
     transcoder.deactivationRound = ZERO_BI;
     transcoder.lastActiveStakeUpdateRound = ZERO_BI;

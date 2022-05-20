@@ -17,7 +17,6 @@ import {
   ONE_BD,
   PERC_DIVISOR,
   ZERO_BD,
-  ZERO_BI,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
 // Import event types from the registrar contract ABIs
@@ -194,8 +193,9 @@ export function newRound(event: NewRound): void {
     let totalRewards = ZERO_BD;
 
     for (let i = 0; i < roundsPerYear; i++) {
-      totalRewards = totalRewards.plus(totalSupply.times(inflationRateBD));
-      totalSupply = totalSupply.times(ONE_BD.plus(inflationRateBD));
+      let roundRewards = totalSupply.times(inflationRateBD);
+      totalRewards = totalRewards.plus(roundRewards);
+      totalSupply = totalSupply.plus(roundRewards);
     }
 
     protocol.yearlyRewardsToStakeRatio = totalRewards.div(

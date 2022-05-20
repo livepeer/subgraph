@@ -70,6 +70,8 @@ type Transcoder @entity {
   active: Boolean!
   "Status of the transcoder"
   status: TranscoderStatus!
+  "The activation date beginning at 12:00am UTC"
+  activationTimestamp: Int!
   "Last round that the transcoder called reward"
   lastRewardRound: Round
   "% of block reward cut paid to transcoder by a delegator"

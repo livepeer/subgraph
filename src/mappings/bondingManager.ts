@@ -514,6 +514,7 @@ export function transcoderActivated(event: TranscoderActivated): void {
   let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
   let protocol = createOrLoadProtocol();
 
+  transcoder.activationTimestamp = event.block.timestamp.toI32();
   transcoder.lastActiveStakeUpdateRound = event.params.activationRound;
   transcoder.activationRound = event.params.activationRound;
   transcoder.deactivationRound = MAXIMUM_VALUE_UINT256;
@@ -551,6 +552,7 @@ export function transcoderDeactivated(event: TranscoderDeactivated): void {
   let round = createOrLoadRound(getBlockNum());
   let protocol = createOrLoadProtocol();
 
+  transcoder.activationTimestamp = 0;
   transcoder.deactivationRound = event.params.deactivationRound;
   transcoder.save();
 
