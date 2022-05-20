@@ -10,8 +10,6 @@ import {
   EMPTY_ADDRESS,
   getBlockNum,
   getBondingManagerAddress,
-  getCalendarDate,
-  getEthPriceUsd,
   getLptPriceEth,
   getTimestampForDaysPast,
   makeEventId,
@@ -67,12 +65,6 @@ export function newRound(event: NewRound): void {
   } else {
     totalActiveStake = convertToDecimal(getTotalBondedCallResult.value);
   }
-
-  // let date = getCalendarDate(event.block.timestamp.toI32());
-  // round.calendarDate = date.id();
-  // round.day = date.day;
-  // round.month = date.month;
-  // round.year = date.year;
 
   round.initialized = true;
   round.totalActiveStake = totalActiveStake;

@@ -253,12 +253,6 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.totalActiveStake = ZERO_BD;
     day.participationRate = ZERO_BD;
 
-    // let date = getCalendarDate(timestamp);
-    // day.calendarDate = date.id();
-    // day.day = date.day;
-    // day.month = date.month;
-    // day.year = date.year;
-
     day.save();
   }
   return day;
@@ -281,12 +275,6 @@ export function createOrLoadTranscoderDay(
     transcoderDay.transcoder = transcoderAddress;
     transcoderDay.volumeUSD = ZERO_BD;
     transcoderDay.volumeETH = ZERO_BD;
-
-    // let date = getCalendarDate(timestamp);
-    // transcoderDay.calendarDate = date.id();
-    // transcoderDay.day = date.day;
-    // transcoderDay.month = date.month;
-    // transcoderDay.year = date.year;
 
     transcoderDay.save();
   }
@@ -350,49 +338,6 @@ export function createRound(
 
 export function getTimestampForDaysPast(currentTimestamp: i32, days: i32): i32 {
   return currentTimestamp - days * 86400;
-}
-
-// Derived from https://github.com/knownorigin/known-origin-subgraph/blob/master/src/utils/DateConverter.ts
-class CalendarDate {
-  day: i32;
-  month: i32;
-  year: i32;
-
-  constructor(day: i32, month: i32, year: i32) {
-    this.day = day;
-    this.month = month;
-    this.year = year;
-  }
-
-  id(): string {
-    return `${this.year}-${this.month.toString().padStart(2, "0")}-${this.day
-      .toString()
-      .padStart(2, "0")}`;
-  }
-}
-
-export function getCalendarDate(timestamp: i32): CalendarDate {
-  let daysSinceEpochStart = timestamp / 86400;
-  daysSinceEpochStart = daysSinceEpochStart + 719468;
-
-  let era =
-    (daysSinceEpochStart >= 0
-      ? daysSinceEpochStart
-      : daysSinceEpochStart - 146096) / 146097;
-  let dayOfEra = daysSinceEpochStart - era * 146097; // [0, 146096]
-  let yearOfEra =
-    (dayOfEra - dayOfEra / 1460 + dayOfEra / 36524 - dayOfEra / 146096) / 365; // [0, 399]
-
-  let year = yearOfEra + era * 400;
-  let dayOfYear =
-    dayOfEra - (365 * yearOfEra + yearOfEra / 4 - yearOfEra / 100); // [0, 365]
-  let monthZeroIndexed = (5 * dayOfYear + 2) / 153; // [0, 11]
-  let day = dayOfYear - (153 * monthZeroIndexed + 2) / 5 + 1; // [1, 31]
-  let month = monthZeroIndexed + (monthZeroIndexed < 10 ? 3 : -9); // [1, 12]
-
-  year = month <= 2 ? year + 1 : year;
-
-  return new CalendarDate(day, month, year);
 }
 
 // return 0 if denominator is 0 in division
