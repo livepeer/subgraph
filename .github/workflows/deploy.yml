@@ -24,7 +24,7 @@ jobs:
       - name: Install
         run: yarn --immutable
 
-      - uses: azure/setup-kubectl@v2.0
+      - uses: azure/setup-kubectl@v2.1
       - uses: azure/setup-helm@v1
 
       - name: Deploy to Arbitrum Rinkeby
