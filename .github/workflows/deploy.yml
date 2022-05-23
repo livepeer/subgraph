@@ -29,8 +29,8 @@ jobs:
 
       - name: Deploy to Arbitrum Rinkeby
         if: github.ref != 'refs/heads/main'
-        run: deploy:arbitrum-rinkeby --deploy-key $SUBGRAPH_ACCESS_TOKEN
+        run: yarn deploy:arbitrum-rinkeby --deploy-key $SUBGRAPH_ACCESS_TOKEN
 
       - name: Deploy to Arbitrum One
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: deploy:arbitrum-one --deploy-key $SUBGRAPH_ACCESS_TOKEN
+        run: yarn deploy:arbitrum-one --deploy-key $SUBGRAPH_ACCESS_TOKEN
