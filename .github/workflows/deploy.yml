@@ -1,0 +1,36 @@
+name: deploy
+
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: "Deploy to Subgraph"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          cache: yarn
+      - name: Install
+        run: yarn --immutable
+
+      - uses: azure/setup-kubectl@v2.0
+      - uses: azure/setup-helm@v1
+
+      - name: Deploy to Arbitrum Rinkeby
+        if: github.ref != 'refs/heads/main'
+        run: deploy:arbitrum-rinkeby --deploy-key $SUBGRAPH_ACCESS_TOKEN
+
+      - name: Deploy to Arbitrum One
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: deploy:arbitrum-one --deploy-key $SUBGRAPH_ACCESS_TOKEN
