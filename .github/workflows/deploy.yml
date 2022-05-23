@@ -24,9 +24,6 @@ jobs:
       - name: Install
         run: yarn --immutable
 
-      - uses: azure/setup-kubectl@v2.0
-      - uses: azure/setup-helm@v1
-
       - name: Deploy to Arbitrum Rinkeby
         if: github.ref != 'refs/heads/main'
         run: yarn deploy:arbitrum-rinkeby --deploy-key $SUBGRAPH_ACCESS_TOKEN
