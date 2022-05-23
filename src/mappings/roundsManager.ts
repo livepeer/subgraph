@@ -1,10 +1,4 @@
-import {
-  Address,
-  BigDecimal,
-  BigInt,
-  dataSource,
-  log,
-} from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadDay,
@@ -16,8 +10,11 @@ import {
   EMPTY_ADDRESS,
   getBlockNum,
   getBondingManagerAddress,
+  getLptPriceEth,
+  getTimestampForDaysPast,
   makeEventId,
   makePoolId,
+  ONE_BD,
   PERC_DIVISOR,
   ZERO_BD,
 } from "../../utils/helpers";
@@ -34,6 +31,7 @@ import {
   ParameterUpdateEvent,
   Pool,
   Transcoder,
+  TranscoderDay,
 } from "../types/schema";
 
 // Handler for NewRound events
@@ -97,6 +95,19 @@ export function newRound(event: NewRound): void {
     protocol.pendingDeactivation = [];
   }
 
+  let thirtyDayTimestamp = getTimestampForDaysPast(
+    event.block.timestamp.toI32(),
+    30
+  );
+  let sixtyDayTimestamp = getTimestampForDaysPast(
+    event.block.timestamp.toI32(),
+    60
+  );
+  let ninetyDayTimestamp = getTimestampForDaysPast(
+    event.block.timestamp.toI32(),
+    90
+  );
+
   // Iterate over all active transcoders
   while (EMPTY_ADDRESS.toHex() != currentTranscoder.toHex()) {
     // create a unique "pool" for each active transcoder. If a transcoder calls
@@ -118,8 +129,45 @@ export function newRound(event: NewRound): void {
       bondingManager.getNextTranscoderInPool(currentTranscoder);
 
     transcoder = Transcoder.load(currentTranscoder.toHex());
+
+    if (transcoder) {
+      // --- Get the 30, 60, 90 day sums of volume ---
+      let thirtyDaySum = ZERO_BD;
+      let sixtyDaySum = ZERO_BD;
+      let ninetyDaySum = ZERO_BD;
+
+      // capped at <90 - transcoder days are ordered newest first
+      let daysLength =
+        transcoder.transcoderDays.length > 90
+          ? 90
+          : transcoder.transcoderDays.length;
+      for (let i = 0; i < daysLength; i++) {
+        let transcoderDay = TranscoderDay.load(transcoder.transcoderDays[i]);
+
+        if (transcoderDay) {
+          if (transcoderDay.date >= thirtyDayTimestamp) {
+            thirtyDaySum = thirtyDaySum.plus(transcoderDay.volumeETH);
+          }
+          if (transcoderDay.date >= sixtyDayTimestamp) {
+            sixtyDaySum = sixtyDaySum.plus(transcoderDay.volumeETH);
+          }
+          if (transcoderDay.date >= ninetyDayTimestamp) {
+            ninetyDaySum = ninetyDaySum.plus(transcoderDay.volumeETH);
+          }
+        }
+      }
+
+      transcoder.thirtyDayVolumeETH = thirtyDaySum;
+      transcoder.sixtyDayVolumeETH = sixtyDaySum;
+      transcoder.ninetyDayVolumeETH = ninetyDaySum;
+
+      transcoder.save();
+    }
   }
 
+  let lptPriceEth = getLptPriceEth();
+
+  protocol.lptPriceEth = lptPriceEth;
   protocol.lastInitializedRound = round.id;
   protocol.totalActiveStake = totalActiveStake;
   protocol.currentRound = round.id;
@@ -136,6 +184,23 @@ export function newRound(event: NewRound): void {
     );
     round.participationRate = protocol.participationRate;
     day.participationRate = protocol.participationRate;
+
+    let inflationRateBD = protocol.inflation
+      .toBigDecimal()
+      .div(BigDecimal.fromString("1000000000"));
+    let roundsPerYear = 417;
+    let totalSupply = protocol.totalSupply;
+    let totalRewards = ZERO_BD;
+
+    for (let i = 0; i < roundsPerYear; i++) {
+      let roundRewards = totalSupply.times(inflationRateBD);
+      totalRewards = totalRewards.plus(roundRewards);
+      totalSupply = totalSupply.plus(roundRewards);
+    }
+
+    protocol.yearlyRewardsToStakeRatio = totalRewards.div(
+      protocol.totalActiveStake
+    );
   }
 
   protocol.save();

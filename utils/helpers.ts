@@ -18,6 +18,7 @@ import {
   TranscoderDay,
   Vote,
 } from "../src/types/schema";
+import { UniswapV3Pool } from "../src/types/TicketBroker/UniswapV3Pool";
 
 let x = BigInt.fromI32(2);
 let y = 255 as u8;
@@ -154,6 +155,8 @@ export function createOrLoadProtocol(): Protocol {
     protocol.numActiveTranscoders = 0;
     protocol.winningTicketCount = 0;
     protocol.roundCount = 0;
+    protocol.yearlyRewardsToStakeRatio = ZERO_BD;
+    protocol.lptPriceEth = ZERO_BD;
     protocol.pendingActivation = [];
     protocol.pendingDeactivation = [];
     protocol.save();
@@ -197,6 +200,7 @@ export function createOrLoadTranscoder(id: string): Transcoder {
   let transcoder = Transcoder.load(id);
   if (transcoder == null) {
     transcoder = new Transcoder(id);
+    transcoder.activationTimestamp = 0;
     transcoder.activationRound = ZERO_BI;
     transcoder.deactivationRound = ZERO_BI;
     transcoder.lastActiveStakeUpdateRound = ZERO_BI;
@@ -211,6 +215,10 @@ export function createOrLoadTranscoder(id: string): Transcoder {
     transcoder.totalStake = ZERO_BD;
     transcoder.totalVolumeETH = ZERO_BD;
     transcoder.totalVolumeUSD = ZERO_BD;
+    transcoder.thirtyDayVolumeETH = ZERO_BD;
+    transcoder.sixtyDayVolumeETH = ZERO_BD;
+    transcoder.ninetyDayVolumeETH = ZERO_BD;
+    transcoder.transcoderDays = [];
     transcoder.save();
   }
   return transcoder;
@@ -245,6 +253,7 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.totalSupply = ZERO_BD;
     day.totalActiveStake = ZERO_BD;
     day.participationRate = ZERO_BD;
+
     day.save();
   }
   return day;
@@ -267,6 +276,7 @@ export function createOrLoadTranscoderDay(
     transcoderDay.transcoder = transcoderAddress;
     transcoderDay.volumeUSD = ZERO_BD;
     transcoderDay.volumeETH = ZERO_BD;
+
     transcoderDay.save();
   }
   return transcoderDay;
@@ -322,8 +332,13 @@ export function createRound(
   round.volumeUSD = ZERO_BD;
   round.movedStake = ZERO_BD;
   round.newStake = ZERO_BD;
+
   round.save();
   return round;
+}
+
+export function getTimestampForDaysPast(currentTimestamp: i32, days: i32): i32 {
+  return currentTimestamp - days * 86400;
 }
 
 // return 0 if denominator is 0 in division
@@ -335,8 +350,39 @@ export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
   }
 }
 
+export function getEthPriceUsd(): BigDecimal {
+  return getPriceForPair(getUniswapV3DaiEthPoolAddress());
+}
+
+export function getLptPriceEth(): BigDecimal {
+  return getPriceForPair(getUniswapV3LptEthPoolAddress());
+}
+
+export function getPriceForPair(address: string): BigDecimal {
+  let pricePair = ZERO_BD;
+
+  if (
+    dataSource.network() == "arbitrum-one" ||
+    dataSource.network() == "arbitrum-rinkeby"
+  ) {
+    let uniswapPool = UniswapV3Pool.bind(Address.fromString(address));
+    let slot0 = uniswapPool.try_slot0();
+    if (!slot0.reverted) {
+      let sqrtPriceX96 = slot0.value.value0;
+      let prices = sqrtPriceX96ToTokenPrices(
+        sqrtPriceX96,
+        BigInt.fromI32(18),
+        BigInt.fromI32(18)
+      );
+      pricePair = prices[1];
+    }
+  }
+
+  return pricePair;
+}
+
 let Q192 = "6277101735386680763835789423207666416102355444464034512896"; // 2 ** 192
-export function sqrtPriceX96ToTokenPrices(
+function sqrtPriceX96ToTokenPrices(
   sqrtPriceX96: BigInt,
   token0Decimals: BigInt,
   token1Decimals: BigInt
@@ -354,6 +400,18 @@ export function sqrtPriceX96ToTokenPrices(
 
 export function integerFromString(s: string): BigInt {
   return BigInt.fromString(s);
+}
+
+export function getUniswapV3LptEthPoolAddress(): string {
+  const network = dataSource.network();
+
+  if (network == "arbitrum-one") {
+    return "4fd47e5102dfbf95541f64ed6fe13d4ed26d2546";
+  } else if (network == "arbitrum-rinkeby") {
+    return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
+  } else {
+    return "0xffa7ee1c08416565d054b2cf3e336dcfe21591e5";
+  }
 }
 
 export function getUniswapV3DaiEthPoolAddress(): string {

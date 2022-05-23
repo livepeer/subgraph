@@ -110,6 +110,8 @@ dataSources:
           file: ./abis/BondingManager.json
         - name: LivepeerToken
           file: ./abis/LivepeerToken.json
+        - name: UniswapV3Pool
+          file: ./abis/UniswapV3Pool.json
       entities:
         - Day
         - NewRoundEvent

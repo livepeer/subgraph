@@ -1,30 +1,52 @@
 import { store } from "@graphprotocol/graph-ts";
 import {
-  convertToDecimal, createOrLoadDelegator, createOrLoadProtocol, createOrLoadRound, createOrLoadTransactionFromEvent, createOrLoadTranscoder, getBlockNum, makeEventId, makePoolId, makeUnbondingLockId, MAXIMUM_VALUE_UINT256, ZERO_BI
+  convertToDecimal,
+  createOrLoadDelegator,
+  createOrLoadProtocol,
+  createOrLoadRound,
+  createOrLoadTransactionFromEvent,
+  createOrLoadTranscoder,
+  getBlockNum,
+  makeEventId,
+  makePoolId,
+  makeUnbondingLockId,
+  MAXIMUM_VALUE_UINT256,
+  ZERO_BI,
 } from "../../utils/helpers";
 // Import event types from the registrar contract ABIs
 import {
-  Bond, BondingManager, EarningsClaimed,
-  ParameterUpdate, Rebond, Reward, TranscoderActivated,
-  TranscoderDeactivated, TranscoderSlashed,
-  TranscoderUpdate, TransferBond,
-  Unbond, WithdrawFees, WithdrawStake
+  Bond,
+  BondingManager,
+  EarningsClaimed,
+  ParameterUpdate,
+  Rebond,
+  Reward,
+  TranscoderActivated,
+  TranscoderDeactivated,
+  TranscoderSlashed,
+  TranscoderUpdate,
+  TransferBond,
+  Unbond,
+  WithdrawFees,
+  WithdrawStake,
 } from "../types/BondingManager/BondingManager";
 import {
-  BondEvent, EarningsClaimedEvent,
+  BondEvent,
+  EarningsClaimedEvent,
   ParameterUpdateEvent,
-  Pool, RebondEvent,
-  RewardEvent, TranscoderActivatedEvent,
+  Pool,
+  RebondEvent,
+  RewardEvent,
+  TranscoderActivatedEvent,
   TranscoderDeactivatedEvent,
   TranscoderSlashedEvent,
-  TranscoderUpdateEvent, TransferBondEvent, UnbondEvent,
+  TranscoderUpdateEvent,
+  TransferBondEvent,
+  UnbondEvent,
   UnbondingLock,
   WithdrawFeesEvent,
-  WithdrawStakeEvent
+  WithdrawStakeEvent,
 } from "../types/schema";
-
-
-
 
 export function bond(event: Bond): void {
   let bondingManager = BondingManager.bind(event.address);
@@ -49,7 +71,9 @@ export function bond(event: Bond): void {
       .gt(ZERO_BI) &&
     event.params.oldDelegate.toHex() != event.params.newDelegate.toHex()
   ) {
-    let oldTranscoder = createOrLoadTranscoder(event.params.oldDelegate.toHex());
+    let oldTranscoder = createOrLoadTranscoder(
+      event.params.oldDelegate.toHex()
+    );
     let oldDelegate = createOrLoadDelegator(event.params.oldDelegate.toHex());
     let oldDelegateData = bondingManager.getDelegator(event.params.oldDelegate);
 
@@ -133,12 +157,12 @@ export function transferBond(event: TransferBond): void {
   delegator.save();
 
   // Add unbonding lock for new delegator since it was transferred from the old delegator
-  let newUnbondingLock = UnbondingLock.load(newUniqueUnbondingLockId)
+  let newUnbondingLock = UnbondingLock.load(newUniqueUnbondingLockId);
   if (newUnbondingLock === null) {
     newUnbondingLock = new UnbondingLock(newUniqueUnbondingLockId);
   }
 
-  let oldUnbondingLock = UnbondingLock.load(oldUniqueUnbondingLockId)
+  let oldUnbondingLock = UnbondingLock.load(oldUniqueUnbondingLockId);
   if (oldUnbondingLock === null) {
     oldUnbondingLock = new UnbondingLock(oldUniqueUnbondingLockId);
   }
@@ -165,8 +189,10 @@ export function transferBond(event: TransferBond): void {
   transferBondEvent.amount = convertToDecimal(event.params.amount);
   transferBondEvent.newDelegator = event.params.newDelegator.toHex();
   transferBondEvent.oldDelegator = event.params.oldDelegator.toHex();
-  transferBondEvent.newUnbondingLockId = event.params.newUnbondingLockId.toI32();
-  transferBondEvent.oldUnbondingLockId = event.params.oldUnbondingLockId.toI32();
+  transferBondEvent.newUnbondingLockId =
+    event.params.newUnbondingLockId.toI32();
+  transferBondEvent.oldUnbondingLockId =
+    event.params.oldUnbondingLockId.toI32();
   transferBondEvent.save();
 }
 
@@ -184,7 +210,7 @@ export function unbond(event: Unbond): void {
   let round = createOrLoadRound(getBlockNum());
   let transcoder = createOrLoadTranscoder(event.params.delegate.toHex());
   let delegate = createOrLoadDelegator(event.params.delegate.toHex());
-  let unbondingLock = UnbondingLock.load(uniqueUnbondingLockId)
+  let unbondingLock = UnbondingLock.load(uniqueUnbondingLockId);
   if (unbondingLock === null) {
     unbondingLock = new UnbondingLock(uniqueUnbondingLockId);
   }
@@ -488,6 +514,7 @@ export function transcoderActivated(event: TranscoderActivated): void {
   let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
   let protocol = createOrLoadProtocol();
 
+  transcoder.activationTimestamp = event.block.timestamp.toI32();
   transcoder.lastActiveStakeUpdateRound = event.params.activationRound;
   transcoder.activationRound = event.params.activationRound;
   transcoder.deactivationRound = MAXIMUM_VALUE_UINT256;
@@ -525,6 +552,7 @@ export function transcoderDeactivated(event: TranscoderDeactivated): void {
   let round = createOrLoadRound(getBlockNum());
   let protocol = createOrLoadProtocol();
 
+  transcoder.activationTimestamp = 0;
   transcoder.deactivationRound = event.params.deactivationRound;
   transcoder.save();
 
