@@ -25,7 +25,7 @@ jobs:
         run: yarn --immutable
 
       - uses: azure/setup-kubectl@v2.0
-      - uses: azure/setup-helm@v1
+      - uses: azure/setup-helm@v2.1
 
       - name: Deploy to Arbitrum Rinkeby
         if: github.ref != 'refs/heads/main'
