@@ -17,15 +17,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
           cache: yarn
       - name: Install
         run: yarn --immutable
-
-      - uses: azure/setup-kubectl@v2.0
-      - uses: azure/setup-helm@v1
 
       - name: Deploy to Arbitrum Rinkeby
         if: github.ref != 'refs/heads/main'
