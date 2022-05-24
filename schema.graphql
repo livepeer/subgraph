@@ -52,6 +52,8 @@ type Protocol @entity {
   pendingActivation: [Transcoder!]!
   "Transcoders pending deactivation"
   pendingDeactivation: [Transcoder!]!
+  "Total number of delegators on the network"
+  totalDelegators: BigInt!
 }
 
 """
@@ -171,6 +173,8 @@ type Round @entity {
   movedStake: BigDecimal!
   "Total amount of new stake introduced during the round"
   newStake: BigDecimal!
+  "Total number of delegators at the start of the round"
+  totalDelegators: BigInt!
 }
 
 """
@@ -308,6 +312,8 @@ type Day @entity {
   totalSupply: BigDecimal!
   "Participation rate during the day (totalActiveStake/totalSupply)"
   participationRate: BigDecimal!
+  "Total number of delegators at the start of the day"
+  totalDelegators: BigInt!
 }
 
 """

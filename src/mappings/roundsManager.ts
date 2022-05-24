@@ -15,6 +15,7 @@ import {
   makeEventId,
   makePoolId,
   ONE_BD,
+  ONE_BI,
   PERC_DIVISOR,
   ZERO_BD,
 } from "../../utils/helpers";
@@ -184,6 +185,7 @@ export function newRound(event: NewRound): void {
     );
     round.participationRate = protocol.participationRate;
     day.participationRate = protocol.participationRate;
+    day.totalDelegators = protocol.totalDelegators;
 
     let inflationRateBD = protocol.inflation
       .toBigDecimal()

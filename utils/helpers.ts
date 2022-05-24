@@ -157,6 +157,7 @@ export function createOrLoadProtocol(): Protocol {
     protocol.roundCount = 0;
     protocol.yearlyRewardsToStakeRatio = ZERO_BD;
     protocol.lptPriceEth = ZERO_BD;
+    protocol.totalDelegators = ZERO_BI;
     protocol.pendingActivation = [];
     protocol.pendingDeactivation = [];
     protocol.save();
@@ -253,6 +254,7 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.totalSupply = ZERO_BD;
     day.totalActiveStake = ZERO_BD;
     day.participationRate = ZERO_BD;
+    day.totalDelegators = ZERO_BI;
 
     day.save();
   }
@@ -332,6 +334,7 @@ export function createRound(
   round.volumeUSD = ZERO_BD;
   round.movedStake = ZERO_BD;
   round.newStake = ZERO_BD;
+  round.totalDelegators = ZERO_BI;
 
   round.save();
   return round;

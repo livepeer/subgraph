@@ -11,6 +11,7 @@ import {
   makePoolId,
   makeUnbondingLockId,
   MAXIMUM_VALUE_UINT256,
+  ONE_BI,
   ZERO_BI,
 } from "../../utils/helpers";
 // Import event types from the registrar contract ABIs
@@ -100,8 +101,6 @@ export function bond(event: Bond): void {
     round.newStake = round.newStake.plus(
       convertToDecimal(event.params.additionalAmount)
     );
-
-    round.save();
   }
 
   transcoder.totalStake = convertToDecimal(delegateData.value3);
@@ -116,6 +115,10 @@ export function bond(event: Bond): void {
     convertToDecimal(event.params.additionalAmount)
   );
 
+  protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
+  round.totalDelegators = round.totalDelegators.plus(ONE_BI);
+
+  round.save();
   delegate.save();
   delegator.save();
   transcoder.save();
