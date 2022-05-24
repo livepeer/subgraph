@@ -105,7 +105,7 @@ export function bond(event: Bond): void {
   }
 
   // add to the total delegators if the prev delegate is zero address
-  if (event.params.oldDelegate.toHex() != EMPTY_ADDRESS.toHex()) {
+  if (event.params.oldDelegate.toHex() == EMPTY_ADDRESS.toHex()) {
     protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
   }
 
