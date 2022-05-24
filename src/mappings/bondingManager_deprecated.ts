@@ -35,6 +35,7 @@ import {
   createOrLoadDelegator,
   createOrLoadTranscoder,
   createOrLoadRound,
+  ONE_BI,
 } from "../../utils/helpers";
 import { integer } from "@protofire/subgraph-toolkit";
 
@@ -165,6 +166,10 @@ export function bond(call: BondCall): void {
       transcoder.delegator = delegatorAddress.toHex();
     }
 
+    if (!delegator.delegate) {
+      protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
+    }
+
     // Changing delegate
     if (
       delegator.delegate != null &&
@@ -268,6 +273,8 @@ export function unbond(event: Unbond): void {
   delegator.bondedAmount = convertToDecimal(delegatorData.value0);
   delegator.fees = convertToDecimal(delegatorData.value1);
   delegator.startRound = delegatorData.value4;
+
+  protocol.totalDelegators = protocol.totalDelegators.minus(ONE_BI);
 
   delegator.unbonded = delegator.unbonded.plus(
     convertToDecimal(delegatorData.value0)
