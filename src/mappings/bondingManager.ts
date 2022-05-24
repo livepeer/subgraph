@@ -49,6 +49,7 @@ import {
   makePoolId,
   MAXIMUM_VALUE_UINT256,
   createOrLoadProtocol,
+  ONE_BI,
 } from "../../utils/helpers";
 
 export function bond(event: Bond): void {
@@ -101,6 +102,11 @@ export function bond(event: Bond): void {
     );
 
     round.save();
+  }
+
+  // add to the total delegators if the prev delegate is zero address
+  if (event.params.oldDelegate.toHex() != EMPTY_ADDRESS.toHex()) {
+    protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
   }
 
   transcoder.totalStake = convertToDecimal(delegateData.value3);
@@ -185,6 +191,8 @@ export function unbond(event: Unbond): void {
       transcoder.status = "NotRegistered";
       transcoder.delegator = null;
     }
+
+    protocol.totalDelegators = protocol.totalDelegators.minus(ONE_BI);
 
     // Update delegator's delegate
     delegator.delegate = null;

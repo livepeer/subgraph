@@ -51,6 +51,8 @@ type Protocol @entity {
   pendingActivation: [Transcoder!]!
   "Transcoders pending deactivation"
   pendingDeactivation: [Transcoder!]!
+  "Total number of delegators on the network"
+  totalDelegators: BigInt!
 }
 
 """
