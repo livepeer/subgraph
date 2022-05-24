@@ -23,6 +23,6 @@ jobs:
 
       - name: Deploy to L1 Mainnet
         if: github.ref == 'refs/heads/l1-mainnet'
-        run: yarn deploy:mainnet --deploy-key $SUBGRAPH_ACCESS_TOKEN
+        run: yarn deploy:mainnet --access-token $SUBGRAPH_ACCESS_TOKEN
         env:
           SUBGRAPH_ACCESS_TOKEN: ${{ secrets.SUBGRAPH_ACCESS_TOKEN }}
