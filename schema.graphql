@@ -147,6 +147,8 @@ The Livepeer protocol is round based and each round is represented by some numbe
 type Round @entity {
   "Round number"
   id: ID!
+  "The start date beginning at 12:00am UTC"
+  startTimestamp: Int!
   "Whether the round was initialized"
   initialized: Boolean!
   "Number of blocks this round lasts for"

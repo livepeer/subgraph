@@ -340,6 +340,7 @@ export function createRound(
   round.totalDelegators = ZERO_BI;
   round.numActiveTranscoders = ZERO_BI;
   round.inflation = ZERO_BI;
+  round.startTimestamp = 0;
 
   round.save();
   return round;

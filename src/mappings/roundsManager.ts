@@ -66,6 +66,7 @@ export function newRound(event: NewRound): void {
     totalActiveStake = convertToDecimal(getTotalBondedCallResult.value);
   }
 
+  round.startTimestamp = event.block.timestamp.toI32();
   round.initialized = true;
   round.totalActiveStake = totalActiveStake;
   round.save();
