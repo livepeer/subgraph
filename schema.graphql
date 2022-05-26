@@ -9,7 +9,7 @@ type Protocol @entity {
   "Change in inflation rate per round until the target bonding rate is achieved"
   inflationChange: BigInt!
   "Total active transcoders"
-  numActiveTranscoders: Int!
+  numActiveTranscoders: BigInt!
   "True if the protocol is paused"
   paused: Boolean!
   "Target bonding rate (participation) that determines whether inflation should increase or decrease"
@@ -173,6 +173,10 @@ type Round @entity {
   movedStake: BigDecimal!
   "Total amount of new stake introduced during the round"
   newStake: BigDecimal!
+  "Per round inflation rate"
+  inflation: BigInt!
+  "Total active transcoders"
+  numActiveTranscoders: BigInt!
   "Total number of delegators at the start of the round"
   totalDelegators: BigInt!
 }
@@ -312,7 +316,11 @@ type Day @entity {
   totalSupply: BigDecimal!
   "Participation rate during the day (totalActiveStake/totalSupply)"
   participationRate: BigDecimal!
-  "Total number of delegators at the start of the day"
+  "Per round inflation rate"
+  inflation: BigInt!
+  "Total active transcoders"
+  numActiveTranscoders: BigInt!
+  "Total number of delegators at the start of the round"
   totalDelegators: BigInt!
 }
 

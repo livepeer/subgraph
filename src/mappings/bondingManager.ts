@@ -408,8 +408,7 @@ export function parameterUpdate(event: ParameterUpdate): void {
 
   if (event.params.param == "numActiveTranscoders") {
     protocol.numActiveTranscoders = bondingManager
-      .getTranscoderPoolMaxSize()
-      .toI32();
+      .getTranscoderPoolMaxSize();
   }
 
   protocol.save();

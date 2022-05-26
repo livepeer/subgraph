@@ -152,12 +152,13 @@ export function createOrLoadProtocol(): Protocol {
     protocol.totalVolumeETH = ZERO_BD;
     protocol.totalVolumeUSD = ZERO_BD;
     protocol.unbondingPeriod = ZERO_BI;
-    protocol.numActiveTranscoders = 0;
+    protocol.numActiveTranscoders = ZERO_BI;
     protocol.winningTicketCount = 0;
     protocol.roundCount = 0;
     protocol.yearlyRewardsToStakeRatio = ZERO_BD;
     protocol.lptPriceEth = ZERO_BD;
-    protocol.totalDelegators = ZERO_BI;
+    // 3230 is the count of total delegators from the mainnet subgraph (in the final round)
+    protocol.totalDelegators = BigInt.fromI32(3230);
     protocol.pendingActivation = [];
     protocol.pendingDeactivation = [];
     protocol.save();
@@ -255,6 +256,8 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.totalActiveStake = ZERO_BD;
     day.participationRate = ZERO_BD;
     day.totalDelegators = ZERO_BI;
+    day.numActiveTranscoders = ZERO_BI;
+    day.inflation = ZERO_BI;
 
     day.save();
   }
@@ -335,6 +338,8 @@ export function createRound(
   round.movedStake = ZERO_BD;
   round.newStake = ZERO_BD;
   round.totalDelegators = ZERO_BI;
+  round.numActiveTranscoders = ZERO_BI;
+  round.inflation = ZERO_BI;
 
   round.save();
   return round;
