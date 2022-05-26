@@ -115,8 +115,8 @@ export function bond(event: Bond): void {
     convertToDecimal(event.params.additionalAmount)
   );
 
-  protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
   round.totalDelegators = round.totalDelegators.plus(ONE_BI);
+  protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
 
   round.save();
   delegate.save();
