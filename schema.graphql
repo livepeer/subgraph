@@ -128,7 +128,7 @@ type Pool @entity {
   "Transcoder associated with the pool"
   delegate: Transcoder!
   "Fees collected in the pool"
-  fees: BigDecimal
+  fees: BigDecimal!
   "Total reward tokens collected in the pool"
   rewardTokens: BigDecimal
   "Transcoder's total stake during the earnings pool's round"
