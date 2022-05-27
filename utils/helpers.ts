@@ -157,8 +157,13 @@ export function createOrLoadProtocol(): Protocol {
     protocol.roundCount = 0;
     protocol.yearlyRewardsToStakeRatio = ZERO_BD;
     protocol.lptPriceEth = ZERO_BD;
+
+    const network = dataSource.network();
     // 3230 is the count of total delegators from the mainnet subgraph (in the final round)
-    protocol.totalDelegators = BigInt.fromI32(3230);
+    protocol.totalDelegators = BigInt.fromI32(
+      network == "arbitrum-one" ? 3230 : 0
+    );
+
     protocol.pendingActivation = [];
     protocol.pendingDeactivation = [];
     protocol.save();
