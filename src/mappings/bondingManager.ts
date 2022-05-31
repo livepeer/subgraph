@@ -192,10 +192,10 @@ export function unbond(event: Unbond): void {
       transcoder.delegator = null;
     }
 
-    protocol.totalDelegators = protocol.totalDelegators.minus(ONE_BI);
-
     // Update delegator's delegate
     delegator.delegate = null;
+
+    protocol.totalDelegators = protocol.totalDelegators.minus(ONE_BI);
   }
 
   unbondingLock.unbondingLockId = event.params.unbondingLockId.toI32();
@@ -257,6 +257,8 @@ export function rebond(event: Rebond): void {
       transcoder.status = "Registered";
       transcoder.delegator = event.params.delegator.toHex();
     }
+
+    protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
   }
 
   // update delegator
