@@ -11,7 +11,6 @@ import {
   getBlockNum,
   getEthPriceUsd,
   makeEventId,
-  sqrtPriceX96ToTokenPrices,
   ZERO_BD,
 } from "../../utils/helpers";
 import {
