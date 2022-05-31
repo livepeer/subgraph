@@ -243,6 +243,9 @@ export function unbond(event: Unbond): void {
 
     // Update delegator's delegate
     delegator.delegate = null;
+
+    round.totalDelegators = round.totalDelegators.minus(ONE_BI);
+    protocol.totalDelegators = protocol.totalDelegators.minus(ONE_BI);
   }
 
   unbondingLock.unbondingLockId = event.params.unbondingLockId.toI32();
@@ -297,6 +300,9 @@ export function rebond(event: Rebond): void {
       transcoder.status = "Registered";
       transcoder.delegator = event.params.delegator.toHex();
     }
+
+    round.totalDelegators = round.totalDelegators.plus(ONE_BI);
+    protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
   }
 
   // update delegator
@@ -407,8 +413,7 @@ export function parameterUpdate(event: ParameterUpdate): void {
   }
 
   if (event.params.param == "numActiveTranscoders") {
-    protocol.numActiveTranscoders = bondingManager
-      .getTranscoderPoolMaxSize();
+    protocol.numActiveTranscoders = bondingManager.getTranscoderPoolMaxSize();
   }
 
   protocol.save();
