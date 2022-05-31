@@ -14,6 +14,8 @@ import {
   getTimestampForDaysPast,
   makeEventId,
   makePoolId,
+  ONE_BD,
+  ONE_BI,
   PERC_DIVISOR,
   ZERO_BD,
 } from "../../utils/helpers";
@@ -64,6 +66,7 @@ export function newRound(event: NewRound): void {
     totalActiveStake = convertToDecimal(getTotalBondedCallResult.value);
   }
 
+  round.startTimestamp = event.block.timestamp.toI32();
   round.initialized = true;
   round.totalActiveStake = totalActiveStake;
   round.save();
@@ -183,7 +186,14 @@ export function newRound(event: NewRound): void {
       protocol.totalSupply
     );
     round.participationRate = protocol.participationRate;
+    round.totalDelegators = protocol.totalDelegators;
+    round.inflation = protocol.inflation;
+    round.numActiveTranscoders = protocol.numActiveTranscoders;
+
     day.participationRate = protocol.participationRate;
+    day.totalDelegators = protocol.totalDelegators;
+    day.inflation = protocol.inflation;
+    day.numActiveTranscoders = protocol.numActiveTranscoders;
 
     let inflationRateBD = protocol.inflation
       .toBigDecimal()

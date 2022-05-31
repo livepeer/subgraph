@@ -73,4 +73,5 @@ yarn test
 
 ## Mainnet
 
-To deploy the old Livepeer subgraph on mainnet checkout commit `b02006b5f7cf27e0c307a8e12b6b065b942f4dab`
+To deploy the Livepeer subgraph on mainnet, make changes to `l1-mainnet`.
+Changes to this branch will automatically deploy to the L1 subgraph.
