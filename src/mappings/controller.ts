@@ -1,32 +1,23 @@
 import {
-  Transaction,
-  Protocol,
-  PauseEvent,
-  UnpauseEvent,
-} from "../types/schema";
-import {
+  createOrLoadProtocol,
   createOrLoadRound,
+  createOrLoadTransactionFromEvent,
   getBlockNum,
-  makeEventId,
+  makeEventId
 } from "../../utils/helpers";
 import { Pause, Unpause } from "../types/Controller/Controller";
+import {
+  PauseEvent,
+  UnpauseEvent
+} from "../types/schema";
 
 export function pause(event: Pause): void {
   let round = createOrLoadRound(getBlockNum());
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   protocol.paused = true;
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let pauseEvent = new PauseEvent(
     makeEventId(event.transaction.hash, event.logIndex)
@@ -39,20 +30,11 @@ export function pause(event: Pause): void {
 
 export function unpause(event: Unpause): void {
   let round = createOrLoadRound(getBlockNum());
-  let protocol = Protocol.load("0");
+  let protocol = createOrLoadProtocol();
   protocol.paused = false;
   protocol.save();
 
-  let tx =
-    Transaction.load(event.transaction.hash.toHex()) ||
-    new Transaction(event.transaction.hash.toHex());
-  tx.blockNumber = event.block.number;
-  tx.gasUsed = event.transaction.gasUsed;
-  tx.gasPrice = event.transaction.gasPrice;
-  tx.timestamp = event.block.timestamp.toI32();
-  tx.from = event.transaction.from.toHex();
-  tx.to = event.transaction.to.toHex();
-  tx.save();
+  createOrLoadTransactionFromEvent(event);
 
   let unpauseEvent = new UnpauseEvent(
     makeEventId(event.transaction.hash, event.logIndex)

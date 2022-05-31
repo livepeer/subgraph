@@ -32,23 +32,44 @@ Follow the instructions documented
 
 1. Install [Docker](https://docs.docker.com) and
    [Docker Compose](https://docs.docker.com/compose/install/)
-2. Inside `docker-compose.yml`, set the `ethereum` value under the `environment`
-   section to an archive node that has tracing enabled. The reason for requiring
-   tracing is because the subgraph relies on call handlers prior to the
-   streamflow deployment to index a couple calls and call handlers require
-   depend on the Parity tracing API. If you don't have access to an archive node
-   with tracing enabled we recommend using [Alchemy](https://alchemyapi.io/).
-3. In the root of this project run `docker-compose up`. This command will look
+2. In the root of this project run `docker-compose up`. This command will look
    for the `docker-compose.yml` file and automatically provision a server with
    rust, postgres, and ipfs, and spin up a graph node with a GraphiQL interface
    at `http://127.0.0.1:8000/`.
-
-4. Run `yarn create:local` to create the subgraph
-5. Run `yarn deploy:local` to deploy it
+3. Run `yarn create:local` to create the subgraph
+4. Run `yarn deploy:local` to deploy it
 
 After downloading the latest blocks from Ethereum, you should begin to see
 Livepeer smart contract events flying in. Open a GraphiQL browser at
 localhost:8000 to query the Graph Node.
+
+## Testing
+
+We rely on Docker Compose to test the subgraph against our contracts. To run the tests, use one of the following methods.
+
+### Multi Command
+
+This will use the dependencies in Docker and run the tests locally in Hardhat. This is the recommended flow for developing tests.
+
+```bash
+yarn start # in first terminal
+```
+
+In another terminal window, create the subgraph and deploy it, then run tests against it:
+
+```bash
+yarn create:local
+yarn deploy:local
+yarn test:development
+```
+
+### Single Command
+
+This will build the latest tests into a Dockerfile and run them against the subgraph in Docker.
+
+```bash
+yarn test
+```
 
 ## Mainnet
 

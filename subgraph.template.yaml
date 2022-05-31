@@ -13,7 +13,7 @@ dataSources:
       abi: BondingManager
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/bondingManager.ts
       abis:
@@ -76,7 +76,7 @@ dataSources:
       abi: L2Migrator
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/l2Migrator.ts
       abis:
@@ -101,7 +101,7 @@ dataSources:
       abi: RoundsManager
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/roundsManager.ts
       abis:
@@ -111,8 +111,8 @@ dataSources:
           file: ./abis/BondingManager.json
         - name: LivepeerToken
           file: ./abis/LivepeerToken.json
-        - name: RoundsManager
-          file: ./abis/RoundsManager.json
+        - name: UniswapV3Pool
+          file: ./abis/UniswapV3Pool.json
       entities:
         - Day
         - NewRoundEvent
@@ -136,7 +136,7 @@ dataSources:
       abi: Minter
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/minter.ts
       abis:
@@ -164,7 +164,7 @@ dataSources:
       abi: Minter
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/minter.ts
       abis:
@@ -192,7 +192,7 @@ dataSources:
       abi: TicketBroker
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/ticketBroker.ts
       abis:
@@ -234,7 +234,7 @@ dataSources:
       abi: Controller
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/controller.ts
       abis:
@@ -259,7 +259,7 @@ dataSources:
       abi: PollCreator
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/pollCreator.ts
       abis:
@@ -284,7 +284,7 @@ dataSources:
       abi: ServiceRegistry
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/serviceRegistry.ts   
       abis:
@@ -309,7 +309,7 @@ dataSources:
       abi: LivepeerToken
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/livepeerToken.ts 
       abis:
@@ -345,7 +345,7 @@ templates:
       abi: BondingManager
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/pollTallyHandlers.ts
       abis:
@@ -378,7 +378,7 @@ templates:
       abi: Poll
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/mappings/poll.ts
       abis:
