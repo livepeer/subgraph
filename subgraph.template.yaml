@@ -25,6 +25,7 @@ dataSources:
           - BondEvent
           - TransferBondEvent
           - Delegator
+          - LivepeerAccount
           - EarningsClaimedEvent
           - ParameterUpdateEvent
           - Pool
