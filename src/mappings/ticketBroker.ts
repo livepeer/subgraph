@@ -11,10 +11,12 @@ import {
   getBlockNum,
   getEthPriceUsd,
   makeEventId,
+  makePoolId,
   ZERO_BD,
 } from "../../utils/helpers";
 import {
   DepositFundedEvent,
+  Pool,
   ReserveClaimedEvent,
   ReserveFundedEvent,
   WinningTicketRedeemedEvent,
@@ -37,6 +39,8 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let protocol = createOrLoadProtocol();
   let faceValue = convertToDecimal(event.params.faceValue);
   let ethPrice = getEthPriceUsd();
+  let poolId = makePoolId(event.params.recipient.toHex(), round.id);
+  let pool = Pool.load(poolId);
 
   createOrLoadTransactionFromEvent(event);
 
@@ -88,6 +92,12 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 
   protocol.winningTicketCount = protocol.winningTicketCount + 1;
   protocol.save();
+
+  // update the transcoder pool fees
+  if (pool) {
+    pool.fees = pool.fees.plus(faceValue);
+    pool.save();
+  }
 
   day.totalSupply = protocol.totalSupply;
   day.totalActiveStake = protocol.totalActiveStake;
