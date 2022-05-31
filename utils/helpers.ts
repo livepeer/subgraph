@@ -221,6 +221,10 @@ export function createOrLoadTranscoder(id: string): Transcoder {
     transcoder.ninetyDayVolumeETH = ZERO_BD;
     transcoder.transcoderDays = [];
     transcoder.save();
+
+    let account = createOrUpdateLivepeerAccount(id);
+    account.delegate = transcoder.id;
+    account.save();
   }
   return transcoder;
 }
@@ -237,6 +241,10 @@ export function createOrLoadDelegator(id: string): Delegator {
     delegator.withdrawnFees = ZERO_BD;
     delegator.delegatedAmount = ZERO_BD;
     delegator.save();
+
+    let account = createOrUpdateLivepeerAccount(id);
+    account.delegate = delegator.id;
+    account.save();
   }
   return delegator;
 }
