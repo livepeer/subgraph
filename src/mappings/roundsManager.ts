@@ -14,7 +14,6 @@ import {
   getTimestampForDaysPast,
   makeEventId,
   makePoolId,
-  ONE_BD,
   PERC_DIVISOR,
   ZERO_BD,
 } from "../../utils/helpers";
@@ -118,6 +117,7 @@ export function newRound(event: NewRound): void {
     pool = new Pool(poolId);
     pool.round = round.id;
     pool.delegate = currentTranscoder.toHex();
+    pool.fees = ZERO_BD;
     if (transcoder) {
       pool.totalStake = transcoder.totalStake;
       pool.rewardCut = transcoder.rewardCut;
