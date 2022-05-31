@@ -243,7 +243,7 @@ export function createOrLoadDelegator(id: string): Delegator {
     delegator.save();
 
     let account = createOrUpdateLivepeerAccount(id);
-    account.delegate = delegator.id;
+    account.delegator = delegator.id;
     account.save();
   }
   return delegator;
@@ -253,8 +253,8 @@ export function createOrUpdateLivepeerAccount(id: string): LivepeerAccount {
   let account = LivepeerAccount.load(id);
   if (account == null) {
     account = new LivepeerAccount(id);
-    account.delegator = ZERO_ADDRESS;
-    account.delegate = ZERO_ADDRESS;
+    account.delegator = EMPTY_ADDRESS.toHex();
+    account.delegate = EMPTY_ADDRESS.toHex();
     account.save();
   }
   return account as LivepeerAccount;
