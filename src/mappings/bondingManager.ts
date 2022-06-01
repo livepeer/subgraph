@@ -535,6 +535,8 @@ export function transcoderActivated(event: TranscoderActivated): void {
     protocol.pendingDeactivation = pendingDeactivation;
   }
 
+  protocol.activeTranscoderCount = protocol.activeTranscoderCount.plus(ONE_BI);
+
   // Add transcoder to list of transcoders pending activation
   let pendingActivation = protocol.pendingActivation;
   pendingActivation.push(event.params.transcoder.toHex());
@@ -570,6 +572,8 @@ export function transcoderDeactivated(event: TranscoderDeactivated): void {
     pendingActivation.splice(index, 1);
     protocol.pendingActivation = pendingActivation;
   }
+
+  protocol.activeTranscoderCount = protocol.activeTranscoderCount.minus(ONE_BI);
 
   // Add transcoder to list of transcoders pending deactivation
   let pendingDeactivation = protocol.pendingDeactivation;

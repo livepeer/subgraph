@@ -189,11 +189,13 @@ export function newRound(event: NewRound): void {
     round.totalDelegators = protocol.totalDelegators;
     round.inflation = protocol.inflation;
     round.numActiveTranscoders = protocol.numActiveTranscoders;
+    round.activeTranscoderCount = protocol.activeTranscoderCount;
 
     day.participationRate = protocol.participationRate;
     day.totalDelegators = protocol.totalDelegators;
     day.inflation = protocol.inflation;
     day.numActiveTranscoders = protocol.numActiveTranscoders;
+    day.activeTranscoderCount = protocol.activeTranscoderCount;
 
     let inflationRateBD = protocol.inflation
       .toBigDecimal()
