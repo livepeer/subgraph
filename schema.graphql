@@ -55,7 +55,7 @@ type Protocol @entity {
   "Transcoders pending deactivation"
   pendingDeactivation: [Transcoder!]!
   "Total number of delegators on the network"
-  totalDelegators: BigInt!
+  delegatorsCount: BigInt!
 }
 
 """
@@ -184,7 +184,7 @@ type Round @entity {
   "Total active transcoders (up to the limit)"
   activeTranscoderCount: BigInt!
   "Total number of delegators at the start of the round"
-  totalDelegators: BigInt!
+  delegatorsCount: BigInt!
 }
 
 """
@@ -341,7 +341,7 @@ type Day @entity {
   "Total active transcoders (up to the limit)"
   activeTranscoderCount: BigInt!
   "Total number of delegators at the start of the round"
-  totalDelegators: BigInt!
+  delegatorsCount: BigInt!
 }
 
 """

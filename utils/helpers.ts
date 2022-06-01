@@ -162,7 +162,7 @@ export function createOrLoadProtocol(): Protocol {
 
     const network = dataSource.network();
     // 3520 is the count of total delegators from the mainnet subgraph (in the final round)
-    protocol.totalDelegators = BigInt.fromI32(
+    protocol.delegatorsCount = BigInt.fromI32(
       network == "arbitrum-one" ? 3520 : 0
     );
 
@@ -281,7 +281,7 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.totalSupply = ZERO_BD;
     day.totalActiveStake = ZERO_BD;
     day.participationRate = ZERO_BD;
-    day.totalDelegators = ZERO_BI;
+    day.delegatorsCount = ZERO_BI;
     day.numActiveTranscoders = ZERO_BI;
     day.activeTranscoderCount = ZERO_BI;
     day.inflation = ZERO_BI;
@@ -364,7 +364,7 @@ export function createRound(
   round.volumeUSD = ZERO_BD;
   round.movedStake = ZERO_BD;
   round.newStake = ZERO_BD;
-  round.totalDelegators = ZERO_BI;
+  round.delegatorsCount = ZERO_BI;
   round.numActiveTranscoders = ZERO_BI;
   round.activeTranscoderCount = ZERO_BI;
   round.inflation = ZERO_BI;
