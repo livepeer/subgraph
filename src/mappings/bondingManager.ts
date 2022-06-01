@@ -115,8 +115,8 @@ export function bond(event: Bond): void {
     convertToDecimal(event.params.additionalAmount)
   );
 
-  round.totalDelegators = round.totalDelegators.plus(ONE_BI);
-  protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
+  round.delegatorsCount = round.delegatorsCount.plus(ONE_BI);
+  protocol.delegatorsCount = protocol.delegatorsCount.plus(ONE_BI);
 
   round.save();
   delegate.save();
@@ -244,8 +244,8 @@ export function unbond(event: Unbond): void {
     // Update delegator's delegate
     delegator.delegate = null;
 
-    round.totalDelegators = round.totalDelegators.minus(ONE_BI);
-    protocol.totalDelegators = protocol.totalDelegators.minus(ONE_BI);
+    round.delegatorsCount = round.delegatorsCount.minus(ONE_BI);
+    protocol.delegatorsCount = protocol.delegatorsCount.minus(ONE_BI);
   }
 
   unbondingLock.unbondingLockId = event.params.unbondingLockId.toI32();
@@ -301,8 +301,8 @@ export function rebond(event: Rebond): void {
       transcoder.delegator = event.params.delegator.toHex();
     }
 
-    round.totalDelegators = round.totalDelegators.plus(ONE_BI);
-    protocol.totalDelegators = protocol.totalDelegators.plus(ONE_BI);
+    round.delegatorsCount = round.delegatorsCount.plus(ONE_BI);
+    protocol.delegatorsCount = protocol.delegatorsCount.plus(ONE_BI);
   }
 
   // update delegator
@@ -535,6 +535,8 @@ export function transcoderActivated(event: TranscoderActivated): void {
     protocol.pendingDeactivation = pendingDeactivation;
   }
 
+  protocol.activeTranscoderCount = protocol.activeTranscoderCount.plus(ONE_BI);
+
   // Add transcoder to list of transcoders pending activation
   let pendingActivation = protocol.pendingActivation;
   pendingActivation.push(event.params.transcoder.toHex());
@@ -570,6 +572,8 @@ export function transcoderDeactivated(event: TranscoderDeactivated): void {
     pendingActivation.splice(index, 1);
     protocol.pendingActivation = pendingActivation;
   }
+
+  protocol.activeTranscoderCount = protocol.activeTranscoderCount.minus(ONE_BI);
 
   // Add transcoder to list of transcoders pending deactivation
   let pendingDeactivation = protocol.pendingDeactivation;

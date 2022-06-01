@@ -154,15 +154,16 @@ export function createOrLoadProtocol(): Protocol {
     protocol.totalVolumeUSD = ZERO_BD;
     protocol.unbondingPeriod = ZERO_BI;
     protocol.numActiveTranscoders = ZERO_BI;
+    protocol.activeTranscoderCount = ZERO_BI;
     protocol.winningTicketCount = 0;
     protocol.roundCount = 0;
     protocol.yearlyRewardsToStakeRatio = ZERO_BD;
     protocol.lptPriceEth = ZERO_BD;
 
     const network = dataSource.network();
-    // 3230 is the count of total delegators from the mainnet subgraph (in the final round)
-    protocol.totalDelegators = BigInt.fromI32(
-      network == "arbitrum-one" ? 3230 : 0
+    // 3520 is the count of total delegators from the mainnet subgraph (in the final round)
+    protocol.delegatorsCount = BigInt.fromI32(
+      network == "arbitrum-one" ? 3520 : 0
     );
 
     protocol.pendingActivation = [];
@@ -280,8 +281,9 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.totalSupply = ZERO_BD;
     day.totalActiveStake = ZERO_BD;
     day.participationRate = ZERO_BD;
-    day.totalDelegators = ZERO_BI;
+    day.delegatorsCount = ZERO_BI;
     day.numActiveTranscoders = ZERO_BI;
+    day.activeTranscoderCount = ZERO_BI;
     day.inflation = ZERO_BI;
 
     day.save();
@@ -362,8 +364,9 @@ export function createRound(
   round.volumeUSD = ZERO_BD;
   round.movedStake = ZERO_BD;
   round.newStake = ZERO_BD;
-  round.totalDelegators = ZERO_BI;
+  round.delegatorsCount = ZERO_BI;
   round.numActiveTranscoders = ZERO_BI;
+  round.activeTranscoderCount = ZERO_BI;
   round.inflation = ZERO_BI;
   round.startTimestamp = 0;
 

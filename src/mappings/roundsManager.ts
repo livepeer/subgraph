@@ -186,14 +186,16 @@ export function newRound(event: NewRound): void {
       protocol.totalSupply
     );
     round.participationRate = protocol.participationRate;
-    round.totalDelegators = protocol.totalDelegators;
+    round.delegatorsCount = protocol.delegatorsCount;
     round.inflation = protocol.inflation;
     round.numActiveTranscoders = protocol.numActiveTranscoders;
+    round.activeTranscoderCount = protocol.activeTranscoderCount;
 
     day.participationRate = protocol.participationRate;
-    day.totalDelegators = protocol.totalDelegators;
+    day.delegatorsCount = protocol.delegatorsCount;
     day.inflation = protocol.inflation;
     day.numActiveTranscoders = protocol.numActiveTranscoders;
+    day.activeTranscoderCount = protocol.activeTranscoderCount;
 
     let inflationRateBD = protocol.inflation
       .toBigDecimal()
