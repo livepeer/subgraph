@@ -154,6 +154,7 @@ export function createOrLoadProtocol(): Protocol {
     protocol.totalVolumeUSD = ZERO_BD;
     protocol.unbondingPeriod = ZERO_BI;
     protocol.numActiveTranscoders = ZERO_BI;
+    protocol.activeTranscoderCount = ZERO_BI;
     protocol.winningTicketCount = 0;
     protocol.roundCount = 0;
     protocol.yearlyRewardsToStakeRatio = ZERO_BD;
@@ -282,6 +283,7 @@ export function createOrLoadDay(timestamp: i32): Day {
     day.participationRate = ZERO_BD;
     day.totalDelegators = ZERO_BI;
     day.numActiveTranscoders = ZERO_BI;
+    day.activeTranscoderCount = ZERO_BI;
     day.inflation = ZERO_BI;
 
     day.save();
@@ -364,6 +366,7 @@ export function createRound(
   round.newStake = ZERO_BD;
   round.totalDelegators = ZERO_BI;
   round.numActiveTranscoders = ZERO_BI;
+  round.activeTranscoderCount = ZERO_BI;
   round.inflation = ZERO_BI;
   round.startTimestamp = 0;
 
