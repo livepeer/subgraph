@@ -42,8 +42,6 @@ type Protocol @entity {
   lastRoundLengthUpdateStartBlock: BigInt!
   "Livepeer Token supply"
   totalSupply: BigDecimal!
-  "The ratio of the estimated total yearly rewards (in LPT) over the total stake (in LPT) given constant inflation"
-  yearlyRewardsToStakeRatio: BigDecimal!
   "Livepeer Token price in ETH (not to be used for trading - updated only every round)"
   lptPriceEth: BigDecimal!
   "Total winning tickets"

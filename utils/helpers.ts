@@ -157,7 +157,6 @@ export function createOrLoadProtocol(): Protocol {
     protocol.activeTranscoderCount = ZERO_BI;
     protocol.winningTicketCount = 0;
     protocol.roundCount = 0;
-    protocol.yearlyRewardsToStakeRatio = ZERO_BD;
     protocol.lptPriceEth = ZERO_BD;
 
     const network = dataSource.network();
