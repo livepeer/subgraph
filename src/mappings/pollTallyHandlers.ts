@@ -42,7 +42,10 @@ export function updatePollTallyOnReward(event: Reward): void {
   let round = createOrLoadRound(getBlockNum());
   let voteId = makeVoteId(delegator.id, poll.id);
   let vote = createOrLoadVote(voteId);
-  let transcoder = createOrLoadTranscoder(event.params.transcoder.toHex());
+  let transcoder = createOrLoadTranscoder(
+    event.params.transcoder.toHex(),
+    event.block.timestamp.toI32()
+  );
 
   // update vote stakes
   if (voterAddress == event.params.transcoder.toHex()) {
@@ -95,13 +98,19 @@ export function updatePollTallyOnBond(event: Bond): void {
     pollAddress
   );
   let oldDelegateVote = createOrLoadVote(oldDelegateVoteId);
-  let oldDelegate = createOrLoadTranscoder(event.params.oldDelegate.toHex());
+  let oldDelegate = createOrLoadTranscoder(
+    event.params.oldDelegate.toHex(),
+    event.block.timestamp.toI32()
+  );
   let newDelegateVoteId = makeVoteId(
     event.params.newDelegate.toHex(),
     pollAddress
   );
   let newDelegateVote = createOrLoadVote(newDelegateVoteId);
-  let newDelegate = createOrLoadTranscoder(event.params.newDelegate.toHex());
+  let newDelegate = createOrLoadTranscoder(
+    event.params.newDelegate.toHex(),
+    event.block.timestamp.toI32()
+  );
   let voteId = makeVoteId(voterAddress, pollAddress);
   let vote = createOrLoadVote(voteId);
   let bondedAmount = convertToDecimal(event.params.bondedAmount);
@@ -210,7 +219,10 @@ function updatePollTally<T extends Rebond>(event: T): void {
   let vote = createOrLoadVote(voteId);
   let delegateVoteId = makeVoteId(event.params.delegate.toHex(), pollAddress);
   let delegateVote = createOrLoadVote(delegateVoteId);
-  let delegate = createOrLoadTranscoder(event.params.delegate.toHex());
+  let delegate = createOrLoadTranscoder(
+    event.params.delegate.toHex(),
+    event.block.timestamp.toI32()
+  );
   let bondingManager = BondingManager.bind(event.address);
 
   if (delegateVote) {

@@ -204,7 +204,7 @@ export function createOrLoadVote(id: string): Vote {
   return vote;
 }
 
-export function createOrLoadTranscoder(id: string): Transcoder {
+export function createOrLoadTranscoder(id: string, timestamp: i32): Transcoder {
   let transcoder = Transcoder.load(id);
   if (transcoder == null) {
     transcoder = new Transcoder(id);
@@ -229,14 +229,14 @@ export function createOrLoadTranscoder(id: string): Transcoder {
     transcoder.transcoderDays = [];
     transcoder.save();
 
-    let account = createOrUpdateLivepeerAccount(id);
+    let account = createOrUpdateLivepeerAccount(id, timestamp);
     account.delegate = transcoder.id;
     account.save();
   }
   return transcoder;
 }
 
-export function createOrLoadDelegator(id: string): Delegator {
+export function createOrLoadDelegator(id: string, timestamp: i32): Delegator {
   let delegator = Delegator.load(id);
   if (delegator == null) {
     delegator = new Delegator(id);
@@ -249,19 +249,20 @@ export function createOrLoadDelegator(id: string): Delegator {
     delegator.delegatedAmount = ZERO_BD;
     delegator.save();
 
-    let account = createOrUpdateLivepeerAccount(id);
+    let account = createOrUpdateLivepeerAccount(id, timestamp);
     account.delegator = delegator.id;
     account.save();
   }
   return delegator;
 }
 
-export function createOrUpdateLivepeerAccount(id: string): LivepeerAccount {
+export function createOrUpdateLivepeerAccount(id: string, timestamp: i32): LivepeerAccount {
   let account = LivepeerAccount.load(id);
   if (account == null) {
     account = new LivepeerAccount(id);
     account.delegator = EMPTY_ADDRESS.toHex();
     account.delegate = EMPTY_ADDRESS.toHex();
+    account.createdTimestamp = timestamp;
     account.save();
   }
   return account as LivepeerAccount;

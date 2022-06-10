@@ -78,7 +78,10 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   }
 
   // Update transcoder's fee volume
-  let transcoder = createOrLoadTranscoder(event.params.recipient.toHex());
+  let transcoder = createOrLoadTranscoder(
+    event.params.recipient.toHex(),
+    event.block.timestamp.toI32()
+  );
   transcoder.totalVolumeETH = transcoder.totalVolumeETH.plus(faceValue);
   transcoder.totalVolumeUSD = transcoder.totalVolumeUSD.plus(
     faceValue.times(ethPrice)
