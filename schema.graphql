@@ -219,8 +219,8 @@ Abstraction for accounts/delegators bonded with the protocol
 type LivepeerAccount @entity {
   "ETH address of the bonded delegator"
   id: ID!
-  "The date the account was created, beginning at 12:00am UTC"
-  createdTimestamp: Int!
+  "The date the account was last associated with an event, beginning at 12:00am UTC"
+  lastUpdatedTimestamp: Int!
   "Delegator details for this account"
   delegator: Delegator
   "Reference to the Delegate this address is bonded to"

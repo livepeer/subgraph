@@ -228,11 +228,12 @@ export function createOrLoadTranscoder(id: string, timestamp: i32): Transcoder {
     transcoder.ninetyDayVolumeETH = ZERO_BD;
     transcoder.transcoderDays = [];
     transcoder.save();
-
-    let account = createOrUpdateLivepeerAccount(id, timestamp);
-    account.delegate = transcoder.id;
-    account.save();
   }
+
+  let account = createOrUpdateLivepeerAccount(id, timestamp);
+  account.delegate = transcoder.id;
+  account.save();
+
   return transcoder;
 }
 
@@ -248,11 +249,12 @@ export function createOrLoadDelegator(id: string, timestamp: i32): Delegator {
     delegator.withdrawnFees = ZERO_BD;
     delegator.delegatedAmount = ZERO_BD;
     delegator.save();
-
-    let account = createOrUpdateLivepeerAccount(id, timestamp);
-    account.delegator = delegator.id;
-    account.save();
   }
+
+  let account = createOrUpdateLivepeerAccount(id, timestamp);
+  account.delegator = delegator.id;
+  account.save();
+
   return delegator;
 }
 
@@ -262,10 +264,12 @@ export function createOrUpdateLivepeerAccount(id: string, timestamp: i32): Livep
     account = new LivepeerAccount(id);
     account.delegator = EMPTY_ADDRESS.toHex();
     account.delegate = EMPTY_ADDRESS.toHex();
-    account.createdTimestamp = timestamp;
-    account.save();
   }
-  return account as LivepeerAccount;
+
+  account.lastUpdatedTimestamp = timestamp;
+  account.save();
+
+  return account;
 }
 
 export function createOrLoadDay(timestamp: i32): Day {
