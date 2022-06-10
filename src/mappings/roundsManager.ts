@@ -55,7 +55,10 @@ export function newRound(event: NewRound): void {
     log.info("getFirstTranscoderInPool reverted", []);
   } else {
     currentTranscoder = callResult.value;
-    transcoder = createOrLoadTranscoder(currentTranscoder.toHex());
+    transcoder = createOrLoadTranscoder(
+      currentTranscoder.toHex(),
+      event.block.timestamp.toI32()
+    );
   }
 
   // will revert if there is no LPT bonded
@@ -79,7 +82,10 @@ export function newRound(event: NewRound): void {
   let pendingActivation = protocol.pendingActivation;
   if (pendingActivation.length) {
     for (let index = 0; index < pendingActivation.length; index++) {
-      let t = createOrLoadTranscoder(pendingActivation[index]);
+      let t = createOrLoadTranscoder(
+        pendingActivation[index],
+        event.block.timestamp.toI32()
+      );
       t.active = true;
       t.save();
     }
@@ -90,7 +96,10 @@ export function newRound(event: NewRound): void {
   let pendingDeactivation = protocol.pendingDeactivation;
   if (pendingDeactivation.length) {
     for (let index = 0; index < pendingDeactivation.length; index++) {
-      let t = createOrLoadTranscoder(pendingDeactivation[index]);
+      let t = createOrLoadTranscoder(
+        pendingDeactivation[index],
+        event.block.timestamp.toI32()
+      );
       t.active = false;
       t.save();
     }
@@ -196,23 +205,6 @@ export function newRound(event: NewRound): void {
     day.inflation = protocol.inflation;
     day.numActiveTranscoders = protocol.numActiveTranscoders;
     day.activeTranscoderCount = protocol.activeTranscoderCount;
-
-    let inflationRateBD = protocol.inflation
-      .toBigDecimal()
-      .div(BigDecimal.fromString("1000000000"));
-    let roundsPerYear = 417;
-    let totalSupply = protocol.totalSupply;
-    let totalRewards = ZERO_BD;
-
-    for (let i = 0; i < roundsPerYear; i++) {
-      let roundRewards = totalSupply.times(inflationRateBD);
-      totalRewards = totalRewards.plus(roundRewards);
-      totalSupply = totalSupply.plus(roundRewards);
-    }
-
-    protocol.yearlyRewardsToStakeRatio = totalRewards.div(
-      protocol.totalActiveStake
-    );
   }
 
   protocol.save();

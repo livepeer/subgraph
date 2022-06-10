@@ -157,7 +157,6 @@ export function createOrLoadProtocol(): Protocol {
     protocol.activeTranscoderCount = ZERO_BI;
     protocol.winningTicketCount = 0;
     protocol.roundCount = 0;
-    protocol.yearlyRewardsToStakeRatio = ZERO_BD;
     protocol.lptPriceEth = ZERO_BD;
 
     const network = dataSource.network();
@@ -205,7 +204,7 @@ export function createOrLoadVote(id: string): Vote {
   return vote;
 }
 
-export function createOrLoadTranscoder(id: string): Transcoder {
+export function createOrLoadTranscoder(id: string, timestamp: i32): Transcoder {
   let transcoder = Transcoder.load(id);
   if (transcoder == null) {
     transcoder = new Transcoder(id);
@@ -229,15 +228,16 @@ export function createOrLoadTranscoder(id: string): Transcoder {
     transcoder.ninetyDayVolumeETH = ZERO_BD;
     transcoder.transcoderDays = [];
     transcoder.save();
-
-    let account = createOrUpdateLivepeerAccount(id);
-    account.delegate = transcoder.id;
-    account.save();
   }
+
+  let account = createOrUpdateLivepeerAccount(id, timestamp);
+  account.delegate = transcoder.id;
+  account.save();
+
   return transcoder;
 }
 
-export function createOrLoadDelegator(id: string): Delegator {
+export function createOrLoadDelegator(id: string, timestamp: i32): Delegator {
   let delegator = Delegator.load(id);
   if (delegator == null) {
     delegator = new Delegator(id);
@@ -249,23 +249,27 @@ export function createOrLoadDelegator(id: string): Delegator {
     delegator.withdrawnFees = ZERO_BD;
     delegator.delegatedAmount = ZERO_BD;
     delegator.save();
-
-    let account = createOrUpdateLivepeerAccount(id);
-    account.delegator = delegator.id;
-    account.save();
   }
+
+  let account = createOrUpdateLivepeerAccount(id, timestamp);
+  account.delegator = delegator.id;
+  account.save();
+
   return delegator;
 }
 
-export function createOrUpdateLivepeerAccount(id: string): LivepeerAccount {
+export function createOrUpdateLivepeerAccount(id: string, timestamp: i32): LivepeerAccount {
   let account = LivepeerAccount.load(id);
   if (account == null) {
     account = new LivepeerAccount(id);
     account.delegator = EMPTY_ADDRESS.toHex();
     account.delegate = EMPTY_ADDRESS.toHex();
-    account.save();
   }
-  return account as LivepeerAccount;
+
+  account.lastUpdatedTimestamp = timestamp;
+  account.save();
+
+  return account;
 }
 
 export function createOrLoadDay(timestamp: i32): Day {

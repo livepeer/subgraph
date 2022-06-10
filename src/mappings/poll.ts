@@ -66,7 +66,10 @@ export function vote(event: VoteEventParam): void {
     // if voter is a delegator
     let delegator = Delegator.load(event.params.voter.toHex());
     if (delegator && delegator.delegate !== null) {
-      let delegate = createOrLoadTranscoder(delegator.delegate!);
+      let delegate = createOrLoadTranscoder(
+        delegator.delegate!,
+        event.block.timestamp.toI32()
+      );
 
       // If voter is a registered transcoder
       if (event.params.voter.toHex() == delegator.delegate) {

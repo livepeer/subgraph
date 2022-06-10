@@ -42,8 +42,6 @@ type Protocol @entity {
   lastRoundLengthUpdateStartBlock: BigInt!
   "Livepeer Token supply"
   totalSupply: BigDecimal!
-  "The ratio of the estimated total yearly rewards (in LPT) over the total stake (in LPT) given constant inflation"
-  yearlyRewardsToStakeRatio: BigDecimal!
   "Livepeer Token price in ETH (not to be used for trading - updated only every round)"
   lptPriceEth: BigDecimal!
   "Total winning tickets"
@@ -221,6 +219,8 @@ Abstraction for accounts/delegators bonded with the protocol
 type LivepeerAccount @entity {
   "ETH address of the bonded delegator"
   id: ID!
+  "The date the account was last associated with an event, beginning at 12:00am UTC"
+  lastUpdatedTimestamp: Int!
   "Delegator details for this account"
   delegator: Delegator
   "Reference to the Delegate this address is bonded to"
