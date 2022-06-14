@@ -6,6 +6,7 @@ import {
   createOrLoadRound,
   createOrLoadTransactionFromEvent,
   createOrLoadTranscoder,
+  EMPTY_ADDRESS,
   getBlockNum,
   makeEventId,
   makePoolId,
@@ -116,6 +117,12 @@ export function bond(event: Bond): void {
     );
   }
 
+  // if the old delegate is the empty address, this is a new delegator
+  if (event.params.oldDelegate.toHex() === EMPTY_ADDRESS.toHex()) {
+    round.delegatorsCount = round.delegatorsCount.plus(ONE_BI);
+    protocol.delegatorsCount = protocol.delegatorsCount.plus(ONE_BI);
+  }
+
   transcoder.totalStake = convertToDecimal(delegateData.value3);
   delegate.delegatedAmount = convertToDecimal(delegateData.value3);
 
@@ -127,9 +134,6 @@ export function bond(event: Bond): void {
   delegator.principal = delegator.principal.plus(
     convertToDecimal(event.params.additionalAmount)
   );
-
-  round.delegatorsCount = round.delegatorsCount.plus(ONE_BI);
-  protocol.delegatorsCount = protocol.delegatorsCount.plus(ONE_BI);
 
   round.save();
   delegate.save();
@@ -286,6 +290,7 @@ export function unbond(event: Unbond): void {
   unbondingLock.save();
   delegator.save();
   protocol.save();
+  round.save();
 
   createOrLoadTransactionFromEvent(event);
 
