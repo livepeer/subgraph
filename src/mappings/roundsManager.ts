@@ -209,6 +209,7 @@ export function newRound(event: NewRound): void {
 
   protocol.save();
   day.save();
+  round.save();
 
   createOrLoadTransactionFromEvent(event);
 
