@@ -216,10 +216,6 @@ export function createOrLoadTranscoder(id: string, timestamp: i32): Transcoder {
     transcoder.status = "NotRegistered";
     transcoder.rewardCut = ZERO_BI;
     transcoder.feeShare = ZERO_BI;
-    transcoder.pricePerSegment = ZERO_BI;
-    transcoder.pendingPricePerSegment = ZERO_BI;
-    transcoder.pendingRewardCut = ZERO_BI;
-    transcoder.pendingFeeShare = ZERO_BI;
     transcoder.totalStake = ZERO_BD;
     transcoder.totalVolumeETH = ZERO_BD;
     transcoder.totalVolumeUSD = ZERO_BD;
