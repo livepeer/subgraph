@@ -254,7 +254,10 @@ export function createOrLoadDelegator(id: string, timestamp: i32): Delegator {
   return delegator;
 }
 
-export function createOrUpdateLivepeerAccount(id: string, timestamp: i32): LivepeerAccount {
+export function createOrUpdateLivepeerAccount(
+  id: string,
+  timestamp: i32
+): LivepeerAccount {
   let account = LivepeerAccount.load(id);
   if (account == null) {
     account = new LivepeerAccount(id);
@@ -269,12 +272,15 @@ export function createOrUpdateLivepeerAccount(id: string, timestamp: i32): Livep
 }
 
 export function createOrLoadDay(timestamp: i32): Day {
-  let dayID = timestamp / 86400;
-  let dayStartTimestamp = dayID * 86400;
-  let day = Day.load(dayID.toString());
+  let dayMonthYear = dayMonthYearFromEventTimestamp(timestamp);
+  let dayId = dayMonthYear.id();
+  let day = Day.load(dayId);
 
   if (day == null) {
-    day = new Day(dayID.toString());
+    let dayRounded = timestamp / 86400;
+    let dayStartTimestamp = dayRounded * 86400;
+
+    day = new Day(dayId);
     day.date = dayStartTimestamp;
     day.volumeUSD = ZERO_BD;
     day.volumeETH = ZERO_BD;
@@ -506,4 +512,47 @@ export function getBlockNum(): BigInt {
     Address.fromString(roundsManagerAddress)
   );
   return roundsManager.blockNum();
+}
+
+class DayMonthYear {
+  day: i32;
+  month: i32;
+  year: i32;
+
+  constructor(day: i32, month: i32, year: i32) {
+    this.day = day;
+    this.month = month;
+    this.year = year;
+  }
+
+  id(): string {
+    return `${this.day}-${this.month}-${this.year}`;
+  }
+}
+
+let SECONDS_IN_DAY: i32 = 86400;
+
+// https://gist.github.com/andygray/b12320f312680e87d6feb845f71a6a3f/
+export function dayMonthYearFromEventTimestamp(timestamp: i32): DayMonthYear {
+  let daysSinceEpochStart = timestamp / SECONDS_IN_DAY;
+  daysSinceEpochStart = daysSinceEpochStart + 719468;
+
+  let era =
+    (daysSinceEpochStart >= 0
+      ? daysSinceEpochStart
+      : daysSinceEpochStart - 146096) / 146097;
+  let dayOfEra = daysSinceEpochStart - era * 146097;
+  let yearOfEra =
+    (dayOfEra - dayOfEra / 1460 + dayOfEra / 36524 - dayOfEra / 146096) / 365;
+
+  let year = yearOfEra + era * 400;
+  let dayOfYear =
+    dayOfEra - (365 * yearOfEra + yearOfEra / 4 - yearOfEra / 100);
+  let monthZeroIndexed = (5 * dayOfYear + 2) / 153;
+  let day = dayOfYear - (153 * monthZeroIndexed + 2) / 5 + 1;
+  let month = monthZeroIndexed + (monthZeroIndexed < 10 ? 3 : -9);
+
+  year = month <= 2 ? year + 1 : year;
+
+  return new DayMonthYear(day, month, year);
 }
