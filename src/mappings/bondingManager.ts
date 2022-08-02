@@ -552,8 +552,14 @@ export function transcoderUpdate(event: TranscoderUpdate): void {
     event.params.transcoder.toHex(),
     event.block.timestamp.toI32()
   );
-  transcoder.rewardCut = event.params.rewardCut;
-  transcoder.feeShare = event.params.feeShare;
+  if (transcoder.rewardCut !== event.params.rewardCut) {
+    transcoder.rewardCut = event.params.rewardCut;
+    transcoder.rewardCutUpdateTimestamp = event.block.timestamp.toI32();
+  }
+  if (transcoder.feeShare !== event.params.feeShare) {
+    transcoder.feeShare = event.params.feeShare;
+    transcoder.feeShareUpdateTimestamp = event.block.timestamp.toI32();
+  }
   transcoder.save();
 
   createOrLoadTransactionFromEvent(event);
