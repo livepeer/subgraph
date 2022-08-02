@@ -215,7 +215,9 @@ export function createOrLoadTranscoder(id: string, timestamp: i32): Transcoder {
     transcoder.active = false;
     transcoder.status = "NotRegistered";
     transcoder.rewardCut = ZERO_BI;
+    transcoder.rewardCutUpdateTimestamp = 0;
     transcoder.feeShare = ZERO_BI;
+    transcoder.feeShareUpdateTimestamp = 0;
     transcoder.totalStake = ZERO_BD;
     transcoder.totalVolumeETH = ZERO_BD;
     transcoder.totalVolumeUSD = ZERO_BD;
