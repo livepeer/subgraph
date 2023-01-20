@@ -487,10 +487,10 @@
     graphql-import-node "^0.0.5"
     js-yaml "^4.1.0"
 
-"@graphprotocol/graph-cli@0.37.2":
-  version "0.37.2"
-  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.37.2.tgz#14d3b29e0e57ab2093b3cb42402c8ba5b9c4e557"
-  integrity sha512-RPHYCRCc62RsscwFpwFT+929lNNoB/FJW+PFaQ+zZaJuauj0x/+npcfIDCb4zAxlQskETqzT5WvWQ9gRK1l66g==
+"@graphprotocol/graph-cli@0.37.6":
+  version "0.37.6"
+  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.37.6.tgz#b5f3409587d6a727664f11b29a899e4eb54bac3a"
+  integrity sha512-MW1GJg87/RDz85LrosELkBPagyTsRf9K2i4b0h8CpfWPgeuLJZY2cSvkpxIHQ370Uebit6yW7WFJwzrZpGcwIA==
   dependencies:
     "@float-capital/float-subgraph-uncrashable" "^0.0.0-alpha.4"
     assemblyscript "0.19.23"
@@ -504,12 +504,11 @@
     glob "7.1.6"
     gluegun "git+https://github.com/edgeandnode/gluegun.git#v4.3.1-pin-colors-dep"
     graphql "15.5.0"
-    immutable "3.8.2"
+    immutable "4.2.1"
     ipfs-http-client "34.0.0"
     jayson "3.6.6"
     js-yaml "3.13.1"
     node-fetch "2.6.0"
-    pkginfo "0.4.1"
     prettier "1.19.1"
     request "2.88.2"
     semver "7.3.5"
@@ -5154,15 +5153,10 @@ immediate@~3.2.3:
   resolved "https://registry.yarnpkg.com/immediate/-/immediate-3.2.3.tgz#d140fa8f614659bd6541233097ddaac25cdd991c"
   integrity sha512-RrGCXRm/fRVqMIhqXrGEX9rRADavPiDFSoMb/k64i9XMk8uH4r/Omi5Ctierj6XzNecwDbO4WuFbDD1zmpl3Tg==
 
-immutable@3.8.2:
-  version "3.8.2"
-  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
-  integrity sha1-wkOZUUVbs5kT2vKBN28VMOEErfM=
-
-immutable@^4.0.0-rc.12:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.1.0.tgz#f795787f0db780183307b9eb2091fcac1f6fafef"
-  integrity sha512-oNkuqVTA8jqG1Q6c+UglTOD1xhC1BtjKI7XkCXRkZHrN5m18/XsnUp8Q89GkQO/z+0WjonSvl0FLhDYftp46nQ==
+immutable@4.2.1, immutable@^4.0.0-rc.12:
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.2.1.tgz#8a4025691018c560a40c67e43d698f816edc44d4"
+  integrity sha512-7WYV7Q5BTs0nlQm7tl92rDYYoyELLKHoDMBKhrxEoiV4mrfVdRz8hzPiYOzH7yWjzoVEamxRuAqhxL2PLRwZYQ==
 
 import-fresh@^3.1.0:
   version "3.2.1"
@@ -7593,11 +7587,6 @@ pinkie@^2.0.0:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/pinkie/-/pinkie-2.0.4.tgz#72556b80cfa0d48a974e80e77248e80ed4f7f870"
   integrity sha1-clVrgM+g1IqXToDnckjoDtT3+HA=
-
-pkginfo@0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/pkginfo/-/pkginfo-0.4.1.tgz#b5418ef0439de5425fc4995042dced14fb2a84ff"
-  integrity sha1-tUGO8EOd5UJfxJlQQtztFPsqhP8=
 
 pluralize@^8.0.0:
   version "8.0.0"
