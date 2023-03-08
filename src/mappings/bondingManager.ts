@@ -491,14 +491,14 @@ export function reward(event: Reward): void {
     convertToDecimal(event.params.amount)
   );
 
-  pool!.rewardTokens = convertToDecimal(event.params.amount);
-  pool!.feeShare = transcoder.feeShare;
-  pool!.rewardCut = transcoder.rewardCut;
-
   transcoder.totalStake = transcoder.totalStake.plus(
     convertToDecimal(event.params.amount)
   );
   transcoder.lastRewardRound = round.id;
+
+  pool!.rewardTokens = convertToDecimal(event.params.amount);
+  pool!.feeShare = transcoder.feeShare;
+  pool!.rewardCut = transcoder.rewardCut;
 
   transcoder.save();
   delegate.save();
