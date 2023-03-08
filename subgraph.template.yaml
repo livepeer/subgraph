@@ -369,8 +369,6 @@ templates:
           handler: updatePollTallyOnUnbond
         - event: Rebond(indexed address,indexed address,uint256,uint256)
           handler: updatePollTallyOnRebond
-        - event: EarningsClaimed(indexed address,indexed address,uint256,uint256,uint256,uint256)
-          handler: updatePollTallyOnEarningsClaimed
   - kind: ethereum/contract
     name: Poll
     network: {{networkName}}
