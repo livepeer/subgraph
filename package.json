@@ -32,7 +32,7 @@
     "chai": "^4.3.7",
     "ethereum-waffle": "^4.0.10",
     "ethers": "^6.1.0",
-    "hardhat": "^2.13.0",
+    "hardhat": "^2.13.1",
     "typechain": "^8.1.1"
   },
   "dependencies": {
