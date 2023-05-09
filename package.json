@@ -24,7 +24,7 @@
     "test": "yarn docker:build && docker-compose -f docker-compose.test.yml up --abort-on-container-exit"
   },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "0.42.4",
+    "@graphprotocol/graph-cli": "0.49.0",
     "@nomiclabs/hardhat-ethers": "^2.2.2",
     "@nomiclabs/hardhat-waffle": "^2.0.5",
     "@typechain/ethers-v5": "^10.2.0",
