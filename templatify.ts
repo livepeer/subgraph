@@ -13,8 +13,8 @@ function getNetworkNameForSubgraph() {
   switch (process.env.SUBGRAPH) {
     case "livepeer/arbitrum-one":
       return "arbitrum-one";
-    case "livepeer/arbitrum-rinkeby":
-      return "arbitrum-rinkeby";
+    case "livepeer/arbitrum-goerli":
+      return "arbitrum-goerli";
     default:
       return null;
   }

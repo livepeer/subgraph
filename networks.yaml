@@ -31,39 +31,39 @@ arbitrum-one:
       address: "148D5b6B4df9530c7C76A810bd1Cdf69EC4c2085"
       startBlock: 5864923
   networkName: arbitrum-one
-arbitrum-rinkeby:
+arbitrum-goerli:
   contracts:
     controller:
-      address: "9ceC649179e2C7Ab91688271bcD09fb707b3E574"
-      startBlock: 8700932
+      address: "EE48C1F8A6BE10FDf6aF8b17a74198E08961A17d"
+      startBlock: 32123592
     bondingManager:
-      address: "e42229d764F673EB3FB8B9a56016C2a4DA45ffd7"
-      startBlock: 8912023
+      address: "c035A9A1105fB77815fD66AB8F8ebDC5fd74bb29"
+      startBlock: 32123673
     roundsManager:
-      address: "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58"
-      startBlock: 8912035
+      address: "69Ac3a48B95f45c6Bf8ac4842C2384cFFF3C7bce"
+      startBlock: 32123713
     livepeerToken:
-      address: "743b8469e5f54cD765F1954604cD4dfA67b64bF6"
-      startBlock: 8700932
+      address: "8ACF21ac13AF13d583b0db39fBca1E7e5498b440"
+      startBlock: 32123608
     minterV1:
-      address: "C10525f660F2A0a71E46340e8ee8cc7b1cD26Dd4"
-      startBlock: 8911969
+      address: "6a6d2E0761c53c897ac9ae3eecC9Dc021e2B84bA"
+      startBlock: 32123599
     minter:
-      address: "C10525f660F2A0a71E46340e8ee8cc7b1cD26Dd4"
-      startBlock: 8911969
+      address: "6a6d2E0761c53c897ac9ae3eecC9Dc021e2B84bA"
+      startBlock: 32123599
     ticketBroker:
-      address: "D218f6eA99907C2EDB889A151DF326aCd0F70D88"
-      startBlock: 8912001
+      address: "13F6305D459230c6e11f284b72230E66f04E55F7"
+      startBlock: 32134575
     pollCreator:
-      address: "7e3305D48489e43B7fBf318D575D5dF654EE175c"
-      startBlock: 8912084
+      address: "A1e283Cdad119Dd69c95a5aA0AF4F9796bdcD332"
+      startBlock: 32123806
     serviceRegistry:
-      address: "22BEc4A040f9F3491F510E7BfbbbBEf347dbb8bf"
-      startBlock: 8912040
+      address: "9246A7589C32b28E75DD2221D3877FF501376ca2"
+      startBlock: 32123730
     l2Migrator:
-      address: "e2f931931B8E04a01c99a2DeBA44A9FF782F688a"
-      startBlock: 8959965
-  networkName: arbitrum-rinkeby
+      address: "deadbeef0deadbeef1deadbeef3deadbeef4dead"
+      startBlock: 33404404
+  networkName: arbitrum-goerli
 development:
   contracts:
     controller:
