@@ -57,6 +57,9 @@ arbitrum-goerli:
     pollCreator:
       address: "A1e283Cdad119Dd69c95a5aA0AF4F9796bdcD332"
       startBlock: 32123806
+    livepeerGovernor:
+      address: "D36575965fe609640dF08296EdDAcFc41b3D8540"
+      startBlock: 32123849
     serviceRegistry:
       address: "9246A7589C32b28E75DD2221D3877FF501376ca2"
       startBlock: 32123730
