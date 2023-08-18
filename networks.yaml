@@ -24,6 +24,9 @@ arbitrum-one:
     pollCreator:
       address: "8bb50806D60c492c0004DAD5D9627DAA2d9732E6"
       startBlock: 5857075
+    livepeerGovernor:
+      address: "deadbeef0deadbeef1deadbeef3deadbeef4dead"
+      startBlock: 5857075
     serviceRegistry:
       address: "C92d3A360b8f9e083bA64DE15d95Cf8180897431"
       startBlock: 5860363
