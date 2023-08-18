@@ -37,35 +37,35 @@ arbitrum-one:
 arbitrum-goerli:
   contracts:
     controller:
-      address: "EE48C1F8A6BE10FDf6aF8b17a74198E08961A17d"
-      startBlock: 32123592
+      address: "53Ea65f3E8B06d07DC1008276c5e4aa15126502B"
+      startBlock: 35154012
     bondingManager:
-      address: "c035A9A1105fB77815fD66AB8F8ebDC5fd74bb29"
-      startBlock: 32123673
+      address: "4bB92357243CC1aB9Cc578cCC6A6Aa3Ad9B853bF"
+      startBlock: 35154248
     roundsManager:
-      address: "69Ac3a48B95f45c6Bf8ac4842C2384cFFF3C7bce"
-      startBlock: 32123713
+      address: "862F638260062Ee1e89a9a2D72CBE8aa7201704f"
+      startBlock: 35154386
     livepeerToken:
-      address: "8ACF21ac13AF13d583b0db39fBca1E7e5498b440"
-      startBlock: 32123608
+      address: "68cbB1Da361E13E32D652b2de5C4764e46863CCc"
+      startBlock: 35154065
     minterV1:
-      address: "6a6d2E0761c53c897ac9ae3eecC9Dc021e2B84bA"
-      startBlock: 32123599
+      address: "7cD8BEfd49050329F48F0ec9f0E29dE1E274E3A2"
+      startBlock: 35154033
     minter:
-      address: "6a6d2E0761c53c897ac9ae3eecC9Dc021e2B84bA"
-      startBlock: 32123599
+      address: "7cD8BEfd49050329F48F0ec9f0E29dE1E274E3A2"
+      startBlock: 35154033
     ticketBroker:
-      address: "13F6305D459230c6e11f284b72230E66f04E55F7"
-      startBlock: 32134575
+      address: "f1b3E9EA33F1746c887057d3921a724276Bab5FB"
+      startBlock: 35154134
     pollCreator:
-      address: "A1e283Cdad119Dd69c95a5aA0AF4F9796bdcD332"
-      startBlock: 32123806
+      address: "8984Fa27b8213e310e7a67B10C158aA42C0733CD"
+      startBlock: 35154743
     livepeerGovernor:
-      address: "D36575965fe609640dF08296EdDAcFc41b3D8540"
-      startBlock: 32123849
+      address: "f6F3E5381F57F22e5D78d02451AE8E044B526Ac5"
+      startBlock: 35154847
     serviceRegistry:
-      address: "9246A7589C32b28E75DD2221D3877FF501376ca2"
-      startBlock: 32123730
+      address: "3a2121A17F2892eEf11991f44F4487Ccc42516Fc"
+      startBlock: 35154446
     l2Migrator:
       address: "deadbeef0deadbeef1deadbeef3deadbeef4dead"
       startBlock: 33404404

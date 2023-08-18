@@ -411,7 +411,7 @@
   },
   {
     "inputs": [],
-    "name": "bumpVotesAddress",
+    "name": "bumpGovernorVotesTokenAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -854,6 +854,16 @@
       {
         "internalType": "uint256",
         "name": "initialProposalThreshold",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "initialQuorum",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "quota",
         "type": "uint256"
       }
     ],

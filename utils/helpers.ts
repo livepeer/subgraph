@@ -471,7 +471,7 @@ export function getBondingManagerAddress(): string {
   if (network == "arbitrum-one") {
     return "35Bcf3c30594191d53231E4FF333E8A770453e40";
   } else if (network == "arbitrum-goerli") {
-    return "c035A9A1105fB77815fD66AB8F8ebDC5fd74bb29";
+    return "4bB92357243CC1aB9Cc578cCC6A6Aa3Ad9B853bF";
   } else {
     return "f71AA2E1DE77E8eE9cbB88A91Dbd228FF3160635";
   }
@@ -483,7 +483,7 @@ export function getRoundsManagerAddress(): string {
   if (network == "arbitrum-one") {
     return "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
   } else if (network == "arbitrum-goerli") {
-    return "69Ac3a48B95f45c6Bf8ac4842C2384cFFF3C7bce";
+    return "862F638260062Ee1e89a9a2D72CBE8aa7201704f";
   } else {
     return "4D3620B1d9146116707d763AEbFe3dF59E00a883";
   }
@@ -495,7 +495,7 @@ export function getMinterAddress(): string {
   if (network == "arbitrum-one") {
     return "c20DE37170B45774e6CD3d2304017fc962f27252";
   } else if (network == "arbitrum-goerli") {
-    return "6a6d2E0761c53c897ac9ae3eecC9Dc021e2B84bA";
+    return "7cD8BEfd49050329F48F0ec9f0E29dE1E274E3A2";
   } else {
     return "3Eb31D0b427e40F01FA3d38F627fE928a33DA0E3";
   }
