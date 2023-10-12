@@ -19,7 +19,7 @@ the `subgraph.yaml` file, which is required by The Graph.
 
 We use [Handlebars](https://github.com/wycats/handlebars.js/) to compile a
 [template subgraph](./subgraph.template.yaml) and add the parameters specific to
-each network (arbitrum-one and arbitrum-rinkeby). The network can be changed via the
+each network (arbitrum-one and arbitrum-goerli). The network can be changed via the
 `NETWORK_NAME` environment variable or directly by choosing a different
 "prepare" script. See [package.json](./package.json) for all options.
 

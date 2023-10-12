@@ -354,6 +354,25 @@ type TranscoderDay @entity {
   transcoder: Transcoder!
 }
 
+type TreasuryProposal @entity {
+  "Governor proposal ID formatted as a decimal number"
+  id: ID!
+  "Account that created the proposal"
+  proposer: LivepeerAccount!
+  "Targets to be called on proposal execution"
+  targets: [String!]!
+  "Values to be passed to the targets on proposal execution"
+  values: [BigInt!]!
+  "Functions to call on the targets on proposal execution"
+  calldatas: [Bytes!]!
+  "Round after which the proposal voting will begin"
+  voteStart: BigInt!
+  "Round after which the proposal voting will end and, if approved, execution will be allowed"
+  voteEnd: BigInt!
+  "Description of the proposal"
+  description: String!
+}
+
 ###############################################################################
 #
 # Event types && transactions for historical records

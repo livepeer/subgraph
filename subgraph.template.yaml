@@ -271,10 +271,31 @@ dataSources:
         - Transaction
         - Protocol
         - Poll
-        - PollCreatedEvent 
+        - PollCreatedEvent
       eventHandlers:
         - event: PollCreated(indexed address,bytes,uint256,uint256,uint256)
           handler: pollCreated
+  - kind: ethereum/contract
+    name: Treasury
+    network: {{networkName}}
+    source:
+      startBlock: {{contracts.livepeerGovernor.startBlock}}
+      address: {{contracts.livepeerGovernor.address}}
+      abi: LivepeerGovernor
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/treasury.ts
+      abis:
+        - name: LivepeerGovernor
+          file: ./abis/LivepeerGovernor.json
+      entities:
+        - TreasuryProposal
+        - LivepeerAccount
+      eventHandlers:
+        - event: ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)
+          handler: proposalCreated
   - kind: ethereum/contract
     name: ServiceRegistry
     network: {{networkName}}
@@ -286,7 +307,7 @@ dataSources:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./src/mappings/serviceRegistry.ts   
+      file: ./src/mappings/serviceRegistry.ts
       abis:
         - name: ServiceRegistry
           file: ./abis/ServiceRegistry.json
@@ -311,7 +332,7 @@ dataSources:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./src/mappings/livepeerToken.ts 
+      file: ./src/mappings/livepeerToken.ts
       abis:
         - name: Minter
           file: ./abis/Minter.json

@@ -402,7 +402,7 @@ export function getPriceForPair(address: string): BigDecimal {
 
   if (
     dataSource.network() == "arbitrum-one" ||
-    dataSource.network() == "arbitrum-rinkeby"
+    dataSource.network() == "arbitrum-goerli"
   ) {
     let uniswapPool = UniswapV3Pool.bind(Address.fromString(address));
     let slot0 = uniswapPool.try_slot0();
@@ -446,7 +446,7 @@ export function getUniswapV3LptEthPoolAddress(): string {
 
   if (network == "arbitrum-one") {
     return "4fd47e5102dfbf95541f64ed6fe13d4ed26d2546";
-  } else if (network == "arbitrum-rinkeby") {
+  } else if (network == "arbitrum-goerli") {
     return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
   } else {
     return "0xffa7ee1c08416565d054b2cf3e336dcfe21591e5";
@@ -458,7 +458,7 @@ export function getUniswapV3DaiEthPoolAddress(): string {
 
   if (network == "arbitrum-one") {
     return "a961f0473da4864c5ed28e00fcc53a3aab056c1b";
-  } else if (network == "arbitrum-rinkeby") {
+  } else if (network == "arbitrum-goerli") {
     return "01ab0834e140f1d33c99b6380a77a6b75b283b3f";
   } else {
     return "0xffa7ee1c08416565d054b2cf3e336dcfe21591e5";
@@ -470,8 +470,8 @@ export function getBondingManagerAddress(): string {
 
   if (network == "arbitrum-one") {
     return "35Bcf3c30594191d53231E4FF333E8A770453e40";
-  } else if (network == "arbitrum-rinkeby") {
-    return "e42229d764F673EB3FB8B9a56016C2a4DA45ffd7";
+  } else if (network == "arbitrum-goerli") {
+    return "4bB92357243CC1aB9Cc578cCC6A6Aa3Ad9B853bF";
   } else {
     return "f71AA2E1DE77E8eE9cbB88A91Dbd228FF3160635";
   }
@@ -482,8 +482,8 @@ export function getRoundsManagerAddress(): string {
 
   if (network == "arbitrum-one") {
     return "dd6f56DcC28D3F5f27084381fE8Df634985cc39f";
-  } else if (network == "arbitrum-rinkeby") {
-    return "3BEc08BA9D8A5b44F5C5E38F654b3efE73555d58";
+  } else if (network == "arbitrum-goerli") {
+    return "862F638260062Ee1e89a9a2D72CBE8aa7201704f";
   } else {
     return "4D3620B1d9146116707d763AEbFe3dF59E00a883";
   }
@@ -494,8 +494,8 @@ export function getMinterAddress(): string {
 
   if (network == "arbitrum-one") {
     return "c20DE37170B45774e6CD3d2304017fc962f27252";
-  } else if (network == "arbitrum-rinkeby") {
-    return "E5bE54705D41DAaA33A043aa51dE472ED637C3d9";
+  } else if (network == "arbitrum-goerli") {
+    return "7cD8BEfd49050329F48F0ec9f0E29dE1E274E3A2";
   } else {
     return "3Eb31D0b427e40F01FA3d38F627fE928a33DA0E3";
   }
