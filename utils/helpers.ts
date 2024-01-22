@@ -224,6 +224,7 @@ export function createOrLoadTranscoder(id: string, timestamp: i32): Transcoder {
     transcoder.thirtyDayVolumeETH = ZERO_BD;
     transcoder.sixtyDayVolumeETH = ZERO_BD;
     transcoder.ninetyDayVolumeETH = ZERO_BD;
+    transcoder.totalRewardsClaimed = ZERO_BD;
     transcoder.transcoderDays = [];
     transcoder.save();
   }

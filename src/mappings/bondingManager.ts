@@ -496,6 +496,10 @@ export function reward(event: Reward): void {
   );
   transcoder.lastRewardRound = round.id;
 
+  transcoder.totalRewardsClaimed = transcoder.totalRewardsClaimed.plus(
+    convertToDecimal(event.params.amount)
+  );
+
   pool!.rewardTokens = convertToDecimal(event.params.amount);
   pool!.feeShare = transcoder.feeShare;
   pool!.rewardCut = transcoder.rewardCut;
