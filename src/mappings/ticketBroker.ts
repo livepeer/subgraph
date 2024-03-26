@@ -86,6 +86,9 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   transcoder.totalVolumeUSD = transcoder.totalVolumeUSD.plus(
     faceValue.times(ethPrice)
   );
+  transcoder.totalFeesDistributed = transcoder.totalFeesDistributed.plus(
+    (100 - transcoder.feeShare / 10000) * convertToDecimal(event.params.amount)
+  );
 
   // Update total protocol fee volume
   protocol.totalVolumeETH = protocol.totalVolumeETH.plus(faceValue);

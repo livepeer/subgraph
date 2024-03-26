@@ -500,6 +500,10 @@ export function reward(event: Reward): void {
     convertToDecimal(event.params.amount)
   );
 
+  transcoder.totalRewardsDistributed = transcoder.totalRewardsDistributed.plus(
+    (transcoder.rewardCut / 10000) * convertToDecimal(event.params.amount)
+  );
+
   pool!.rewardTokens = convertToDecimal(event.params.amount);
   pool!.feeShare = transcoder.feeShare;
   pool!.rewardCut = transcoder.rewardCut;
