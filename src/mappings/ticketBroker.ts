@@ -76,6 +76,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   } else {
     broadcaster.deposit = broadcaster.deposit.minus(faceValue);
   }
+  broadcaster.save();
 
   // Update transcoder's fee volume
   let transcoder = createOrLoadTranscoder(
