@@ -75,6 +75,7 @@ subgraph.yaml
 
 build/
 cache/
+generated/
 
 # typechain types output
 typechain-types/
