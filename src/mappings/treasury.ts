@@ -79,6 +79,9 @@ export function handleVoteCast(event: VoteCast): void {
     } else {
       tally.abstain = tally.abstain.minus(new BigDecimal(v.weight) || BigDecimal.zero())
     }
+
+    tVote.nonVoteStake = tVote.nonVoteStake.plus(new BigDecimal(v.weight) || BigDecimal.zero())
+    tVote.voteStake = tVote.voteStake.minus(new BigDecimal(v.weight) || BigDecimal.zero())
   }
 
   vote.save();
