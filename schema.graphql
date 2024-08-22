@@ -359,6 +359,8 @@ type TreasuryProposal @entity {
   id: ID!
   "Account that created the proposal"
   proposer: LivepeerAccount!
+  "vote tally"
+  tally: TreasureProposalTally!
   "Targets to be called on proposal execution"
   targets: [String!]!
   "Values to be passed to the targets on proposal execution"
@@ -371,8 +373,43 @@ type TreasuryProposal @entity {
   voteEnd: BigInt!
   "Description of the proposal"
   description: String!
+  "Votes belonging to a proposal"
+  votes: [TreasuryProposalVote!]!
 }
 
+type TreasureProposalTally @entity {
+  "Proposal id"
+  id: ID!
+  "Stake voted yes"
+  yes: BigDecimal!
+  "Stake voted no"
+  no: BigDecimal!
+  "Stake voted to abstain"
+  abstain: BigDecimal!
+}
+
+enum TreasureProposalVoteChoice @entity {
+  No
+  Yes
+  Abstain
+}
+
+type TreasuryProposalVote @entity {
+  "Voter address + poll address"
+  id: ID!
+  "Vote caster"
+  voter: String!
+  "Stake weighted vote"
+  voteStake: BigDecimal!
+  "This will be non-zero if voter is an transcoder and any of the its delegators voted"
+  nonVoteStake: BigDecimal!
+  "Vote choice"
+  support: TreasureProposalVoteChoice
+  "Poll associated with this vote"
+  proposal: TreasuryProposal
+  "True if the voter was a registered transcoder during the poll period"
+  registeredTranscoder: Boolean
+}
 ###############################################################################
 #
 # Event types && transactions for historical records
