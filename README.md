@@ -1,6 +1,6 @@
 # Livepeer Subgraph
 
-[![Discord](https://img.shields.io/discord/423160867534929930.svg?style=flat-square)](https://discord.gg/7wRSUGX)
+[![Discord](https://img.shields.io/discord/423160867534929930.svg?style=flat-square)](https://discord.gg/livepeer)
 [![GitHub issues](https://img.shields.io/github/issues/livepeer/livepeerjs/subgraph.svg?style=flat-square)](https://github.com/livepeer/livepeerjs/labels/subgraph)
 
 This package contains the source code for the Livepeer Subgraph, a project for
