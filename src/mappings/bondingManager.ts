@@ -1,4 +1,4 @@
-import { store } from "@graphprotocol/graph-ts";
+import { Address, store } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadDelegator,
@@ -8,6 +8,7 @@ import {
   createOrLoadTranscoder,
   EMPTY_ADDRESS,
   getBlockNum,
+  integerFromString,
   makeEventId,
   makePoolId,
   makeUnbondingLockId,
@@ -499,6 +500,16 @@ export function reward(event: Reward): void {
   pool!.rewardTokens = convertToDecimal(event.params.amount);
   pool!.feeShare = transcoder.feeShare;
   pool!.rewardCut = transcoder.rewardCut;
+
+  let bondingManager = BondingManager.bind(event.address);
+  let pendingStake = convertToDecimal(
+    bondingManager.pendingStake(
+      Address.fromString(transcoder.id),
+      integerFromString(round.id)
+    )
+  );
+  transcoder.pendingStake = pendingStake;
+  pool.pendingStake = pendingStake;
 
   transcoder.save();
   delegate.save();
