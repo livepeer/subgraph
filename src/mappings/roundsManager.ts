@@ -28,6 +28,8 @@ import {
 } from "../types/RoundsManager/RoundsManager";
 // Import entity types generated from the GraphQL schema
 import {
+  Broadcaster,
+  BroadcasterDay,
   NewRoundEvent,
   ParameterUpdateEvent,
   Pool,
@@ -176,6 +178,59 @@ export function newRound(event: NewRound): void {
       transcoder.save();
     }
   }
+
+  // Update rolling fee windows for tracked broadcasters (gateways)
+  let trackedBroadcasters = protocol.activeBroadcasters;
+  let activeBroadcasters: string[] = [];
+  if (trackedBroadcasters && trackedBroadcasters.length) {
+    for (let i = 0; i < trackedBroadcasters.length; i++) {
+      let broadcaster = Broadcaster.load(trackedBroadcasters[i]);
+
+      if (broadcaster) {
+        // --- Get the 30, 60, 90 day sums of volume ---
+        let broadcasterThirtyDaySum = ZERO_BD;
+        let broadcasterSixtyDaySum = ZERO_BD;
+        let broadcasterNinetyDaySum = ZERO_BD;
+
+        // capped at <90 - broadcaster days are ordered newest first
+        let broadcasterDays = broadcaster.broadcasterDays;
+        let broadcasterDaysLength =
+          broadcasterDays.length > 90 ? 90 : broadcasterDays.length;
+        for (let j = 0; j < broadcasterDaysLength; j++) {
+          let broadcasterDay = BroadcasterDay.load(broadcasterDays[j]);
+
+          if (broadcasterDay) {
+            if (broadcasterDay.date >= thirtyDayTimestamp) {
+              broadcasterThirtyDaySum = broadcasterThirtyDaySum.plus(
+                broadcasterDay.volumeETH
+              );
+            }
+            if (broadcasterDay.date >= sixtyDayTimestamp) {
+              broadcasterSixtyDaySum = broadcasterSixtyDaySum.plus(
+                broadcasterDay.volumeETH
+              );
+            }
+            if (broadcasterDay.date >= ninetyDayTimestamp) {
+              broadcasterNinetyDaySum = broadcasterNinetyDaySum.plus(
+                broadcasterDay.volumeETH
+              );
+            }
+          }
+        }
+
+        broadcaster.thirtyDayVolumeETH = broadcasterThirtyDaySum;
+        broadcaster.sixtyDayVolumeETH = broadcasterSixtyDaySum;
+        broadcaster.ninetyDayVolumeETH = broadcasterNinetyDaySum;
+        broadcaster.save();
+
+        if (broadcaster.lastActiveDay >= ninetyDayTimestamp) {
+          activeBroadcasters.push(broadcaster.id);
+        }
+      }
+    }
+  }
+
+  protocol.activeBroadcasters = activeBroadcasters;
 
   let lptPriceEth = getLptPriceEth();
 

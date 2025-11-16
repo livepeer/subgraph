@@ -9,6 +9,7 @@ import {
 import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 import {
   Broadcaster,
+  BroadcasterDay,
   Day,
   Delegator,
   LivepeerAccount,
@@ -158,6 +159,7 @@ export function createOrLoadProtocol(): Protocol {
     protocol.winningTicketCount = 0;
     protocol.roundCount = 0;
     protocol.lptPriceEth = ZERO_BD;
+    protocol.activeBroadcasters = [];
 
     const network = dataSource.network();
     // 3520 is the count of total delegators from the mainnet subgraph (in the final round)
@@ -167,6 +169,12 @@ export function createOrLoadProtocol(): Protocol {
 
     protocol.pendingActivation = [];
     protocol.pendingDeactivation = [];
+    protocol.save();
+  }
+
+  // Ensure backwards compatibility
+  if (protocol.activeBroadcasters == null) {
+    protocol.activeBroadcasters = [];
     protocol.save();
   }
   return protocol;
@@ -179,8 +187,23 @@ export function createOrLoadBroadcaster(id: string): Broadcaster {
     broadcaster = new Broadcaster(id);
     broadcaster.deposit = ZERO_BD;
     broadcaster.reserve = ZERO_BD;
+    broadcaster.totalVolumeETH = ZERO_BD;
+    broadcaster.totalVolumeUSD = ZERO_BD;
+    broadcaster.thirtyDayVolumeETH = ZERO_BD;
+    broadcaster.sixtyDayVolumeETH = ZERO_BD;
+    broadcaster.ninetyDayVolumeETH = ZERO_BD;
+    broadcaster.lastActiveDay = 0;
+    broadcaster.broadcasterDays = [];
 
     broadcaster.save();
+  }
+
+  let protocol = createOrLoadProtocol();
+  let activeBroadcasters = protocol.activeBroadcasters;
+  if (!activeBroadcasters.includes(id)) {
+    activeBroadcasters.push(id);
+    protocol.activeBroadcasters = activeBroadcasters;
+    protocol.save();
   }
 
   return broadcaster;
@@ -314,6 +337,29 @@ export function createOrLoadTranscoderDay(
     transcoderDay.save();
   }
   return transcoderDay;
+}
+
+export function createOrLoadBroadcasterDay(
+  timestamp: i32,
+  broadcasterAddress: string
+): BroadcasterDay {
+  let dayID = timestamp / 86400;
+  let dayStartTimestamp = dayID * 86400;
+  let broadcasterDayID = broadcasterAddress
+    .concat("-")
+    .concat(BigInt.fromI32(dayID).toString());
+  let broadcasterDay = BroadcasterDay.load(broadcasterDayID);
+
+  if (broadcasterDay == null) {
+    broadcasterDay = new BroadcasterDay(broadcasterDayID);
+    broadcasterDay.date = dayStartTimestamp;
+    broadcasterDay.broadcaster = broadcasterAddress;
+    broadcasterDay.volumeUSD = ZERO_BD;
+    broadcasterDay.volumeETH = ZERO_BD;
+
+    broadcasterDay.save();
+  }
+  return broadcasterDay;
 }
 
 export function createOrLoadRound(blockNumber: BigInt): Round {
