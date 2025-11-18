@@ -17,19 +17,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+        - uses: actions/setup-node@v3
         with:
           node-version: 22
           cache: yarn
-      - name: Install
-        run: yarn --immutable
-
+          - name: Install
+          run: yarn --immutable
+          
+      - name: Derive short SHA
+        id: short_sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Deploy preview to Subgraph Studio (livepeer-ci)
         id: deploy_preview
         if: github.event_name == 'pull_request'
         env:
           LIVEPEER_CI_DEPLOY_KEY: ${{ secrets.LIVEPEER_CI_DEPLOY_KEY }}
-          VERSION_LABEL: pr-${{ github.event.number }}-${{ github.sha }}
+          VERSION_LABEL: pr-${{ github.event.number }}-${{ steps.short_sha.outputs.short_sha }}-${{ github.run_id }}
         run: |
           yarn prepare:arbitrum-one
           ./.github/scripts/deploy-studio.sh livepeer-ci "$VERSION_LABEL" "$LIVEPEER_CI_DEPLOY_KEY"
@@ -55,7 +58,7 @@ jobs:
 
             | Item | Details |
             | :--- | :------ |
-            | Version label | `pr-${{ github.event.number }}-${{ github.sha }}` |
+            | Version label | `pr-${{ github.event.number }}-${{ steps.short_sha.outputs.short_sha }}-${{ github.run_id }}` |
             | Query endpoint | [`${{ steps.deploy_preview.outputs.studio_query_url }}`](${{ steps.deploy_preview.outputs.studio_query_url }}) |
 
             ```bash
