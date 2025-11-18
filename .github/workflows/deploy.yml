@@ -19,19 +19,41 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 22
           cache: yarn
       - name: Install
         run: yarn --immutable
 
-      - name: Deploy to Arbitrum Goerli
-        if: github.ref != 'refs/heads/main'
-        run: yarn deploy:arbitrum-goerli --deploy-key $SUBGRAPH_ACCESS_TOKEN
+      - name: Deploy preview to Subgraph Studio (livepeer-ci)
+        id: deploy_preview
+        if: github.event_name == 'pull_request'
         env:
-          SUBGRAPH_ACCESS_TOKEN: ${{ secrets.SUBGRAPH_ACCESS_TOKEN }}
+          LIVEPEER_CI_DEPLOY_KEY: ${{ secrets.LIVEPEER_CI_DEPLOY_KEY }}
+          VERSION_LABEL: pr-${{ github.event.number }}
+        run: |
+          yarn prepare:arbitrum-one
+          ./.github/scripts/deploy-studio.sh livepeer-ci "$VERSION_LABEL" "$LIVEPEER_CI_DEPLOY_KEY"
+
+      - name: Comment Studio preview endpoint
+        if: github.event_name == 'pull_request' && steps.deploy_preview.outputs.studio_query_url != ''
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            🚀 Subgraph Studio preview deployed for this PR.
+
+            Query endpoint: `${{ steps.deploy_preview.outputs.studio_query_url }}`
+
+      # NOTE: disabled until Goerli testnet is deployed
+      # - name: Deploy to Arbitrum Goerli
+      #   if: github.ref != 'refs/heads/main'
+      #   run: yarn deploy:arbitrum-goerli --deploy-key $SUBGRAPH_ACCESS_TOKEN
+      #   env:
+      #     SUBGRAPH_ACCESS_TOKEN: ${{ secrets.SUBGRAPH_ACCESS_TOKEN }}
 
       - name: Deploy to Arbitrum One
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: yarn deploy:arbitrum-one --deploy-key $SUBGRAPH_ACCESS_TOKEN
         env:
-          SUBGRAPH_ACCESS_TOKEN: ${{ secrets.SUBGRAPH_ACCESS_TOKEN }}
+          ARBITRUM_ONE_DEPLOY_KEY: ${{ secrets.ARBITRUM_ONE_DEPLOY_KEY }}
+        run: yarn deploy:arbitrum-one --deploy-key $ARBITRUM_ONE_DEPLOY_KEY
