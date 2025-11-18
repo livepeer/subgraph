@@ -51,9 +51,18 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           edit-mode: replace
           body: |
-            🚀 Subgraph Studio preview deployed for this PR.
+            🚀 **Subgraph Studio preview deployed**
 
-            Query endpoint: `${{ steps.deploy_preview.outputs.studio_query_url }}`
+            | Item | Details |
+            | :--- | :------ |
+            | Version label | `pr-${{ github.event.number }}-${{ github.sha }}` |
+            | Query endpoint | [`${{ steps.deploy_preview.outputs.studio_query_url }}`](${{ steps.deploy_preview.outputs.studio_query_url }}) |
+
+            ```bash
+            curl -H 'Content-Type: application/json' \
+              -d '{"query":"{ protocol(id: \"0\") { inflation } }"}' \
+              ${{ steps.deploy_preview.outputs.studio_query_url }}
+            ```
 
       # NOTE: disabled until Goerli testnet is deployed
       # - name: Deploy to Arbitrum Goerli
