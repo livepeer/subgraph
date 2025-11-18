@@ -29,7 +29,7 @@ jobs:
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Deploy preview to Subgraph Studio (livepeer-ci)
         id: deploy_preview
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
         env:
           LIVEPEER_CI_DEPLOY_KEY: ${{ secrets.LIVEPEER_CI_DEPLOY_KEY }}
           VERSION_LABEL: pr-${{ github.event.number }}-${{ steps.short_sha.outputs.short_sha }}-${{ github.run_id }}
@@ -38,7 +38,7 @@ jobs:
           ./.github/scripts/deploy-studio.sh livepeer-ci "$VERSION_LABEL" "$LIVEPEER_CI_DEPLOY_KEY"
 
       - name: Find Studio preview comment
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
         id: find_studio_comment
         uses: peter-evans/find-comment@v4
         with:
@@ -46,7 +46,7 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: Subgraph Studio preview deployed
       - name: Comment Studio preview endpoint
-        if: github.event_name == 'pull_request' && steps.deploy_preview.outputs.studio_query_url != ''
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false && steps.deploy_preview.outputs.studio_query_url != ''
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.find_studio_comment.outputs.comment-id }}
