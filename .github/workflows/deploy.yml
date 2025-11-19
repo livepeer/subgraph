@@ -19,19 +19,62 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 22
           cache: yarn
       - name: Install
         run: yarn --immutable
-
-      - name: Deploy to Arbitrum Goerli
-        if: github.ref != 'refs/heads/main'
-        run: yarn deploy:arbitrum-goerli --deploy-key $SUBGRAPH_ACCESS_TOKEN
+          
+      - name: Derive short SHA
+        id: short_sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Deploy preview to Subgraph Studio (livepeer-ci)
+        id: deploy_preview
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
         env:
-          SUBGRAPH_ACCESS_TOKEN: ${{ secrets.SUBGRAPH_ACCESS_TOKEN }}
+          LIVEPEER_CI_DEPLOY_KEY: ${{ secrets.LIVEPEER_CI_DEPLOY_KEY }}
+          VERSION_LABEL: pr-${{ github.event.number }}-${{ steps.short_sha.outputs.short_sha }}-${{ github.run_id }}
+        run: |
+          yarn prepare:arbitrum-one
+          ./.github/scripts/deploy-studio.sh livepeer-ci "$VERSION_LABEL" "$LIVEPEER_CI_DEPLOY_KEY"
 
+      - name: Find subgraph studio preview comment
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+        id: find_studio_comment
+        uses: peter-evans/find-comment@v4
+        with:
+          issue-number: ${{ github.event.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Subgraph Studio preview deployed
+      - name: Comment subgraph studio preview endpoint
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false && steps.deploy_preview.outputs.studio_query_url != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find_studio_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          edit-mode: replace
+          body: |
+            🚀 **Subgraph studio preview deployed**
+
+            | Item | Details |
+            | :--- | :------ |
+            | Version label | `pr-${{ github.event.number }}-${{ steps.short_sha.outputs.short_sha }}-${{ github.run_id }}` |
+            | Query endpoint | [`${{ steps.deploy_preview.outputs.studio_query_url }}`](${{ steps.deploy_preview.outputs.studio_query_url }}) |
+
+            ```bash
+            curl -H 'Content-Type: application/json' \
+              -d '{"query":"{ protocol(id: \"0\") { inflation } }"}' \
+              ${{ steps.deploy_preview.outputs.studio_query_url }}
+            ```
+
+      # NOTE: disabled until Goerli testnet is deployed
+      # - name: Deploy to Arbitrum Goerli
+      #   if: github.ref != 'refs/heads/main'
+      #   run: yarn deploy:arbitrum-goerli --deploy-key $SUBGRAPH_ACCESS_TOKEN
+      #   env:
+      #     SUBGRAPH_ACCESS_TOKEN: ${{ secrets.SUBGRAPH_ACCESS_TOKEN }}
       - name: Deploy to Arbitrum One
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: yarn deploy:arbitrum-one --deploy-key $SUBGRAPH_ACCESS_TOKEN
         env:
-          SUBGRAPH_ACCESS_TOKEN: ${{ secrets.SUBGRAPH_ACCESS_TOKEN }}
+          ARBITRUM_ONE_DEPLOY_KEY: ${{ secrets.ARBITRUM_ONE_DEPLOY_KEY }}
+        run: yarn deploy:arbitrum-one --deploy-key $ARBITRUM_ONE_DEPLOY_KEY
