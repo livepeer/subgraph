@@ -35,7 +35,7 @@ jobs:
           VERSION_LABEL: pr-${{ github.event.number }}-${{ steps.short_sha.outputs.short_sha }}-${{ github.run_id }}
         run: |
           yarn prepare:arbitrum-one
-          ./.github/scripts/deploy-studio.sh livepeer-ci "$VERSION_LABEL" "$LIVEPEER_CI_DEPLOY_KEY"
+          ./.github/scripts/deploy-subgraph-studio.sh livepeer-ci "$VERSION_LABEL" "$LIVEPEER_CI_DEPLOY_KEY"
 
       - name: Find subgraph studio preview comment
         if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
