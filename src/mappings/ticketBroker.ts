@@ -151,6 +151,12 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 export function depositFunded(event: DepositFunded): void {
   let round = createOrLoadRound(getBlockNum());
   let broadcaster = createOrLoadBroadcaster(event.params.sender.toHex());
+  let timestamp = event.block.timestamp.toI32();
+  let firstActiveDay = (timestamp / 86400) * 86400;
+
+  if (broadcaster.firstActiveDay == 0) {
+    broadcaster.firstActiveDay = firstActiveDay;
+  }
 
   broadcaster.deposit = broadcaster.deposit.plus(
     convertToDecimal(event.params.amount)
@@ -163,7 +169,7 @@ export function depositFunded(event: DepositFunded): void {
     makeEventId(event.transaction.hash, event.logIndex)
   );
   depositFundedEvent.transaction = event.transaction.hash.toHex();
-  depositFundedEvent.timestamp = event.block.timestamp.toI32();
+  depositFundedEvent.timestamp = timestamp;
   depositFundedEvent.round = round.id;
   depositFundedEvent.sender = event.params.sender.toHex();
   depositFundedEvent.amount = convertToDecimal(event.params.amount);
@@ -173,6 +179,12 @@ export function depositFunded(event: DepositFunded): void {
 export function reserveFunded(event: ReserveFunded): void {
   let round = createOrLoadRound(getBlockNum());
   let broadcaster = createOrLoadBroadcaster(event.params.reserveHolder.toHex());
+  let timestamp = event.block.timestamp.toI32();
+  let firstActiveDay = (timestamp / 86400) * 86400;
+
+  if (broadcaster.firstActiveDay == 0) {
+    broadcaster.firstActiveDay = firstActiveDay;
+  }
 
   broadcaster.reserve = broadcaster.reserve.plus(
     convertToDecimal(event.params.amount)
@@ -185,7 +197,7 @@ export function reserveFunded(event: ReserveFunded): void {
     makeEventId(event.transaction.hash, event.logIndex)
   );
   reserveFundedEvent.transaction = event.transaction.hash.toHex();
-  reserveFundedEvent.timestamp = event.block.timestamp.toI32();
+  reserveFundedEvent.timestamp = timestamp;
   reserveFundedEvent.round = round.id;
   reserveFundedEvent.reserveHolder = event.params.reserveHolder.toHex();
   reserveFundedEvent.amount = convertToDecimal(event.params.amount);

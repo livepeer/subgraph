@@ -177,6 +177,7 @@ export function createOrLoadProtocol(): Protocol {
     protocol.activeBroadcasters = [];
     protocol.save();
   }
+
   return protocol;
 }
 
@@ -192,18 +193,25 @@ export function createOrLoadBroadcaster(id: string): Broadcaster {
     broadcaster.thirtyDayVolumeETH = ZERO_BD;
     broadcaster.sixtyDayVolumeETH = ZERO_BD;
     broadcaster.ninetyDayVolumeETH = ZERO_BD;
+    broadcaster.firstActiveDay = 0;
     broadcaster.lastActiveDay = 0;
     broadcaster.broadcasterDays = [];
 
     broadcaster.save();
-  }
-
+  } 
+  
   let protocol = createOrLoadProtocol();
   let activeBroadcasters = protocol.activeBroadcasters;
   if (!activeBroadcasters.includes(id)) {
     activeBroadcasters.push(id);
     protocol.activeBroadcasters = activeBroadcasters;
     protocol.save();
+  }
+
+  // Ensure backwards compatibility
+  if (broadcaster.firstActiveDay == null) {
+    broadcaster.firstActiveDay = 0;
+    broadcaster.save();
   }
 
   return broadcaster;
