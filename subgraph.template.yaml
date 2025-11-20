@@ -296,6 +296,8 @@ dataSources:
       eventHandlers:
         - event: ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)
           handler: proposalCreated
+        - event: VoteCast(indexed address,uint256,uint8,uint256,string)
+          handler: handleVoteCast
   - kind: ethereum/contract
     name: ServiceRegistry
     network: {{networkName}}
