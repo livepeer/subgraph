@@ -54,7 +54,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           edit-mode: replace
           body: |
-            🚀 **Subgraph studio preview deployed**
+            🚀 **Subgraph Studio preview deployed**
 
             | Item | Details |
             | :--- | :------ |
