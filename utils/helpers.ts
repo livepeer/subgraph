@@ -390,11 +390,15 @@ export function safeDiv(amount0: BigDecimal, amount1: BigDecimal): BigDecimal {
 }
 
 export function getEthPriceUsd(): BigDecimal {
-  return getPriceForPair(getUniswapV3DaiEthPoolAddress());
+  return getPriceForPair(getUniswapV3DaiEthPoolAddress())
 }
 
 export function getLptPriceEth(): BigDecimal {
   return getPriceForPair(getUniswapV3LptEthPoolAddress());
+}
+
+export function getLptPriceUsd(): BigDecimal {
+  return getLptPriceEth().times(getEthPriceUsd());
 }
 
 export function getPriceForPair(address: string): BigDecimal {

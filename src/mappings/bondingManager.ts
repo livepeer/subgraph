@@ -8,6 +8,7 @@ import {
   createOrLoadTranscoder,
   EMPTY_ADDRESS,
   getBlockNum,
+  getLptPriceUsd,
   makeEventId,
   makePoolId,
   makeUnbondingLockId,
@@ -486,17 +487,15 @@ export function reward(event: Reward): void {
   let poolId = makePoolId(event.params.transcoder.toHex(), round.id);
   let pool = Pool.load(poolId);
   let protocol = createOrLoadProtocol();
+  let rewardTokens = convertToDecimal(event.params.amount);
+  let rewardTokensUSD = rewardTokens.times(getLptPriceUsd());
 
-  delegate.delegatedAmount = delegate.delegatedAmount.plus(
-    convertToDecimal(event.params.amount)
-  );
+  delegate.delegatedAmount = delegate.delegatedAmount.plus(rewardTokens);
 
-  transcoder.totalStake = transcoder.totalStake.plus(
-    convertToDecimal(event.params.amount)
-  );
+  transcoder.totalStake = transcoder.totalStake.plus(rewardTokens);
   transcoder.lastRewardRound = round.id;
 
-  pool!.rewardTokens = convertToDecimal(event.params.amount);
+  pool!.rewardTokens = rewardTokens;
   pool!.feeShare = transcoder.feeShare;
   pool!.rewardCut = transcoder.rewardCut;
 
@@ -513,7 +512,8 @@ export function reward(event: Reward): void {
   rewardEvent.transaction = event.transaction.hash.toHex();
   rewardEvent.timestamp = event.block.timestamp.toI32();
   rewardEvent.round = round.id;
-  rewardEvent.rewardTokens = convertToDecimal(event.params.amount);
+  rewardEvent.rewardTokens = rewardTokens;
+  rewardEvent.rewardTokensUSD = rewardTokensUSD;
   rewardEvent.delegate = event.params.transcoder.toHex();
   rewardEvent.save();
 }
