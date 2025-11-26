@@ -293,9 +293,17 @@ dataSources:
       entities:
         - TreasuryProposal
         - LivepeerAccount
+        - TreasuryVote
+        - TreasuryVoteEvent
+        - Transaction
+        - Round
       eventHandlers:
         - event: ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)
           handler: proposalCreated
+        - event: VoteCast(indexed address,uint256,uint8,uint256,string)
+          handler: voteCast
+        - event: VoteCastWithParams(indexed address,uint256,uint8,uint256,string,bytes)
+          handler: voteCastWithParams
   - kind: ethereum/contract
     name: ServiceRegistry
     network: {{networkName}}
