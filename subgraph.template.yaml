@@ -290,13 +290,16 @@ dataSources:
       abis:
         - name: LivepeerGovernor
           file: ./abis/LivepeerGovernor.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - TreasuryProposal
-        - LivepeerAccount
         - TreasuryVote
         - TreasuryVoteEvent
-        - Transaction
+        - LivepeerAccount
         - Round
+        - Protocol
+        - Transaction
       eventHandlers:
         - event: ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)
           handler: proposalCreated
