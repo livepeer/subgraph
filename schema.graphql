@@ -386,7 +386,7 @@ type TreasuryProposal @entity {
   totalVotes: BigDecimal!
 }
 
-enum TreasuryVoteSupport @entity {
+enum TreasuryVoteSupport{
   Against
   For
   Abstain
