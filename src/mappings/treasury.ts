@@ -1,12 +1,12 @@
 import { BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
 import {
-  convertToDecimal, 
-  createOrLoadRound, 
-  createOrLoadTransactionFromEvent, 
-  createOrUpdateLivepeerAccount, 
-  getBlockNum, 
-  makeEventId, 
+  convertToDecimal,
+  createOrLoadRound,
+  createOrLoadTransactionFromEvent,
+  createOrUpdateLivepeerAccount,
+  getBlockNum,
+  makeEventId,
   ZERO_BD,
 } from "../../utils/helpers";
 import {
@@ -19,6 +19,13 @@ import {
   VoteCast,
   VoteCastWithParams,
 } from "../types/Treasury/LivepeerGovernor";
+
+// Workaround: Graph entities store enums as strings (no string enums in AS/codegen).
+namespace TreasurySupport {
+  export const Against = "Against";
+  export const For = "For";
+  export const Abstain = "Abstain";
+}
 
 export function proposalCreated(event: ProposalCreated): void {
   const p = event.params;
@@ -125,9 +132,9 @@ function handleVote(
 }
 
 function supportFromValue(value: i32): string | null {
-  if (value == 0) return "Against";
-  if (value == 1) return "For";
-  if (value == 2) return "Abstain";
+  if (value == 0) return TreasurySupport.Against;
+  if (value == 1) return TreasurySupport.For;
+  if (value == 2) return TreasurySupport.Abstain;
   return null;
 }
 
@@ -136,9 +143,9 @@ function increaseProposalTotals(
   support: string,
   weight: BigDecimal
 ): void {
-  if (support == "For") {
+  if (support == TreasurySupport.For) {
     proposal.forVotes = proposal.forVotes.plus(weight);
-  } else if (support == "Against") {
+  } else if (support == TreasurySupport.Against) {
     proposal.againstVotes = proposal.againstVotes.plus(weight);
   } else {
     proposal.abstainVotes = proposal.abstainVotes.plus(weight);
