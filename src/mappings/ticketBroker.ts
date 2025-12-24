@@ -151,11 +151,11 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 export function depositFunded(event: DepositFunded): void {
   let round = createOrLoadRound(getBlockNum());
   let broadcaster = createOrLoadBroadcaster(event.params.sender.toHex());
-  let timestamp = event.block.timestamp.toI32();
-  let firstActiveDay = (timestamp / 86400) * 86400;
-
+  const timestamp = event.block.timestamp.toI32();
+  
+  // One-time initialization: set to start of day for this timestamp.
   if (broadcaster.firstActiveDay == 0) {
-    broadcaster.firstActiveDay = firstActiveDay;
+    broadcaster.firstActiveDay = (timestamp / 86400) * 86400;
   }
 
   broadcaster.deposit = broadcaster.deposit.plus(
@@ -179,11 +179,11 @@ export function depositFunded(event: DepositFunded): void {
 export function reserveFunded(event: ReserveFunded): void {
   let round = createOrLoadRound(getBlockNum());
   let broadcaster = createOrLoadBroadcaster(event.params.reserveHolder.toHex());
-  let timestamp = event.block.timestamp.toI32();
-  let firstActiveDay = (timestamp / 86400) * 86400;
+  const timestamp = event.block.timestamp.toI32();
 
+  // One-time initialization: set to start of day for this timestamp.
   if (broadcaster.firstActiveDay == 0) {
-    broadcaster.firstActiveDay = firstActiveDay;
+    broadcaster.firstActiveDay = (timestamp / 86400) * 86400;
   }
 
   broadcaster.reserve = broadcaster.reserve.plus(
