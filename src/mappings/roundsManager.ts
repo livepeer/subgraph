@@ -182,7 +182,7 @@ export function newRound(event: NewRound): void {
   // Update rolling fee windows for tracked broadcasters (gateways)
   let trackedBroadcasters = protocol.activeBroadcasters;
   let activeBroadcasters: string[] = [];
-  if (trackedBroadcasters && trackedBroadcasters.length) {
+  if (trackedBroadcasters.length) {
     for (let i = 0; i < trackedBroadcasters.length; i++) {
       let broadcaster = Broadcaster.load(trackedBroadcasters[i]);
 

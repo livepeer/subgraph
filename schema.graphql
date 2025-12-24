@@ -360,7 +360,7 @@ type Day @entity {
 Transcoder data accumulated and condensed into day stats
 """
 type TranscoderDay @entity {
-  "Combination of the transcoder address and the timestamp rounded to current day by dividing by 86400"
+  "Concatenation of the transcoder address and the day timestamp (e.g. <ADDRESS>-<TIMESTAMP>)"
   id: ID!
   "The date beginning at 12:00am UTC"
   date: Int!
@@ -376,7 +376,7 @@ type TranscoderDay @entity {
 Broadcaster data accumulated and condensed into day stats
 """
 type BroadcasterDay @entity {
-  "Combination of the broadcaster address and the timestamp rounded to the current day by dividing by 86400"
+  "Concatenation of the broadcaster address and the day timestamp (e.g. <ADDRESS>-<TIMESTAMP>)"
   id: ID!
   "The date beginning at 12:00am UTC"
   date: Int!
