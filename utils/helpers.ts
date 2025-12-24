@@ -172,12 +172,6 @@ export function createOrLoadProtocol(): Protocol {
     protocol.save();
   }
 
-  // Ensure backwards compatibility
-  if (protocol.activeBroadcasters == null) {
-    protocol.activeBroadcasters = [];
-    protocol.save();
-  }
-
   return protocol;
 }
 
@@ -206,12 +200,6 @@ export function createOrLoadBroadcaster(id: string): Broadcaster {
     activeBroadcasters.push(id);
     protocol.activeBroadcasters = activeBroadcasters;
     protocol.save();
-  }
-
-  // Ensure backwards compatibility
-  if (broadcaster.firstActiveDay == null) {
-    broadcaster.firstActiveDay = 0;
-    broadcaster.save();
   }
 
   return broadcaster;
