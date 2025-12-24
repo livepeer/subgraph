@@ -2,6 +2,7 @@ import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadBroadcaster,
+  createOrLoadBroadcasterDay,
   createOrLoadDay,
   createOrLoadProtocol,
   createOrLoadRound,
@@ -32,13 +33,15 @@ import {
 
 export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let round = createOrLoadRound(getBlockNum());
-  let day = createOrLoadDay(event.block.timestamp.toI32());
+  let timestamp = event.block.timestamp.toI32();
+  let day = createOrLoadDay(timestamp);
   let winningTicketRedeemedEvent = new WinningTicketRedeemedEvent(
     makeEventId(event.transaction.hash, event.logIndex)
   );
   let protocol = createOrLoadProtocol();
   let faceValue = convertToDecimal(event.params.faceValue);
   let ethPrice = getEthPriceUsd();
+  let faceValueUSD = faceValue.times(ethPrice);
   let poolId = makePoolId(event.params.recipient.toHex(), round.id);
   let pool = Pool.load(poolId);
 
@@ -50,7 +53,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   winningTicketRedeemedEvent.sender = event.params.sender.toHex();
   winningTicketRedeemedEvent.recipient = event.params.recipient.toHex();
   winningTicketRedeemedEvent.faceValue = faceValue;
-  winningTicketRedeemedEvent.faceValueUSD = faceValue.times(ethPrice);
+  winningTicketRedeemedEvent.faceValueUSD = faceValueUSD;
   winningTicketRedeemedEvent.winProb = event.params.winProb;
   winningTicketRedeemedEvent.senderNonce = event.params.senderNonce;
   winningTicketRedeemedEvent.recipientRand = event.params.recipientRand;
@@ -76,6 +79,23 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   } else {
     broadcaster.deposit = broadcaster.deposit.minus(faceValue);
   }
+
+  broadcaster.totalVolumeETH = broadcaster.totalVolumeETH.plus(faceValue);
+  broadcaster.totalVolumeUSD = broadcaster.totalVolumeUSD.plus(faceValueUSD);
+  
+  let broadcasterDay = createOrLoadBroadcasterDay(
+    timestamp,
+    event.params.sender.toHex()
+  );
+  broadcaster.lastActiveDay = broadcasterDay.date;
+  broadcasterDay.volumeETH = broadcasterDay.volumeETH.plus(faceValue);
+  broadcasterDay.volumeUSD = broadcasterDay.volumeUSD.plus(faceValueUSD);
+  broadcasterDay.save();
+  let broadcasterDays = broadcaster.broadcasterDays;
+  if (!broadcasterDays.includes(broadcasterDay.id)) {
+    broadcasterDays.unshift(broadcasterDay.id);
+    broadcaster.broadcasterDays = broadcasterDays;
+  }
   broadcaster.save();
 
   // Update transcoder's fee volume
@@ -84,15 +104,11 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     event.block.timestamp.toI32()
   );
   transcoder.totalVolumeETH = transcoder.totalVolumeETH.plus(faceValue);
-  transcoder.totalVolumeUSD = transcoder.totalVolumeUSD.plus(
-    faceValue.times(ethPrice)
-  );
+  transcoder.totalVolumeUSD = transcoder.totalVolumeUSD.plus(faceValueUSD);
 
   // Update total protocol fee volume
   protocol.totalVolumeETH = protocol.totalVolumeETH.plus(faceValue);
-  protocol.totalVolumeUSD = protocol.totalVolumeUSD.plus(
-    faceValue.times(ethPrice)
-  );
+  protocol.totalVolumeUSD = protocol.totalVolumeUSD.plus(faceValueUSD);
 
   protocol.winningTicketCount = protocol.winningTicketCount + 1;
   protocol.save();
@@ -107,17 +123,15 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   day.totalActiveStake = protocol.totalActiveStake;
   day.participationRate = protocol.participationRate;
   day.volumeETH = day.volumeETH.plus(faceValue);
-  day.volumeUSD = day.volumeUSD.plus(faceValue.times(ethPrice));
+  day.volumeUSD = day.volumeUSD.plus(faceValueUSD);
   day.save();
 
   let transcoderDay = createOrLoadTranscoderDay(
-    event.block.timestamp.toI32(),
+    timestamp,
     event.params.recipient.toHex()
   );
   transcoderDay.volumeETH = transcoderDay.volumeETH.plus(faceValue);
-  transcoderDay.volumeUSD = transcoderDay.volumeUSD.plus(
-    faceValue.times(ethPrice)
-  );
+  transcoderDay.volumeUSD = transcoderDay.volumeUSD.plus(faceValueUSD);
   transcoderDay.save();
 
   // Manually manage the array of transcoder days (add newest to the beginning of the list)
@@ -130,13 +144,19 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 
   // Update fee volume for this round
   round.volumeETH = round.volumeETH.plus(faceValue);
-  round.volumeUSD = round.volumeUSD.plus(faceValue.times(ethPrice));
+  round.volumeUSD = round.volumeUSD.plus(faceValueUSD);
   round.save();
 }
 
 export function depositFunded(event: DepositFunded): void {
   let round = createOrLoadRound(getBlockNum());
   let broadcaster = createOrLoadBroadcaster(event.params.sender.toHex());
+  const timestamp = event.block.timestamp.toI32();
+  
+  // One-time initialization: set to start of day for this timestamp.
+  if (broadcaster.firstActiveDay == 0) {
+    broadcaster.firstActiveDay = (timestamp / 86400) * 86400;
+  }
 
   broadcaster.deposit = broadcaster.deposit.plus(
     convertToDecimal(event.params.amount)
@@ -149,7 +169,7 @@ export function depositFunded(event: DepositFunded): void {
     makeEventId(event.transaction.hash, event.logIndex)
   );
   depositFundedEvent.transaction = event.transaction.hash.toHex();
-  depositFundedEvent.timestamp = event.block.timestamp.toI32();
+  depositFundedEvent.timestamp = timestamp;
   depositFundedEvent.round = round.id;
   depositFundedEvent.sender = event.params.sender.toHex();
   depositFundedEvent.amount = convertToDecimal(event.params.amount);
@@ -159,6 +179,12 @@ export function depositFunded(event: DepositFunded): void {
 export function reserveFunded(event: ReserveFunded): void {
   let round = createOrLoadRound(getBlockNum());
   let broadcaster = createOrLoadBroadcaster(event.params.reserveHolder.toHex());
+  const timestamp = event.block.timestamp.toI32();
+
+  // One-time initialization: set to start of day for this timestamp.
+  if (broadcaster.firstActiveDay == 0) {
+    broadcaster.firstActiveDay = (timestamp / 86400) * 86400;
+  }
 
   broadcaster.reserve = broadcaster.reserve.plus(
     convertToDecimal(event.params.amount)
@@ -171,7 +197,7 @@ export function reserveFunded(event: ReserveFunded): void {
     makeEventId(event.transaction.hash, event.logIndex)
   );
   reserveFundedEvent.transaction = event.transaction.hash.toHex();
-  reserveFundedEvent.timestamp = event.block.timestamp.toI32();
+  reserveFundedEvent.timestamp = timestamp;
   reserveFundedEvent.round = round.id;
   reserveFundedEvent.reserveHolder = event.params.reserveHolder.toHex();
   reserveFundedEvent.amount = convertToDecimal(event.params.amount);
