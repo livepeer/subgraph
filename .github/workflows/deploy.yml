@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "*"
 
 jobs:
   deploy:
@@ -67,14 +69,18 @@ jobs:
               ${{ steps.deploy_preview.outputs.studio_query_url }}
             ```
 
-      # NOTE: disabled until Goerli testnet is deployed
-      # - name: Deploy to Arbitrum Goerli
-      #   if: github.ref != 'refs/heads/main'
-      #   run: yarn deploy:arbitrum-goerli --deploy-key $SUBGRAPH_ACCESS_TOKEN
+      # # NOTE: disabled until testnet is deployed
+      # - name: Deploy to Arbitrum Goerli (main)
+      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       #   env:
-      #     SUBGRAPH_ACCESS_TOKEN: ${{ secrets.SUBGRAPH_ACCESS_TOKEN }}
-      - name: Deploy to Arbitrum One
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      #     DEPLOY_KEY: ${{ secrets.ARBITRUM_GOERLI_DEPLOY_KEY }}
+      #     VERSION_LABEL: ${{ steps.short_sha.outputs.short_sha }}
+      #   run: |
+      #     yarn deploy:arbitrum-goerli -- --version-label "$VERSION_LABEL" --deploy-key "$DEPLOY_KEY"
+      - name: Deploy to Arbitrum One (tag)
+        if: startsWith(github.ref, 'refs/tags/')
         env:
-          ARBITRUM_ONE_DEPLOY_KEY: ${{ secrets.ARBITRUM_ONE_DEPLOY_KEY }}
-        run: yarn deploy:arbitrum-one --deploy-key $ARBITRUM_ONE_DEPLOY_KEY
+          DEPLOY_KEY: ${{ secrets.ARBITRUM_ONE_DEPLOY_KEY }}
+          VERSION_LABEL: ${{ github.ref_name }}
+        run: |
+          yarn deploy:arbitrum-one -- --version-label "$VERSION_LABEL" --deploy-key "$DEPLOY_KEY"

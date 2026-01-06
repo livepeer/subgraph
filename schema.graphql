@@ -54,6 +54,8 @@ type Protocol @entity {
   pendingDeactivation: [Transcoder!]!
   "Total number of delegators on the network"
   delegatorsCount: BigInt!
+  "Broadcasters active within the current 90 day fee window"
+  activeBroadcasters: [String!]!
 }
 
 """
@@ -231,6 +233,22 @@ type Broadcaster @entity {
   deposit: BigDecimal!
   "Amount of funds in reserve"
   reserve: BigDecimal!
+  "Total fees paid out by this broadcaster in ETH"
+  totalVolumeETH: BigDecimal!
+  "Total fees paid out by this broadcaster in USD"
+  totalVolumeUSD: BigDecimal!
+  "Fees paid out by this broadcaster in ETH during the last 30 days"
+  thirtyDayVolumeETH: BigDecimal!
+  "Fees paid out by this broadcaster in ETH during the last 60 days"
+  sixtyDayVolumeETH: BigDecimal!
+  "Fees paid out by this broadcaster in ETH during the last 90 days"
+  ninetyDayVolumeETH: BigDecimal!
+  "The date this broadcaster first funded a deposit or reserve, beginning at 12:00am UTC"
+  firstActiveDay: Int!
+  "The date this broadcaster last paid fees, beginning at 12:00am UTC"
+  lastActiveDay: Int!
+  "Days in which this broadcaster paid out fees"
+  broadcasterDays: [BroadcasterDay!]!
 }
 
 """
@@ -342,7 +360,7 @@ type Day @entity {
 Transcoder data accumulated and condensed into day stats
 """
 type TranscoderDay @entity {
-  "Combination of the transcoder address and the timestamp rounded to current day by dividing by 86400"
+  "Concatenation of the transcoder address and the day timestamp (e.g. <ADDRESS>-<TIMESTAMP>)"
   id: ID!
   "The date beginning at 12:00am UTC"
   date: Int!
@@ -352,6 +370,22 @@ type TranscoderDay @entity {
   volumeUSD: BigDecimal!
   "Transcoder associated with the day"
   transcoder: Transcoder!
+}
+
+"""
+Broadcaster data accumulated and condensed into day stats
+"""
+type BroadcasterDay @entity {
+  "Concatenation of the broadcaster address and the day timestamp (e.g. <ADDRESS>-<TIMESTAMP>)"
+  id: ID!
+  "The date beginning at 12:00am UTC"
+  date: Int!
+  "Fees paid this day in ETH"
+  volumeETH: BigDecimal!
+  "Fees paid this day in USD"
+  volumeUSD: BigDecimal!
+  "Broadcaster associated with the day"
+  broadcaster: Broadcaster!
 }
 
 """

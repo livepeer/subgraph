@@ -1,6 +1,6 @@
 # Livepeer Subgraph
 
-[![Discord](https://img.shields.io/discord/423160867534929930.svg?style=flat-square)](https://discord.gg/7wRSUGX)
+[![Discord](https://img.shields.io/discord/423160867534929930.svg?style=flat-square)](https://discord.gg/livepeer)
 [![GitHub issues](https://img.shields.io/github/issues/livepeer/livepeerjs/subgraph.svg?style=flat-square)](https://github.com/livepeer/livepeerjs/labels/subgraph)
 
 This package contains the source code for the Livepeer Subgraph, a project for
@@ -23,10 +23,23 @@ each network (arbitrum-one and arbitrum-goerli). The network can be changed via 
 `NETWORK_NAME` environment variable or directly by choosing a different
 "prepare" script. See [package.json](./package.json) for all options.
 
-### Deploy the Livepeer Subgraph to the Graph's hosted service (recommended)
+### Deploy the Livepeer Subgraph with Subgraph Studio
 
-Follow the instructions documented
-[here](https://thegraph.com/docs/deploy-a-subgraph).
+Deploy to Subgraph Studio first, then publish to the decentralized Graph Network
+from the Studio UI. For more information, see the [Subgraph Studio
+documentation](https://thegraph.com/docs/en/subgraphs/developing/deploying/using-subgraph-studio/).
+
+Example deploy:
+
+```bash
+yarn deploy:arbitrum-one -- --version-label <version-label> --deploy-key <deploy-key>
+```
+
+You can also override the subgraph name for the generic deploy script:
+
+```bash
+SUBGRAPH=livepeer/arbitrum-one yarn deploy -- --version-label <version-label> --deploy-key <deploy-key>
+```
 
 ### Deploy the Livepeer Subgraph locally
 
