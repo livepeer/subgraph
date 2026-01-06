@@ -1,4 +1,4 @@
-name: Staging Deploy (Studio/Testnet)
+name: Staging Deploy
 
 on:
   pull_request:
