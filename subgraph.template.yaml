@@ -290,12 +290,23 @@ dataSources:
       abis:
         - name: LivepeerGovernor
           file: ./abis/LivepeerGovernor.json
+        - name: RoundsManager
+          file: ./abis/RoundsManager.json
       entities:
         - TreasuryProposal
+        - TreasuryVote
+        - TreasuryVoteEvent
         - LivepeerAccount
+        - Round
+        - Protocol
+        - Transaction
       eventHandlers:
         - event: ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)
           handler: proposalCreated
+        - event: VoteCast(indexed address,uint256,uint8,uint256,string)
+          handler: voteCast
+        - event: VoteCastWithParams(indexed address,uint256,uint8,uint256,string,bytes)
+          handler: voteCastWithParams
   - kind: ethereum/contract
     name: ServiceRegistry
     network: {{networkName}}

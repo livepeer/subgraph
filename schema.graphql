@@ -388,6 +388,9 @@ type BroadcasterDay @entity {
   broadcaster: Broadcaster!
 }
 
+"""
+Stake weighted treasury proposal
+"""
 type TreasuryProposal @entity {
   "Governor proposal ID formatted as a decimal number"
   id: ID!
@@ -405,6 +408,40 @@ type TreasuryProposal @entity {
   voteEnd: BigInt!
   "Description of the proposal"
   description: String!
+  "Votes cast for this proposal"
+  votes: [TreasuryVote!]! @derivedFrom(field: "proposal")
+  "Total weight of votes in favor"
+  forVotes: BigDecimal!
+  "Total weight of votes against"
+  againstVotes: BigDecimal!
+  "Total weight of abstaining votes"
+  abstainVotes: BigDecimal!
+  "Sum of all vote weights"
+  totalVotes: BigDecimal!
+}
+
+enum TreasuryVoteSupport{
+  Against
+  For
+  Abstain
+}
+
+"""
+Stake weighted vote on a treasury proposal
+"""
+type TreasuryVote @entity {
+  "Proposal ID + voter address"
+  id: ID!
+  "The proposal that was voted on"
+  proposal: TreasuryProposal!
+  "Account that cast the vote"
+  voter: LivepeerAccount!
+  "The voter's position"
+  support: TreasuryVoteSupport!
+  "Stake-weighted voting power"
+  weight: BigDecimal!
+  "Optional reason string provided by the voter"
+  reason: String
 }
 
 ###############################################################################
@@ -903,6 +940,30 @@ type ParameterUpdateEvent implements Event @entity {
   round: Round!
   "Parameter that was updated"
   param: String!
+}
+
+"""
+TreasuryVoteEvent entities are created for every emitted VoteCast/VoteCastWithParams event.
+"""
+type TreasuryVoteEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occured in"
+  round: Round!
+  "Account that cast the vote"
+  voter: LivepeerAccount!
+  "Proposal that the vote was cast for"
+  proposal: TreasuryProposal!
+  "The voter's position"
+  support: TreasuryVoteSupport!
+  "Stake-weighted voting power"
+  weight: BigDecimal!
+  "Optional reason string provided by the voter"
+  reason: String
 }
 
 """
