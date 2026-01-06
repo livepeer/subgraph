@@ -1,14 +1,20 @@
-name: staging
+name: Staging Deploy (Studio/Testnet)
 
 on:
   pull_request:
     branches:
       - "*"
+  # NOTE: disabled until testnet is deployed
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   deploy:
     name: "Deploy to Subgraph"
+
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -24,7 +30,7 @@ jobs:
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Deploy preview to Subgraph Studio (livepeer-ci)
         id: deploy_preview
-        if: github.event.pull_request.draft == false
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
         env:
           LIVEPEER_CI_DEPLOY_KEY: ${{ secrets.LIVEPEER_CI_DEPLOY_KEY }}
           VERSION_LABEL: pr-${{ github.event.number }}-${{ steps.short_sha.outputs.short_sha }}-${{ github.run_id }}
@@ -33,7 +39,7 @@ jobs:
           ./.github/scripts/deploy-subgraph-studio.sh livepeer-ci "$VERSION_LABEL" "$LIVEPEER_CI_DEPLOY_KEY"
 
       - name: Find subgraph studio preview comment
-        if: github.event.pull_request.draft == false
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
         id: find_studio_comment
         uses: peter-evans/find-comment@v4
         with:
@@ -41,7 +47,7 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: Subgraph Studio preview deployed
       - name: Comment subgraph studio preview endpoint
-        if: github.event.pull_request.draft == false && steps.deploy_preview.outputs.studio_query_url != ''
+        if: github.event_name == 'pull_request' && github.event.pull_request.draft == false && steps.deploy_preview.outputs.studio_query_url != ''
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.find_studio_comment.outputs.comment-id }}
@@ -61,3 +67,12 @@ jobs:
               -d '{"query":"{ protocol(id: \"0\") { inflation } }"}' \
               ${{ steps.deploy_preview.outputs.studio_query_url }}
             ```
+
+      # NOTE: disabled until testnet is deployed
+      # - name: Deploy to Arbitrum Goerli (main)
+      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      #   env:
+      #     DEPLOY_KEY: ${{ secrets.ARBITRUM_GOERLI_DEPLOY_KEY }}
+      #     VERSION_LABEL: ${{ steps.short_sha.outputs.short_sha }}
+      #   run: |
+      #     yarn deploy:arbitrum-goerli -- --version-label "$VERSION_LABEL" --deploy-key "$DEPLOY_KEY"
