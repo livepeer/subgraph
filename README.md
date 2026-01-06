@@ -23,10 +23,23 @@ each network (arbitrum-one and arbitrum-goerli). The network can be changed via 
 `NETWORK_NAME` environment variable or directly by choosing a different
 "prepare" script. See [package.json](./package.json) for all options.
 
-### Deploy the Livepeer Subgraph to the Graph's hosted service (recommended)
+### Deploy the Livepeer Subgraph with Subgraph Studio
 
-Follow the instructions documented
-[here](https://thegraph.com/docs/deploy-a-subgraph).
+Deploy to Subgraph Studio first, then publish to the decentralized Graph Network
+from the Studio UI. For more information, see the [Subgraph Studio
+documentation](https://thegraph.com/docs/en/subgraphs/developing/deploying/using-subgraph-studio/).
+
+Example deploy:
+
+```bash
+yarn deploy:arbitrum-one -- --version-label <version-label> --deploy-key <deploy-key>
+```
+
+You can also override the subgraph name for the generic deploy script:
+
+```bash
+SUBGRAPH=livepeer/arbitrum-one yarn deploy -- --version-label <version-label> --deploy-key <deploy-key>
+```
 
 ### Deploy the Livepeer Subgraph locally
 
