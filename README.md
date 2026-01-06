@@ -1,7 +1,8 @@
 # Livepeer Subgraph
 
 [![Discord](https://img.shields.io/discord/423160867534929930.svg?style=flat-square)](https://discord.gg/livepeer)
-[![GitHub issues](https://img.shields.io/github/issues/livepeer/livepeerjs/subgraph.svg?style=flat-square)](https://github.com/livepeer/livepeerjs/labels/subgraph)
+[![Onchain Deploy](https://github.com/livepeer/subgraph/actions/workflows/deploy.yml/badge.svg)](https://github.com/livepeer/subgraph/actions/workflows/deploy.yml)
+[![Staging Deploy](https://github.com/livepeer/subgraph/actions/workflows/staging.yml/badge.svg)](https://github.com/livepeer/subgraph/actions/workflows/staging.yml)
 
 This package contains the source code for the Livepeer Subgraph, a project for
 indexing and querying Livepeer data from the Ethereum blockchain using
@@ -10,8 +11,8 @@ indexing and querying Livepeer data from the Ethereum blockchain using
 ## Quickstart
 
 ```bash
-$ yarn
-$ yarn prepare:arbitrum-one
+yarn
+yarn prepare:arbitrum-one
 ```
 
 The first command installs all external dependencies, while the latter generates
