@@ -29,10 +29,11 @@ This helps us avoid duplicated effort and align on scope.
 
 ## Deployment workflow
 
-1. CI deploys a Subgraph Studio preview and posts the link as a PR comment.
+1. CI deploys a Subgraph Studio preview on PRs and posts the link as a PR comment.
 2. Reviewers should confirm the Studio deployment fully syncs without errors.
-3. After approval, merge to `main` to trigger a testnet deployment (if enabled).
-4. Tag releases publish to the on-chain Graph Network (any tag triggers the workflow).
+3. After approval, merge to `main` to trigger a testnet deployment (currently disabled).
+4. For on-chain releases, update `package.json` version to match the release tag (e.g. `v1.2.3`).
+5. Create a `v*` tag to deploy the on-chain subgraph to the Graph Network.
 
 ## License
 
