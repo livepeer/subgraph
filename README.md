@@ -3,6 +3,7 @@
 [![Discord](https://img.shields.io/discord/423160867534929930.svg?style=flat-square)](https://discord.gg/livepeer)
 [![Onchain Deploy](https://github.com/livepeer/subgraph/actions/workflows/deploy.yml/badge.svg)](https://github.com/livepeer/subgraph/actions/workflows/deploy.yml)
 [![Staging Deploy](https://github.com/livepeer/subgraph/actions/workflows/staging.yml/badge.svg)](https://github.com/livepeer/subgraph/actions/workflows/staging.yml)
+[![Tag Version Check](https://github.com/livepeer/subgraph/actions/workflows/version-check.yml/badge.svg)](https://github.com/livepeer/subgraph/actions/workflows/version-check.yml)
 
 This package contains the source code for the Livepeer Subgraph, a project for
 indexing and querying Livepeer data from the Ethereum blockchain using
