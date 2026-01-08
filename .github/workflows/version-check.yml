@@ -4,11 +4,15 @@ on:
   push:
     tags:
       - "v*"
+    paths:
+      - "package.json"
+  workflow_dispatch:
 
 jobs:
-  version_check:
-    name: "Check package.json matches tag"
+  version_check_tag:
+    name: "Check package.json matches tag (tag push)"
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -22,3 +26,24 @@ jobs:
               "Please update package.json version to match the latest deployment tag."
             exit 1
           fi
+  version_check_pkg:
+    name: "Check package.json matches latest tag (package.json push)"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || !startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Fail if package.json mismatches latest tag
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_NAME=$(git tag --list "v*" --sort=version:refname | tail -n 1)
+          [ -z "$TAG_NAME" ] && echo "No version tag found; skipping." && exit 0
+          if [ "$TAG_NAME" != "v$PKG_VERSION" ]; then
+            printf "%s\n" \
+              "Tag '$TAG_NAME' does not match package.json version 'v$PKG_VERSION'." \
+              "Please update package.json version to match the latest deployment tag."
+            exit 1
+          fi
+          echo "package.json version matches latest deployment tag ($TAG_NAME)."
