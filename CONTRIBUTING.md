@@ -33,7 +33,11 @@ This helps us avoid duplicated effort and align on scope.
 2. Reviewers should confirm the Studio deployment fully syncs without errors.
 3. After approval, merge to `main` to trigger a testnet deployment (currently disabled).
 4. For on-chain releases, update `package.json` version to match the release tag (e.g. `v1.2.3`).
-5. Create a `v*` tag to deploy the on-chain subgraph to the Graph Network.
+5. Create a `v*` tag to deploy a new version to Subgraph Studio (this does not publish to the network).
+
+## Publishing
+
+Publishing to the decentralized network requires a wallet with publish permissions. A wallet admin should complete this step, either from the Studio UI or via the CLI. See the [Graph docs](https://thegraph.com/docs/en/subgraphs/developing/publishing/publishing-a-subgraph/#publishing-from-the-cli).
 
 ## License
 
