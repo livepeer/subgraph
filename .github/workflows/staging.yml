@@ -75,4 +75,4 @@ jobs:
       #     DEPLOY_KEY: ${{ secrets.ARBITRUM_GOERLI_DEPLOY_KEY }}
       #     VERSION_LABEL: ${{ steps.short_sha.outputs.short_sha }}
       #   run: |
-      #     yarn deploy:arbitrum-goerli -- --version-label "$VERSION_LABEL" --deploy-key "$DEPLOY_KEY"
+      #     yarn deploy:arbitrum-goerli --version-label "$VERSION_LABEL" --deploy-key "$DEPLOY_KEY"
