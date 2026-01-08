@@ -1,0 +1,24 @@
+name: Tag Version Check
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  version_check:
+    name: "Check package.json matches tag"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Fail if tag mismatches package.json version
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_NAME="${{ github.ref_name }}"
+          if [ "$TAG_NAME" != "v$PKG_VERSION" ]; then
+            printf "%s\n" \
+              "Tag '$TAG_NAME' does not match package.json version 'v$PKG_VERSION'." \
+              "Please update package.json version to match the latest deployment tag."
+            exit 1
+          fi
