@@ -20,7 +20,7 @@ jobs:
           cache: yarn
       - name: Install
         run: yarn --immutable
-      - name: Deploy to Arbitrum One (tag)
+      - name: Deploy to Subgraph Studio (tag)
         if: startsWith(github.ref, 'refs/tags/')
         env:
           DEPLOY_KEY: ${{ secrets.ARBITRUM_ONE_DEPLOY_KEY }}

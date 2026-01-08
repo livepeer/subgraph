@@ -11,7 +11,7 @@ on:
 
 jobs:
   deploy:
-    name: "Deploy to Subgraph"
+    name: "Deploy to Livepeer CI Subgraph"
 
     runs-on: ubuntu-latest
 
