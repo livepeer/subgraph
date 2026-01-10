@@ -6,6 +6,6 @@ Fixes # (issue)
 
 # Checklist
 
-- [ ] Ran `yarn prepare:arbitrum-one` and verified `graph codegen` and `graph build` succeed.
+- [ ] Ran `yarn prepare` and verified `yarn codegen` and `yarn build` succeed.
 - [ ] (Optional) Validated locally with `yarn deploy:local`.
 - [ ] Confirmed the Subgraph Studio preview link in the PR comment works and the subgraph syncs without errors.
