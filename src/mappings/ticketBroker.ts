@@ -11,6 +11,7 @@ import {
   createOrLoadTranscoderDay,
   getBlockNum,
   getEthPriceUsd,
+  integerFromString,
   makeEventId,
   makePoolId,
   ZERO_BD,
@@ -30,6 +31,9 @@ import {
   WinningTicketRedeemed,
   Withdrawal,
 } from "../types/TicketBroker/TicketBroker";
+import {
+  BondingManager,
+} from "../types/BondingManager/BondingManager";
 
 export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let round = createOrLoadRound(getBlockNum());
@@ -113,9 +117,17 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   protocol.winningTicketCount = protocol.winningTicketCount + 1;
   protocol.save();
 
-  // update the transcoder pool fees
+  // update the transcoder pool fees and cummulative factors
   if (pool) {
     pool.fees = pool.fees.plus(faceValue);
+
+    let bondingManager = BondingManager.bind(event.address);
+    let earningsPool = bondingManager.getTranscoderEarningsPoolForRound(
+      Address.fromString(transcoder.id),
+      integerFromString(round.id)
+    );
+    pool.cumulativeFeeFactor = convertToDecimal(earningsPool.cumulativeFeeFactor);
+    
     pool.save();
   }
 
