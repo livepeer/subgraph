@@ -466,7 +466,9 @@ type Transaction @entity {
   blockNumber: BigInt!
   "Timestamp for transaction"
   timestamp: Int!
-  "Actually is the limit of gas in the transaction, pending update in downstream projects"
+  "Gas limit for the transaction"
+  gasLimit: BigInt!
+  "Gas used for the transaction"
   gasUsed: BigInt!
   "Cost per unit of gas specified for the transaction"
   gasPrice: BigInt!
