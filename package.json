@@ -38,7 +38,7 @@
   "dependencies": {
     "@graphprotocol/graph-ts": "0.29.3",
     "apollo-fetch": "^0.7.0",
-    "fs-extra": "^11.1.0",
+    "fs-extra": "^11.3.3",
     "handlebars": "^4.5.2",
     "js-yaml": "^4.1.0",
     "ts-node": "^10.9.1",
