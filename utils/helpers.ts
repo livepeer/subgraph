@@ -194,14 +194,6 @@ export function createOrLoadBroadcaster(id: string): Broadcaster {
     broadcaster.save();
   } 
   
-  let protocol = createOrLoadProtocol();
-  let activeBroadcasters = protocol.activeBroadcasters;
-  if (!activeBroadcasters.includes(id)) {
-    activeBroadcasters.push(id);
-    protocol.activeBroadcasters = activeBroadcasters;
-    protocol.save();
-  }
-
   return broadcaster;
 }
 

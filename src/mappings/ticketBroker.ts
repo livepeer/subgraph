@@ -110,7 +110,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   protocol.totalVolumeETH = protocol.totalVolumeETH.plus(faceValue);
   protocol.totalVolumeUSD = protocol.totalVolumeUSD.plus(faceValueUSD);
 
-  // Add broadcaster to activeBroadcasters if not already present
+  // Track active broadcasters based on ticket activity.
   let activeBroadcasters = protocol.activeBroadcasters;
   if (!activeBroadcasters.includes(broadcaster.id)) {
     activeBroadcasters.push(broadcaster.id);
