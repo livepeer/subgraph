@@ -35,11 +35,15 @@ export function updatePollTallyOnReward(event: Reward): void {
   let poll = Poll.load(pollAddress);
 
   // Return if poll is no longer active
-  if (!poll || poll.endBlock.lt(event.block.number)) {
+  // Use getBlockNum() (L1 block number) instead of event.block.number (L2 block
+  // number) since poll.endBlock is set from the contract's block.number which
+  // returns L1 block numbers on Arbitrum
+  let blockNum = getBlockNum();
+  if (!poll || poll.endBlock.lt(blockNum)) {
     return;
   }
 
-  let round = createOrLoadRound(getBlockNum());
+  let round = createOrLoadRound(blockNum);
   let voteId = makeVoteId(delegator.id, poll.id);
   let vote = createOrLoadVote(voteId);
   let transcoder = createOrLoadTranscoder(
@@ -82,7 +86,10 @@ export function updatePollTallyOnBond(event: Bond): void {
   let poll = Poll.load(pollAddress);
 
   // Return if poll is no longer active
-  if (!poll || poll.endBlock.lt(event.block.number)) {
+  // Use getBlockNum() (L1 block number) instead of event.block.number (L2 block
+  // number) since poll.endBlock is set from the contract's block.number which
+  // returns L1 block numbers on Arbitrum
+  if (!poll || poll.endBlock.lt(getBlockNum())) {
     return;
   }
 
@@ -209,11 +216,15 @@ function updatePollTally<T extends Rebond>(event: T): void {
   let updateTally = false;
 
   // Return if poll is no longer active
-  if (!poll || poll.endBlock.lt(event.block.number)) {
+  // Use getBlockNum() (L1 block number) instead of event.block.number (L2 block
+  // number) since poll.endBlock is set from the contract's block.number which
+  // returns L1 block numbers on Arbitrum
+  let blockNum = getBlockNum();
+  if (!poll || poll.endBlock.lt(blockNum)) {
     return;
   }
 
-  let round = createOrLoadRound(getBlockNum());
+  let round = createOrLoadRound(blockNum);
   let voterAddress = dataSource.context().getString("voter");
   let voteId = makeVoteId(voterAddress, pollAddress);
   let vote = createOrLoadVote(voteId);
