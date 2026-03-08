@@ -13,11 +13,13 @@ import {
   getBondingManagerAddress,
   getLptPriceEth,
   getTimestampForDaysPast,
+  integerFromString,
   makeEventId,
   ONE_BD,
   ONE_BI,
   PERC_DIVISOR,
   ZERO_BD,
+  ZERO_BI,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
 // Import event types from the registrar contract ABIs

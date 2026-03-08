@@ -61,6 +61,22 @@ export function createOrLoadPool(roundId: string, transcoderAddress: string): Po
     pool.round = roundId;
     pool.delegate = transcoderAddress;
     pool.fees = ZERO_BD;
+
+    // Propagate cumulative factors from the previous round's pool so every
+    // pool has valid factors even if the transcoder misses reward() or has
+    // no fees in a round. This mirrors the contract's latestCumulativeFactorsPool.
+    let prevRoundNum = integerFromString(roundId).minus(ONE_BI);
+    let prevPool = Pool.load(
+      makePoolId(transcoderAddress, prevRoundNum.toString())
+    );
+    if (prevPool) {
+      pool.cumulativeRewardFactor = prevPool.cumulativeRewardFactor;
+      pool.cumulativeFeeFactor = prevPool.cumulativeFeeFactor;
+    } else {
+      pool.cumulativeRewardFactor = ZERO_BI;
+      pool.cumulativeFeeFactor = ZERO_BI;
+    }
+
     let transcoder = Transcoder.load(transcoderAddress);
 
     if (transcoder) {
@@ -122,6 +138,38 @@ export function percOf(_amount: BigInt, _fracNum: BigInt): BigInt {
 
 export function percPoints(_fracNum: BigInt, _fracDenom: BigInt): BigInt {
   return _fracNum.times(BigInt.fromI32(PERC_DIVISOR)).div(_fracDenom);
+}
+
+// PreciseMathUtils equivalents (matches Solidity's 27-decimal fixed-point arithmetic)
+export let PRECISE_PERC_DIVISOR = BigInt.fromString(
+  "1000000000000000000000000000"
+); // 10^27
+
+export function precisePercPoints(
+  _fracNum: BigInt,
+  _fracDenom: BigInt
+): BigInt {
+  return _fracNum.times(PRECISE_PERC_DIVISOR).div(_fracDenom);
+}
+
+export function precisePercOf(
+  _baseAmount: BigInt,
+  _fracNum: BigInt,
+  _fracDenom: BigInt
+): BigInt {
+  return _baseAmount
+    .times(precisePercPoints(_fracNum, _fracDenom))
+    .div(PRECISE_PERC_DIVISOR);
+}
+
+// Convert BigDecimal (in token units) back to raw BigInt (in wei)
+export function convertFromDecimal(amount: BigDecimal): BigInt {
+  let str = amount.times(exponentToBigDecimal(BI_18)).toString();
+  let dotIndex = str.indexOf(".");
+  if (dotIndex >= 0) {
+    str = str.substring(0, dotIndex);
+  }
+  return BigInt.fromString(str);
 }
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
@@ -287,6 +335,7 @@ export function createOrLoadDelegator(id: string, timestamp: i32): Delegator {
     delegator.fees = ZERO_BD;
     delegator.withdrawnFees = ZERO_BD;
     delegator.delegatedAmount = ZERO_BD;
+    delegator.shares = ZERO_BI;
     delegator.save();
   }
 
