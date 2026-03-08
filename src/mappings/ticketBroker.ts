@@ -1,5 +1,6 @@
 import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
+  convertFromDecimal,
   convertToDecimal,
   createOrLoadBroadcaster,
   createOrLoadBroadcasterDay,
@@ -11,9 +12,15 @@ import {
   createOrLoadTranscoderDay,
   getBlockNum,
   getEthPriceUsd,
+  integerFromString,
   makeEventId,
   makePoolId,
+  ONE_BI,
+  percOf,
+  PRECISE_PERC_DIVISOR,
+  precisePercOf,
   ZERO_BD,
+  ZERO_BI,
 } from "../../utils/helpers";
 import {
   DepositFundedEvent,
@@ -113,8 +120,30 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   protocol.winningTicketCount = protocol.winningTicketCount + 1;
   protocol.save();
 
-  // update the transcoder pool fees
+  // update the transcoder pool fees and cumulative fee factor
   if (pool) {
+    // Compute cumulative fee factor (matches on-chain PreciseMathUtils)
+    // Use previous round's CRF, matching contract's latestCumulativeFactorsPool(_round - 1)
+    let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
+    let prevPoolForFees = Pool.load(
+      makePoolId(event.params.recipient.toHex(), prevRoundNum.toString())
+    );
+    let prevCRF = PRECISE_PERC_DIVISOR; // default: 10^27
+    if (
+      prevPoolForFees &&
+      !prevPoolForFees.cumulativeRewardFactor.equals(ZERO_BI)
+    ) {
+      prevCRF = prevPoolForFees.cumulativeRewardFactor;
+    }
+
+    let delegatorsFees = percOf(event.params.faceValue, pool.feeShare);
+    let totalStakeBI = convertFromDecimal(pool.totalStake);
+    if (totalStakeBI.gt(ZERO_BI)) {
+      pool.cumulativeFeeFactor = pool.cumulativeFeeFactor.plus(
+        precisePercOf(prevCRF, delegatorsFees, totalStakeBI)
+      );
+    }
+
     pool.fees = pool.fees.plus(faceValue);
     pool.save();
   }
