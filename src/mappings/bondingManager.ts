@@ -11,6 +11,7 @@ import {
   EMPTY_ADDRESS,
   getBlockNum,
   makeEventId,
+  makePoolId,
   makeUnbondingLockId,
   MAXIMUM_VALUE_UINT256,
   ONE_BI,
@@ -41,6 +42,7 @@ import {
   DelegatorSnapshot,
   EarningsClaimedEvent,
   ParameterUpdateEvent,
+  Pool,
   RebondEvent,
   RewardEvent,
   TranscoderActivatedEvent,
@@ -593,6 +595,9 @@ export function reward(event: Reward): void {
   let totalRewardTokens = event.params.amount; // raw BigInt in wei
   let transcoderCommission = percOf(totalRewardTokens, pool.rewardCut);
   let delegatorsRewards = totalRewardTokens.minus(transcoderCommission);
+
+  // Accumulate lifetime orchestrator commission
+  transcoder.cumulativeRewards = transcoder.cumulativeRewards.plus(transcoderCommission);
 
   let totalStakeBI = convertFromDecimal(pool.totalStake);
   if (totalStakeBI.gt(ZERO_BI)) {

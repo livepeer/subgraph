@@ -108,6 +108,8 @@ type Transcoder @entity {
   serviceURI: String
   "Days which the transcoder earned fees"
   transcoderDays: [TranscoderDay!]!
+  "Lifetime cumulative rewards (rewardCut commission) earned by this orchestrator in wei"
+  cumulativeRewards: BigInt!
 }
 
 enum TranscoderStatus @entity {
