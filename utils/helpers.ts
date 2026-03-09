@@ -276,8 +276,10 @@ export function createOrLoadTranscoder(id: string, timestamp: i32): Transcoder {
     transcoder.sixtyDayVolumeETH = ZERO_BD;
     transcoder.ninetyDayVolumeETH = ZERO_BD;
     transcoder.transcoderDays = [];
-    transcoder.cumulativeRewards = ZERO_BI;
-    transcoder.lifetimeRewards = ZERO_BI;
+    transcoder.pendingRewardCommission = ZERO_BI;
+    transcoder.lifetimeRewardCommission = ZERO_BI;
+    transcoder.pendingFeeCommission = ZERO_BI;
+    transcoder.lifetimeFeeCommission = ZERO_BI;
     transcoder.save();
   }
 

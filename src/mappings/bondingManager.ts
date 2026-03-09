@@ -596,9 +596,9 @@ export function reward(event: Reward): void {
   let transcoderCommission = percOf(totalRewardTokens, pool!.rewardCut);
   let delegatorsRewards = totalRewardTokens.minus(transcoderCommission);
 
-  // Accumulate orchestrator commission
-  transcoder.cumulativeRewards = transcoder.cumulativeRewards.plus(transcoderCommission);
-  transcoder.lifetimeRewards = transcoder.lifetimeRewards.plus(transcoderCommission);
+  // Accumulate orchestrator reward commission
+  transcoder.pendingRewardCommission = transcoder.pendingRewardCommission.plus(transcoderCommission);
+  transcoder.lifetimeRewardCommission = transcoder.lifetimeRewardCommission.plus(transcoderCommission);
 
   let totalStakeBI = convertFromDecimal(pool!.totalStake);
   if (totalStakeBI.gt(ZERO_BI)) {
@@ -792,7 +792,8 @@ export function earningsClaimed(event: EarningsClaimed): void {
       event.params.delegator.toHex(),
       event.block.timestamp.toI32()
     );
-    transcoder.cumulativeRewards = ZERO_BI;
+    transcoder.pendingRewardCommission = ZERO_BI;
+    transcoder.pendingFeeCommission = ZERO_BI;
     transcoder.save();
   }
 

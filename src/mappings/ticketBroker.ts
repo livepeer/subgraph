@@ -137,6 +137,12 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     }
 
     let delegatorsFees = percOf(event.params.faceValue, pool.feeShare);
+    let transcoderFeeCommission = event.params.faceValue.minus(delegatorsFees);
+
+    // Accumulate orchestrator fee commission
+    transcoder.pendingFeeCommission = transcoder.pendingFeeCommission.plus(transcoderFeeCommission);
+    transcoder.lifetimeFeeCommission = transcoder.lifetimeFeeCommission.plus(transcoderFeeCommission);
+
     let totalStakeBI = convertFromDecimal(pool.totalStake);
     if (totalStakeBI.gt(ZERO_BI)) {
       pool.cumulativeFeeFactor = pool.cumulativeFeeFactor.plus(
