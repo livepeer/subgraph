@@ -276,6 +276,7 @@ export function createOrLoadTranscoder(id: string, timestamp: i32): Transcoder {
     transcoder.sixtyDayVolumeETH = ZERO_BD;
     transcoder.ninetyDayVolumeETH = ZERO_BD;
     transcoder.transcoderDays = [];
+    transcoder.cumulativeRewards = ZERO_BI;
     transcoder.save();
   }
 
