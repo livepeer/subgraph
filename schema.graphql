@@ -110,6 +110,8 @@ type Transcoder @entity {
   transcoderDays: [TranscoderDay!]!
   "Unclaimed orchestrator commission (rewardCut portion) in wei. Resets to zero on claim. Full pending stake = shares * crf / 10^27 + cumulativeRewards"
   cumulativeRewards: BigInt!
+  "Lifetime total orchestrator commission earned (rewardCut portion) in wei. Never resets."
+  lifetimeRewards: BigInt!
 }
 
 enum TranscoderStatus @entity {
