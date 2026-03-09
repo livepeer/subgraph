@@ -187,7 +187,9 @@ export function createOrLoadBroadcaster(id: string): Broadcaster {
     broadcaster.thirtyDayVolumeETH = ZERO_BD;
     broadcaster.sixtyDayVolumeETH = ZERO_BD;
     broadcaster.ninetyDayVolumeETH = ZERO_BD;
+    broadcaster.firstFundedDay = 0;
     broadcaster.firstActiveDay = 0;
+    broadcaster.lastFundedDay = 0;
     broadcaster.lastActiveDay = 0;
     broadcaster.broadcasterDays = [];
 
