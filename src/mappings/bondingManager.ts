@@ -596,8 +596,9 @@ export function reward(event: Reward): void {
   let transcoderCommission = percOf(totalRewardTokens, pool!.rewardCut);
   let delegatorsRewards = totalRewardTokens.minus(transcoderCommission);
 
-  // Accumulate lifetime orchestrator commission
+  // Accumulate orchestrator commission
   transcoder.cumulativeRewards = transcoder.cumulativeRewards.plus(transcoderCommission);
+  transcoder.lifetimeRewards = transcoder.lifetimeRewards.plus(transcoderCommission);
 
   let totalStakeBI = convertFromDecimal(pool!.totalStake);
   if (totalStakeBI.gt(ZERO_BI)) {
