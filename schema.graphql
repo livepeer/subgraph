@@ -54,7 +54,7 @@ type Protocol @entity {
   pendingDeactivation: [Transcoder!]!
   "Total number of delegators on the network"
   delegatorsCount: BigInt!
-  "Broadcasters active within the current 90 day fee window"
+  "Broadcasters that paid tickets within the current 90 day fee window"
   activeBroadcasters: [String!]!
 }
 
