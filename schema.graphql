@@ -108,7 +108,7 @@ type Transcoder @entity {
   serviceURI: String
   "Days which the transcoder earned fees"
   transcoderDays: [TranscoderDay!]!
-  "Lifetime cumulative rewards (rewardCut commission) earned by this orchestrator in wei"
+  "Unclaimed orchestrator commission (rewardCut portion) in wei. Resets to zero on claim. Full pending stake = shares * crf / 10^27 + cumulativeRewards"
   cumulativeRewards: BigInt!
 }
 

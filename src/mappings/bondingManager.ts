@@ -785,6 +785,16 @@ export function earningsClaimed(event: EarningsClaimed): void {
   delegator.fees = delegator.fees.plus(convertToDecimal(event.params.fees));
   delegator.save();
 
+  // Reset orchestrator's unclaimed commission when they claim
+  if (event.params.delegator.toHex() == event.params.delegate.toHex()) {
+    let transcoder = createOrLoadTranscoder(
+      event.params.delegator.toHex(),
+      event.block.timestamp.toI32()
+    );
+    transcoder.cumulativeRewards = ZERO_BI;
+    transcoder.save();
+  }
+
   createOrLoadTransactionFromEvent(event);
 
   let earningsClaimedEvent = new EarningsClaimedEvent(
