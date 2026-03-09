@@ -1,4 +1,4 @@
-FROM node:14
+FROM node:20
 
 # Clone and install wait-for-it
 RUN git clone https://github.com/vishnubob/wait-for-it \
