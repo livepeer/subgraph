@@ -156,6 +156,11 @@ export function newRound(event: NewRound): void {
       pool.totalStake = transcoder.totalStake;
       pool.rewardCut = transcoder.rewardCut;
       pool.feeShare = transcoder.feeShare;
+
+      // Snapshot pendingRewardCommission as activeCumulativeRewards for this round,
+      // mirroring the contract's setCurrentRoundTotalActiveStake snapshot
+      transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
+      transcoder.save();
     }
     pool.save();
 

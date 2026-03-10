@@ -108,10 +108,12 @@ type Transcoder @entity {
   serviceURI: String
   "Days which the transcoder earned fees"
   transcoderDays: [TranscoderDay!]!
-  "Unclaimed orchestrator reward commission (rewardCut portion) in wei. Resets to zero on claim. Full pending stake = shares * crf / 10^27 + pendingRewardCommission"
+  "Unclaimed orchestrator reward commission in wei. Includes both rewardCut commission and rewards earned on staked commission. Resets to zero on claim. Full pending stake = shares * crf / 10^27 + pendingRewardCommission"
   pendingRewardCommission: BigInt!
-  "Lifetime total orchestrator reward commission earned (rewardCut portion) in wei. Never resets."
+  "Lifetime total orchestrator reward commission earned in wei. Never resets."
   lifetimeRewardCommission: BigInt!
+  "Snapshot of pendingRewardCommission at the start of the current round. Used to compute the transcoder's share of delegator rewards earned by its own staked commission. Resets to zero on claim."
+  activeCumulativeRewards: BigInt!
   "Unclaimed orchestrator fee commission in wei. Resets to zero on claim."
   pendingFeeCommission: BigInt!
   "Lifetime total orchestrator fee commission earned in wei. Never resets."

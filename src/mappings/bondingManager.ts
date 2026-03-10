@@ -596,11 +596,24 @@ export function reward(event: Reward): void {
   let transcoderCommission = percOf(totalRewardTokens, pool!.rewardCut);
   let delegatorsRewards = totalRewardTokens.minus(transcoderCommission);
 
-  // Accumulate orchestrator reward commission
-  transcoder.pendingRewardCommission = transcoder.pendingRewardCommission.plus(transcoderCommission);
-  transcoder.lifetimeRewardCommission = transcoder.lifetimeRewardCommission.plus(transcoderCommission);
-
+  // Compute rewards earned by the transcoder's own staked commission
   let totalStakeBI = convertFromDecimal(pool!.totalStake);
+  let transcoderRewardStakeRewards = ZERO_BI;
+  if (totalStakeBI.gt(ZERO_BI)) {
+    transcoderRewardStakeRewards = precisePercOf(
+      delegatorsRewards,
+      transcoder.activeCumulativeRewards,
+      totalStakeBI
+    );
+  }
+
+  // Accumulate orchestrator reward commission (rewardCut + rewards on staked commission)
+  transcoder.pendingRewardCommission = transcoder.pendingRewardCommission
+    .plus(transcoderCommission)
+    .plus(transcoderRewardStakeRewards);
+  transcoder.lifetimeRewardCommission = transcoder.lifetimeRewardCommission
+    .plus(transcoderCommission)
+    .plus(transcoderRewardStakeRewards);
   if (totalStakeBI.gt(ZERO_BI)) {
     pool!.cumulativeRewardFactor = prevCRF.plus(
       precisePercOf(prevCRF, delegatorsRewards, totalStakeBI)
@@ -794,6 +807,7 @@ export function earningsClaimed(event: EarningsClaimed): void {
     );
     transcoder.pendingRewardCommission = ZERO_BI;
     transcoder.pendingFeeCommission = ZERO_BI;
+    transcoder.activeCumulativeRewards = ZERO_BI;
     transcoder.save();
   }
 
