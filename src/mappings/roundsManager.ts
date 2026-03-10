@@ -131,6 +131,10 @@ export function newRound(event: NewRound): void {
     transcoder = Transcoder.load(currentTranscoder.toHex());
 
     if (transcoder) {
+      // Snapshot pendingRewardCommission as activeCumulativeRewards for this round,
+      // mirroring the contract's setCurrentRoundTotalActiveStake snapshot
+      transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
+
       // --- Get the 30, 60, 90 day sums of volume ---
       let thirtyDaySum = ZERO_BD;
       let sixtyDaySum = ZERO_BD;
