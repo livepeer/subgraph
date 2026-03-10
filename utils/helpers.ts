@@ -113,9 +113,7 @@ export function precisePercOf(
   _fracNum: BigInt,
   _fracDenom: BigInt
 ): BigInt {
-  return _baseAmount
-    .times(precisePercPoints(_fracNum, _fracDenom))
-    .div(PRECISE_PERC_DIVISOR);
+  return _baseAmount.times(_fracNum).div(_fracDenom);
 }
 
 // Convert BigDecimal (in token units) back to raw BigInt (in wei)
