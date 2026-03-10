@@ -128,6 +128,13 @@ export function newRound(event: NewRound): void {
     // given transcoder and round then we know the transcoder failed to call reward()
     createOrLoadPool(round.id, currentTranscoder.toHex());
 
+    if (transcoder) {
+      // Snapshot pendingRewardCommission as activeCumulativeRewards for this round,
+      // mirroring the contract's setCurrentRoundTotalActiveStake snapshot
+      transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
+      transcoder.save();
+    }
+
     currentTranscoder =
       bondingManager.getNextTranscoderInPool(currentTranscoder);
 
