@@ -244,9 +244,13 @@ type Broadcaster @entity {
   "Fees paid out by this broadcaster in ETH during the last 90 days"
   ninetyDayVolumeETH: BigDecimal!
   "The date this broadcaster first funded a deposit or reserve, beginning at 12:00am UTC"
-  firstActiveDay: Int!
+  firstFundedDay: Int!
+  "The date this broadcaster first funded a deposit or reserve, beginning at 12:00am UTC"
+  firstActiveDay: Int! @deprecated(reason: "Use firstFundedDay instead.")
   "The date this broadcaster last paid fees, beginning at 12:00am UTC"
-  lastActiveDay: Int!
+  lastFundedDay: Int!
+  "The date this broadcaster last paid fees, beginning at 12:00am UTC"
+  lastActiveDay: Int! @deprecated(reason: "Use lastFundedDay instead.")
   "Days in which this broadcaster paid out fees"
   broadcasterDays: [BroadcasterDay!]!
 }

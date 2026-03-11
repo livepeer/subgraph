@@ -223,7 +223,7 @@ export function newRound(event: NewRound): void {
         broadcaster.ninetyDayVolumeETH = broadcasterNinetyDaySum;
         broadcaster.save();
 
-        if (broadcaster.lastActiveDay >= ninetyDayTimestamp) {
+        if (broadcaster.lastFundedDay >= ninetyDayTimestamp) {
           activeBroadcasters.push(broadcaster.id);
         }
       }

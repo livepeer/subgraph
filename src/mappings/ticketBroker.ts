@@ -87,6 +87,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     timestamp,
     event.params.sender.toHex()
   );
+  broadcaster.lastFundedDay = broadcasterDay.date;
   broadcaster.lastActiveDay = broadcasterDay.date;
   broadcasterDay.volumeETH = broadcasterDay.volumeETH.plus(faceValue);
   broadcasterDay.volumeUSD = broadcasterDay.volumeUSD.plus(faceValueUSD);
@@ -161,8 +162,10 @@ export function depositFunded(event: DepositFunded): void {
   const timestamp = event.block.timestamp.toI32();
   
   // One-time initialization: set to start of day for this timestamp.
-  if (broadcaster.firstActiveDay == 0) {
-    broadcaster.firstActiveDay = (timestamp / 86400) * 86400;
+  if (broadcaster.firstFundedDay == 0) {
+    const startOfDay = (timestamp / 86400) * 86400;
+    broadcaster.firstFundedDay = startOfDay;
+    broadcaster.firstActiveDay = startOfDay;
   }
 
   broadcaster.deposit = broadcaster.deposit.plus(
@@ -189,8 +192,10 @@ export function reserveFunded(event: ReserveFunded): void {
   const timestamp = event.block.timestamp.toI32();
 
   // One-time initialization: set to start of day for this timestamp.
-  if (broadcaster.firstActiveDay == 0) {
-    broadcaster.firstActiveDay = (timestamp / 86400) * 86400;
+  if (broadcaster.firstFundedDay == 0) {
+    const startOfDay = (timestamp / 86400) * 86400;
+    broadcaster.firstFundedDay = startOfDay;
+    broadcaster.firstActiveDay = startOfDay;
   }
 
   broadcaster.reserve = broadcaster.reserve.plus(
