@@ -12,12 +12,14 @@ import {
   getBondingManagerAddress,
   getLptPriceEth,
   getTimestampForDaysPast,
+  integerFromString,
   makeEventId,
   makePoolId,
   ONE_BD,
   ONE_BI,
   PERC_DIVISOR,
   ZERO_BD,
+  ZERO_BI,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
 // Import event types from the registrar contract ABIs
@@ -132,10 +134,33 @@ export function newRound(event: NewRound): void {
     pool.round = round.id;
     pool.delegate = currentTranscoder.toHex();
     pool.fees = ZERO_BD;
+
+    // Propagate cumulative factors from the previous round's pool so every
+    // pool has valid factors even if the transcoder misses reward() or has
+    // no fees in a round. This mirrors the contract's latestCumulativeFactorsPool.
+    let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
+    let prevPoolId = makePoolId(
+      currentTranscoder.toHex(),
+      prevRoundNum.toString()
+    );
+    let prevPool = Pool.load(prevPoolId);
+    if (prevPool) {
+      pool.cumulativeRewardFactor = prevPool.cumulativeRewardFactor;
+      pool.cumulativeFeeFactor = prevPool.cumulativeFeeFactor;
+    } else {
+      pool.cumulativeRewardFactor = ZERO_BI;
+      pool.cumulativeFeeFactor = ZERO_BI;
+    }
+
     if (transcoder) {
       pool.totalStake = transcoder.totalStake;
       pool.rewardCut = transcoder.rewardCut;
       pool.feeShare = transcoder.feeShare;
+
+      // Snapshot pendingRewardCommission as activeCumulativeRewards for this round,
+      // mirroring the contract's setCurrentRoundTotalActiveStake snapshot
+      transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
+      transcoder.save();
     }
     pool.save();
 
