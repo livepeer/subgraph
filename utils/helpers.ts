@@ -116,7 +116,8 @@ export function createOrLoadTransactionFromEvent<T extends ethereum.Event>(
     tx = new Transaction(event.transaction.hash.toHex());
 
     tx.blockNumber = event.block.number;
-    tx.gasUsed = event.transaction.gasLimit;
+    tx.gasLimit = event.transaction.gasLimit;
+    tx.gasUsed = event.receipt.gasUsed;
     tx.gasPrice = event.transaction.gasPrice;
     tx.timestamp = event.block.timestamp.toI32();
     tx.from = event.transaction.from.toHex();
