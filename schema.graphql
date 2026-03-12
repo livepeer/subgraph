@@ -135,6 +135,8 @@ type Pool @entity {
   rewardCut: BigInt!
   "Transcoder's fee share during the earnings pool's round"
   feeShare: BigInt!
+  "Cumulative fee factor for delegator fees calculation"
+  cumulativeFeeFactor: BigDecimal
 }
 
 """
