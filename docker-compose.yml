@@ -1,4 +1,3 @@
-version: "3"
 services:
   geth:
     image: livepeer/geth-with-livepeer-protocol:streamflow

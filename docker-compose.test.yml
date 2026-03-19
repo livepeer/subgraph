@@ -1,4 +1,3 @@
-version: "3"
 services:
   subgraph-tests:
     image: livepeer/subgraph:latest
