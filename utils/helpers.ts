@@ -265,9 +265,9 @@ export function createOrLoadTranscoder(id: string, timestamp: i32): Transcoder {
     transcoder.transcoderDays = [];
     transcoder.pendingRewardCommission = ZERO_BI;
     transcoder.lifetimeRewardCommission = ZERO_BI;
+    transcoder.activeCumulativeRewards = ZERO_BI;
     transcoder.pendingFeeCommission = ZERO_BI;
     transcoder.lifetimeFeeCommission = ZERO_BI;
-    transcoder.activeCumulativeRewards = ZERO_BI;
     transcoder.save();
   }
 
