@@ -97,9 +97,7 @@ export function percPoints(_fracNum: BigInt, _fracDenom: BigInt): BigInt {
 }
 
 // PreciseMathUtils equivalents (matches Solidity's 27-decimal fixed-point arithmetic)
-export let PRECISE_PERC_DIVISOR = BigInt.fromString(
-  "1000000000000000000000000000"
-); // 10^27
+export let PRECISE_PERC_DIVISOR = BigInt.fromI32(10).pow(27);
 
 export function precisePercPoints(
   _fracNum: BigInt,
