@@ -31,6 +31,7 @@ export let EMPTY_ADDRESS = Address.fromString(
   "0000000000000000000000000000000000000000"
 );
 export let PERC_DIVISOR = 1000000;
+export let PRECISE_PERC_DIVISOR = BigInt.fromI32(10).pow(27);
 
 export let ZERO_BI = BigInt.fromI32(0);
 export let ONE_BI = BigInt.fromI32(1);
@@ -94,16 +95,6 @@ export function percOf(_amount: BigInt, _fracNum: BigInt): BigInt {
 
 export function percPoints(_fracNum: BigInt, _fracDenom: BigInt): BigInt {
   return _fracNum.times(BigInt.fromI32(PERC_DIVISOR)).div(_fracDenom);
-}
-
-// PreciseMathUtils equivalents (matches Solidity's 27-decimal fixed-point arithmetic)
-export let PRECISE_PERC_DIVISOR = BigInt.fromI32(10).pow(27);
-
-export function precisePercPoints(
-  _fracNum: BigInt,
-  _fracDenom: BigInt
-): BigInt {
-  return _fracNum.times(PRECISE_PERC_DIVISOR).div(_fracDenom);
 }
 
 export function precisePercOf(
