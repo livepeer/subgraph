@@ -12,7 +12,9 @@ import {
   BroadcasterDay,
   Day,
   Delegator,
+  DelegatorSnapshot,
   LivepeerAccount,
+  Pool,
   Protocol,
   Round,
   Transaction,
@@ -103,6 +105,19 @@ export function precisePercOf(
   _fracDenom: BigInt
 ): BigInt {
   return _baseAmount.times(_fracNum).div(_fracDenom);
+}
+
+// Compute delegator shares: bondedAmount * 10^27 / CRF[currentRound]
+export function computeShares(delegate: string, roundId: string, bondedAmount: BigInt): BigInt {
+  if (bondedAmount.isZero()) {
+    return ZERO_BI;
+  }
+  let pool = Pool.load(makePoolId(delegate, roundId));
+  let crf = PRECISE_PERC_DIVISOR;
+  if (pool && !pool.cumulativeRewardFactor.equals(ZERO_BI)) {
+    crf = pool.cumulativeRewardFactor;
+  }
+  return bondedAmount.times(PRECISE_PERC_DIVISOR).div(crf);
 }
 
 // Convert BigDecimal (in token units) back to raw BigInt (in wei)
@@ -298,6 +313,24 @@ export function createOrLoadDelegator(id: string, timestamp: i32): Delegator {
   account.save();
 
   return delegator;
+}
+
+// Save a point-in-time record of delegator state for historical queries
+export function saveDelegatorSnapshot(
+  delegatorAddress: string,
+  delegate: string,
+  delegator: Delegator,
+  roundId: string,
+  timestamp: i32
+): void {
+  let snapshot = new DelegatorSnapshot(delegatorAddress + "-" + roundId);
+  snapshot.delegator = delegatorAddress;
+  snapshot.delegate = delegate;
+  snapshot.bondedAmount = delegator.bondedAmount;
+  snapshot.shares = delegator.shares;
+  snapshot.round = roundId;
+  snapshot.timestamp = timestamp;
+  snapshot.save();
 }
 
 export function createOrUpdateLivepeerAccount(id: string, timestamp: i32): LivepeerAccount {

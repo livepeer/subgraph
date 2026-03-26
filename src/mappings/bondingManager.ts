@@ -1,5 +1,6 @@
-import { BigInt, store } from "@graphprotocol/graph-ts";
+import { store } from "@graphprotocol/graph-ts";
 import {
+  computeShares,
   convertFromDecimal,
   convertToDecimal,
   createOrLoadDelegator,
@@ -17,6 +18,7 @@ import {
   percOf,
   PRECISE_PERC_DIVISOR,
   precisePercOf,
+  saveDelegatorSnapshot,
   ZERO_BI,
 } from "../../utils/helpers";
 // Import event types from the registrar contract ABIs
@@ -38,8 +40,6 @@ import {
 } from "../types/BondingManager/BondingManager";
 import {
   BondEvent,
-  Delegator,
-  DelegatorSnapshot,
   EarningsClaimedEvent,
   ParameterUpdateEvent,
   Pool,
@@ -55,37 +55,6 @@ import {
   WithdrawFeesEvent,
   WithdrawStakeEvent,
 } from "../types/schema";
-
-// Save a point-in-time record of delegator state for historical queries
-function saveDelegatorSnapshot(
-  delegatorAddress: string,
-  delegate: string,
-  delegator: Delegator,
-  roundId: string,
-  timestamp: i32
-): void {
-  let snapshot = new DelegatorSnapshot(delegatorAddress + "-" + roundId);
-  snapshot.delegator = delegatorAddress;
-  snapshot.delegate = delegate;
-  snapshot.bondedAmount = delegator.bondedAmount;
-  snapshot.shares = delegator.shares;
-  snapshot.round = roundId;
-  snapshot.timestamp = timestamp;
-  snapshot.save();
-}
-
-// Compute delegator shares: bondedAmount * 10^27 / CRF[currentRound]
-function computeShares(delegate: string, roundId: string, bondedAmount: BigInt): BigInt {
-  if (bondedAmount.isZero()) {
-    return ZERO_BI;
-  }
-  let pool = Pool.load(makePoolId(delegate, roundId));
-  let crf = PRECISE_PERC_DIVISOR;
-  if (pool && !pool.cumulativeRewardFactor.equals(ZERO_BI)) {
-    crf = pool.cumulativeRewardFactor;
-  }
-  return bondedAmount.times(PRECISE_PERC_DIVISOR).div(crf);
-}
 
 export function bond(event: Bond): void {
   let bondingManager = BondingManager.bind(event.address);
