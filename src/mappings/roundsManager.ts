@@ -138,22 +138,35 @@ export function newRound(event: NewRound): void {
     // Ensure every pool has valid cumulative factors even when reward() is
     // missed or no fees are earned. Mirrors the contract's
     // latestCumulativeFactorsPool(): try the previous round, fall back to
-    // lastRewardRound if the transcoder was inactive.
+    // lastRewardRound / lastFeeRound independently if the transcoder was inactive.
     let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
-    let latestCumulativeFactorsPool = Pool.load(
+    let prevPool = Pool.load(
       makePoolId(currentTranscoder.toHex(), prevRoundNum.toString())
     );
-    if (!latestCumulativeFactorsPool && transcoder && transcoder.lastRewardRound) {
-      latestCumulativeFactorsPool = Pool.load(
-        makePoolId(currentTranscoder.toHex(), transcoder.lastRewardRound)
-      );
-    }
-    if (latestCumulativeFactorsPool) {
-      pool.cumulativeRewardFactor = latestCumulativeFactorsPool.cumulativeRewardFactor;
-      pool.cumulativeFeeFactor = latestCumulativeFactorsPool.cumulativeFeeFactor;
+    if (prevPool) {
+      pool.cumulativeRewardFactor = prevPool.cumulativeRewardFactor;
+      pool.cumulativeFeeFactor = prevPool.cumulativeFeeFactor;
     } else {
+      // CRF fallback to lastRewardRound
       pool.cumulativeRewardFactor = ZERO_BI;
+      if (transcoder && transcoder.lastRewardRound) {
+        let rewardPool = Pool.load(
+          makePoolId(currentTranscoder.toHex(), transcoder.lastRewardRound)
+        );
+        if (rewardPool) {
+          pool.cumulativeRewardFactor = rewardPool.cumulativeRewardFactor;
+        }
+      }
+      // CFF fallback to lastFeeRound
       pool.cumulativeFeeFactor = ZERO_BI;
+      if (transcoder && transcoder.lastFeeRound) {
+        let feePool = Pool.load(
+          makePoolId(currentTranscoder.toHex(), transcoder.lastFeeRound)
+        );
+        if (feePool) {
+          pool.cumulativeFeeFactor = feePool.cumulativeFeeFactor;
+        }
+      }
     }
 
     if (transcoder) {
@@ -161,8 +174,9 @@ export function newRound(event: NewRound): void {
       pool.rewardCut = transcoder.rewardCut;
       pool.feeShare = transcoder.feeShare;
 
-      // Snapshot pendingRewardCommission as activeCumulativeRewards for this round,
-      // mirroring the contract's setCurrentRoundTotalActiveStake snapshot
+      // Initial snapshot of activeCumulativeRewards for fees that arrive before
+      // reward(). The reward handler re-snapshots this to match the contract's
+      // exact timing (updateTranscoderWithRewards line 1490).
       transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
       transcoder.save();
     }

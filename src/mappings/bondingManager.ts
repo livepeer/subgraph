@@ -575,6 +575,11 @@ export function reward(event: Reward): void {
   );
   transcoder.lastRewardRound = round.id;
 
+  // Snapshot activeCumulativeRewards from pendingRewardCommission, mirroring
+  // the contract's updateTranscoderWithRewards (line 1490):
+  // t.activeCumulativeRewards = t.cumulativeRewards
+  transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
+
   // Compute cumulative reward factor (matches on-chain PreciseMathUtils)
   // The pool's CRF was propagated from the previous round during pool creation,
   // so it already contains the correct previous cumulative reward factor.
@@ -584,8 +589,8 @@ export function reward(event: Reward): void {
   }
 
   let totalRewardTokens = event.params.amount; // raw BigInt in wei
-  let transcoderCommission = percOf(totalRewardTokens, pool!.rewardCut);
-  let delegatorsRewards = totalRewardTokens.minus(transcoderCommission);
+  let transcoderCommissionRewards = percOf(totalRewardTokens, pool!.rewardCut);
+  let delegatorsRewards = totalRewardTokens.minus(transcoderCommissionRewards);
 
   // Compute rewards earned by the transcoder's own staked commission
   let totalStakeBI = convertFromDecimal(pool!.totalStake);
@@ -600,10 +605,10 @@ export function reward(event: Reward): void {
 
   // Accumulate orchestrator reward commission (rewardCut + rewards on staked commission)
   transcoder.pendingRewardCommission = transcoder.pendingRewardCommission
-    .plus(transcoderCommission)
+    .plus(transcoderCommissionRewards)
     .plus(transcoderRewardStakeRewards);
   transcoder.lifetimeRewardCommission = transcoder.lifetimeRewardCommission
-    .plus(transcoderCommission)
+    .plus(transcoderCommissionRewards)
     .plus(transcoderRewardStakeRewards);
   if (totalStakeBI.gt(ZERO_BI)) {
     pool!.cumulativeRewardFactor = prevCRF.plus(
@@ -798,7 +803,9 @@ export function earningsClaimed(event: EarningsClaimed): void {
     );
     transcoder.pendingRewardCommission = ZERO_BI;
     transcoder.pendingFeeCommission = ZERO_BI;
-    transcoder.activeCumulativeRewards = ZERO_BI;
+    // activeCumulativeRewards is NOT reset here — the contract preserves it
+    // until the next reward() call. The claimed commission stays in totalStake
+    // (as regular bondedAmount) and should still earn its share of fees.
     transcoder.save();
   }
 

@@ -144,13 +144,19 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     let delegatorsFees = percOf(event.params.faceValue, pool.feeShare);
     let transcoderCommissionFees = event.params.faceValue.minus(delegatorsFees);
 
-    // Compute fees earned by the transcoder's own staked commission
+    // Compute fees earned by the transcoder's own staked commission.
+    // If reward() hasn't been called yet this round, use pendingRewardCommission
+    // directly (mirrors contract's updateTranscoderWithFees line 339).
+    let activeCumulativeRewards = transcoder.lastRewardRound == round.id
+      ? transcoder.activeCumulativeRewards
+      : transcoder.pendingRewardCommission;
+
     let totalStakeBI = convertFromDecimal(pool.totalStake);
     let transcoderRewardStakeFees = ZERO_BI;
     if (totalStakeBI.gt(ZERO_BI)) {
       transcoderRewardStakeFees = precisePercOf(
         delegatorsFees,
-        transcoder.activeCumulativeRewards,
+        activeCumulativeRewards,
         totalStakeBI
       );
     }
@@ -166,6 +172,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
       );
     }
 
+    transcoder.lastFeeRound = round.id;
     pool.fees = pool.fees.plus(faceValue);
     pool.save();
   }

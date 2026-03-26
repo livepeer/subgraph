@@ -78,6 +78,8 @@ type Transcoder @entity {
   activationTimestamp: Int!
   "Last round that the transcoder called reward"
   lastRewardRound: Round
+  "Last round that the transcoder received fees"
+  lastFeeRound: Round
   "% of block reward cut paid to transcoder by a delegator"
   rewardCut: BigInt!
   "The last timestamped update to reward cut, beginning at 12:00am UTC"
@@ -108,11 +110,11 @@ type Transcoder @entity {
   serviceURI: String
   "Days which the transcoder earned fees"
   transcoderDays: [TranscoderDay!]!
-  "Unclaimed orchestrator reward commission in wei. Includes both rewardCut commission and rewards earned on staked commission. Resets to zero on claim. Full pending stake = shares * crf / 10^27 + pendingRewardCommission"
+  "Unclaimed orchestrator reward commission in wei. Includes both rewardCut commission and compounding rewards earned on staked commission. Resets to zero on claim. Full pending stake = shares * crf / 10^27 + pendingRewardCommission"
   pendingRewardCommission: BigInt!
   "Lifetime total orchestrator reward commission earned in wei. Never resets."
   lifetimeRewardCommission: BigInt!
-  "Snapshot of pendingRewardCommission at the start of the current round. Used to compute the transcoder's share of delegator rewards earned by its own staked commission. Resets to zero on claim."
+  "Snapshot of pendingRewardCommission taken at reward() call time (re-snapshotted from initial round-start value). Used to compute the transcoder's share of delegator rewards/fees earned by its own staked commission. Not reset on claim; the reward handler re-snapshots it."
   activeCumulativeRewards: BigInt!
   "Unclaimed orchestrator fee commission in wei. Resets to zero on claim."
   pendingFeeCommission: BigInt!
