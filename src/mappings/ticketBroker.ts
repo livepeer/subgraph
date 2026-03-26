@@ -122,8 +122,9 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 
   // update the transcoder pool fees and cumulative fee factor
   if (pool) {
-    // Compute cumulative fee factor (matches on-chain PreciseMathUtils)
-    // Use previous round's CRF, matching contract's latestCumulativeFactorsPool(_round - 1)
+    // Use previous round's CRF for fee factor calculation, matching the
+    // contract's latestCumulativeFactorsPool(currentRound - 1). Fall back
+    // to the current pool's propagated CRF on reactivation (no prev pool).
     let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
     let prevPoolForFees = Pool.load(
       makePoolId(event.params.recipient.toHex(), prevRoundNum.toString())
@@ -134,6 +135,10 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
       !prevPoolForFees.cumulativeRewardFactor.equals(ZERO_BI)
     ) {
       prevCRF = prevPoolForFees.cumulativeRewardFactor;
+    } else if (!pool.cumulativeRewardFactor.equals(ZERO_BI)) {
+      // Current pool's CRF was propagated from lastRewardRound in newRound,
+      // so it holds the correct previous factor when prev pool doesn't exist.
+      prevCRF = pool.cumulativeRewardFactor;
     }
 
     let delegatorsFees = percOf(event.params.faceValue, pool.feeShare);
