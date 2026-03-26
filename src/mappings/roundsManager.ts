@@ -135,18 +135,22 @@ export function newRound(event: NewRound): void {
     pool.delegate = currentTranscoder.toHex();
     pool.fees = ZERO_BD;
 
-    // Propagate cumulative factors from the previous round's pool so every
-    // pool has valid factors even if the transcoder misses reward() or has
-    // no fees in a round. This mirrors the contract's latestCumulativeFactorsPool.
+    // Ensure every pool has valid cumulative factors even when reward() is
+    // missed or no fees are earned. Mirrors the contract's
+    // latestCumulativeFactorsPool(): try the previous round, fall back to
+    // lastRewardRound if the transcoder was inactive.
     let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
-    let prevPoolId = makePoolId(
-      currentTranscoder.toHex(),
-      prevRoundNum.toString()
+    let latestCumulativeFactorsPool = Pool.load(
+      makePoolId(currentTranscoder.toHex(), prevRoundNum.toString())
     );
-    let prevPool = Pool.load(prevPoolId);
-    if (prevPool) {
-      pool.cumulativeRewardFactor = prevPool.cumulativeRewardFactor;
-      pool.cumulativeFeeFactor = prevPool.cumulativeFeeFactor;
+    if (!latestCumulativeFactorsPool && transcoder && transcoder.lastRewardRound) {
+      latestCumulativeFactorsPool = Pool.load(
+        makePoolId(currentTranscoder.toHex(), transcoder.lastRewardRound)
+      );
+    }
+    if (latestCumulativeFactorsPool) {
+      pool.cumulativeRewardFactor = latestCumulativeFactorsPool.cumulativeRewardFactor;
+      pool.cumulativeFeeFactor = latestCumulativeFactorsPool.cumulativeFeeFactor;
     } else {
       pool.cumulativeRewardFactor = ZERO_BI;
       pool.cumulativeFeeFactor = ZERO_BI;
