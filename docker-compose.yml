@@ -5,7 +5,7 @@ services:
     ports:
       - "8545:8545"
   graph-node:
-    image: graphprotocol/graph-node
+    image: graphprotocol/graph-node:v0.35.1
     container_name: graph-node
     ports:
       - "8000:8000"
@@ -33,7 +33,7 @@ services:
     volumes:
       - ./data/ipfs:/data/ipfs
   postgres:
-    image: postgres
+    image: postgres:16
     container_name: postgres
     ports:
       - "5432:5432"
@@ -42,5 +42,6 @@ services:
       POSTGRES_USER: graph-node
       POSTGRES_PASSWORD: let-me-in
       POSTGRES_DB: graph-node
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
