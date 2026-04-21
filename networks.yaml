@@ -96,6 +96,9 @@ development:
     pollCreator:
       address: "8bb50806D60c492c0004DAD5D9627DAA2d9732E6"
       startBlock: 0
+    livepeerGovernor:
+      address: "deadbeef0deadbeef1deadbeef3deadbeef4dead"
+      startBlock: 0
     serviceRegistry:
       address: "489dD183D8Ec068084e40931FB854b4Afb789a0D"
       startBlock: 0
