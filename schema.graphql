@@ -108,6 +108,16 @@ type Transcoder @entity {
   serviceURI: String
   "Days which the transcoder earned fees"
   transcoderDays: [TranscoderDay!]!
+  "Unclaimed orchestrator reward commission in wei. Includes both rewardCut commission and rewards earned on staked commission. Resets to zero on claim. Full pending stake = shares * crf / 10^27 + pendingRewardCommission"
+  pendingRewardCommission: BigInt!
+  "Lifetime total orchestrator reward commission earned in wei. Never resets."
+  lifetimeRewardCommission: BigInt!
+  "Snapshot of pendingRewardCommission at the start of the current round. Used to compute the transcoder's share of delegator rewards earned by its own staked commission. Resets to zero on claim."
+  activeCumulativeRewards: BigInt!
+  "Unclaimed orchestrator fee commission in wei. Resets to zero on claim."
+  pendingFeeCommission: BigInt!
+  "Lifetime total orchestrator fee commission earned in wei. Never resets."
+  lifetimeFeeCommission: BigInt!
 }
 
 enum TranscoderStatus @entity {
@@ -135,6 +145,10 @@ type Pool @entity {
   rewardCut: BigInt!
   "Transcoder's fee share during the earnings pool's round"
   feeShare: BigInt!
+  "Cumulative reward factor for computing delegator rewards without looping (27-decimal fixed-point, matches on-chain PreciseMathUtils)"
+  cumulativeRewardFactor: BigInt!
+  "Cumulative fee factor for computing delegator fees without looping (27-decimal fixed-point, matches on-chain PreciseMathUtils)"
+  cumulativeFeeFactor: BigInt!
 }
 
 """
@@ -205,8 +219,30 @@ type Delegator @entity {
   withdrawnFees: BigDecimal!
   "Amount of Livepeer Token the delegator has delegated"
   delegatedAmount: BigDecimal!
+  "Proportional claim on the orchestrator's pool (bondedAmount * 10^27 / crf[lastClaimRound]). Invariant across claims, only changes on bond/unbond."
+  shares: BigInt!
   "Unbonding locks associated with the delegator"
   unbondingLocks: [UnbondingLock!] @derivedFrom(field: "delegator")
+}
+
+"""
+Snapshot of delegator state at each state-changing event, enabling historical stake and reward computation via cumulative factors
+"""
+type DelegatorSnapshot @entity {
+  "Unique identifier: delegator address + round number"
+  id: ID!
+  "The delegator this snapshot belongs to"
+  delegator: Delegator!
+  "The delegate (orchestrator) at the time of this snapshot, null if fully unbonded"
+  delegate: Transcoder
+  "Bonded amount at the time of this snapshot"
+  bondedAmount: BigDecimal!
+  "Proportional claim on the orchestrator's pool. stake = shares * crf[round] / 10^27"
+  shares: BigInt!
+  "Round when this snapshot was taken"
+  round: Round!
+  "Timestamp when this snapshot was taken"
+  timestamp: Int!
 }
 
 """
