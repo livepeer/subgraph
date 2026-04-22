@@ -1,5 +1,6 @@
 import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
+  convertFromDecimal,
   convertToDecimal,
   createOrLoadBroadcaster,
   createOrLoadBroadcasterDay,
@@ -11,9 +12,15 @@ import {
   createOrLoadTranscoderDay,
   getBlockNum,
   getEthPriceUsd,
+  integerFromString,
   makeEventId,
   makePoolId,
+  ONE_BI,
+  percOf,
+  PRECISE_PERC_DIVISOR,
+  precisePercOf,
   ZERO_BD,
+  ZERO_BI,
 } from "../../utils/helpers";
 import {
   DepositFundedEvent,
@@ -121,8 +128,59 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   protocol.winningTicketCount = protocol.winningTicketCount + 1;
   protocol.save();
 
-  // update the transcoder pool fees
+  // update the transcoder pool fees and cumulative fee factor
   if (pool) {
+    // Use previous round's CRF for fee factor calculation, matching the
+    // contract's latestCumulativeFactorsPool(currentRound - 1). Fall back
+    // to the current pool's propagated CRF on reactivation (no prev pool).
+    let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
+    let prevPoolForFees = Pool.load(
+      makePoolId(event.params.recipient.toHex(), prevRoundNum.toString())
+    );
+    let prevCRF = PRECISE_PERC_DIVISOR; // default: 10^27
+    if (
+      prevPoolForFees &&
+      !prevPoolForFees.cumulativeRewardFactor.equals(ZERO_BI)
+    ) {
+      prevCRF = prevPoolForFees.cumulativeRewardFactor;
+    } else if (!pool.cumulativeRewardFactor.equals(ZERO_BI)) {
+      // Current pool's CRF was propagated from lastRewardRound in newRound,
+      // so it holds the correct previous factor when prev pool doesn't exist.
+      prevCRF = pool.cumulativeRewardFactor;
+    }
+
+    let delegatorsFees = percOf(event.params.faceValue, pool.feeShare);
+    let transcoderCommissionFees = event.params.faceValue.minus(delegatorsFees);
+
+    // Compute fees earned by the transcoder's own staked commission.
+    // If reward() hasn't been called yet this round, use pendingRewardCommission
+    // directly (mirrors contract's updateTranscoderWithFees line 339).
+    let activeCumulativeRewards = transcoder.lastRewardRound == round.id
+      ? transcoder.activeCumulativeRewards
+      : transcoder.pendingRewardCommission;
+
+    let totalStakeBI = convertFromDecimal(pool.totalStake);
+    let transcoderRewardStakeFees = ZERO_BI;
+    if (totalStakeBI.gt(ZERO_BI)) {
+      transcoderRewardStakeFees = precisePercOf(
+        delegatorsFees,
+        activeCumulativeRewards,
+        totalStakeBI
+      );
+    }
+
+    // Accumulate orchestrator fee commission (feeShare cut + fees on staked commission)
+    let totalFeeCommission = transcoderCommissionFees.plus(transcoderRewardStakeFees);
+    transcoder.pendingFeeCommission = transcoder.pendingFeeCommission.plus(totalFeeCommission);
+    transcoder.lifetimeFeeCommission = transcoder.lifetimeFeeCommission.plus(totalFeeCommission);
+
+    if (totalStakeBI.gt(ZERO_BI)) {
+      pool.cumulativeFeeFactor = pool.cumulativeFeeFactor.plus(
+        precisePercOf(prevCRF, delegatorsFees, totalStakeBI)
+      );
+    }
+
+    transcoder.lastFeeRound = round.id;
     pool.fees = pool.fees.plus(faceValue);
     pool.save();
   }
