@@ -1,8 +1,15 @@
-specVersion: 0.0.2
+specVersion: 1.0.0
 description: A protocol for affordable and reliable video encoding. Find transcoders, delegators, earning pools, and staking rounds.
 repository: https://github.com/livepeer/subgraph
 schema:
   file: ./schema.graphql
+indexerHints:
+  # Retain ~50k blocks of history (~3.5h on Arbitrum) — far deeper than any
+  # plausible reorg, so the indexer can always revert to follow the canonical
+  # chain (avoids the "revert beyond earliest_block" wedge) while keeping
+  # storage bounded. The apps only do current-state queries, not time-travel,
+  # so full archive (prune: never) isn't needed.
+  prune: 50000
 dataSources:
   - kind: ethereum/contract
     name: BondingManager
