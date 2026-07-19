@@ -123,6 +123,12 @@ export function createOrLoadTransactionFromEvent<T extends ethereum.Event>(
 
     if (event.transaction.to) {
       tx.to = event.transaction.to!.toHex();
+    } else {
+      // Contract-creation transactions have no `to` address. `Transaction.to`
+      // is non-nullable, so default to the zero address; leaving it unset makes
+      // graph-node abort with a fatal "missing value for non-nullable field
+      // `to`" error whenever a protocol event is emitted from a constructor.
+      tx.to = EMPTY_ADDRESS.toHex();
     }
 
     tx.save();
