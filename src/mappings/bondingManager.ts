@@ -13,6 +13,7 @@ import {
   makeUnbondingLockId,
   MAXIMUM_VALUE_UINT256,
   ONE_BI,
+  ZERO_BD,
   ZERO_BI,
 } from "../../utils/helpers";
 // Import event types from the registrar contract ABIs
@@ -486,6 +487,21 @@ export function reward(event: Reward): void {
   let poolId = makePoolId(event.params.transcoder.toHex(), round.id);
   let pool = Pool.load(poolId);
   let protocol = createOrLoadProtocol();
+
+  // A Pool is normally created for every active transcoder in newRound(). If a
+  // transcoder emits Reward for a round that has no Pool (e.g. its NewRound was
+  // never indexed, getFirstTranscoderInPool reverted so no pools were created,
+  // or the transcoder was absent from the round's pool snapshot) then
+  // Pool.load() returns null. Create it on demand so indexing never aborts on a
+  // null Pool. totalStake is read before the reward is added below, matching the
+  // start-of-round stake semantics newRound() uses.
+  if (pool == null) {
+    pool = new Pool(poolId);
+    pool.round = round.id;
+    pool.delegate = event.params.transcoder.toHex();
+    pool.fees = ZERO_BD;
+    pool.totalStake = transcoder.totalStake;
+  }
 
   delegate.delegatedAmount = delegate.delegatedAmount.plus(
     convertToDecimal(event.params.amount)
