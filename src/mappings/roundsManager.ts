@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadDay,
+  createOrLoadPool,
   createOrLoadProtocol,
   createOrLoadRound,
   createOrLoadTransactionFromEvent,
@@ -13,7 +14,6 @@ import {
   getLptPriceEth,
   getTimestampForDaysPast,
   makeEventId,
-  makePoolId,
   ONE_BD,
   ONE_BI,
   PERC_DIVISOR,
@@ -32,7 +32,6 @@ import {
   BroadcasterDay,
   NewRoundEvent,
   ParameterUpdateEvent,
-  Pool,
   Transcoder,
   TranscoderDay,
 } from "../types/schema";
@@ -76,8 +75,6 @@ export function newRound(event: NewRound): void {
   round.totalActiveStake = totalActiveStake;
   round.save();
 
-  let poolId: string;
-  let pool: Pool;
   let protocol = createOrLoadProtocol();
 
   // Activate all transcoders pending activation
@@ -127,17 +124,7 @@ export function newRound(event: NewRound): void {
     // reward() for a given round, we store its reward tokens inside this Pool
     // entry in a field called "rewardTokens". If "rewardTokens" is null for a
     // given transcoder and round then we know the transcoder failed to call reward()
-    poolId = makePoolId(currentTranscoder.toHex(), round.id);
-    pool = new Pool(poolId);
-    pool.round = round.id;
-    pool.delegate = currentTranscoder.toHex();
-    pool.fees = ZERO_BD;
-    if (transcoder) {
-      pool.totalStake = transcoder.totalStake;
-      pool.rewardCut = transcoder.rewardCut;
-      pool.feeShare = transcoder.feeShare;
-    }
-    pool.save();
+    createOrLoadPool(round.id, currentTranscoder.toHex());
 
     currentTranscoder =
       bondingManager.getNextTranscoderInPool(currentTranscoder);
