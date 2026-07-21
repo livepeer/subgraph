@@ -476,8 +476,8 @@ type Transaction @entity {
   gasPrice: BigInt!
   "The sending party of the transaction"
   from: String!
-  "The receiving party of the transaction"
-  to: String!
+  "The receiving party of the transaction - null for contract-creation transactions"
+  to: String
   "The events emitted within this transaction"
   events: [Event!] @derivedFrom(field: "transaction")
 }
