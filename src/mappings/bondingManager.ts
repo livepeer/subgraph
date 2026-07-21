@@ -2,6 +2,7 @@ import { store } from "@graphprotocol/graph-ts";
 import {
   convertToDecimal,
   createOrLoadDelegator,
+  createOrLoadPool,
   createOrLoadProtocol,
   createOrLoadRound,
   createOrLoadTransactionFromEvent,
@@ -9,7 +10,6 @@ import {
   EMPTY_ADDRESS,
   getBlockNum,
   makeEventId,
-  makePoolId,
   makeUnbondingLockId,
   MAXIMUM_VALUE_UINT256,
   ONE_BI,
@@ -36,7 +36,6 @@ import {
   BondEvent,
   EarningsClaimedEvent,
   ParameterUpdateEvent,
-  Pool,
   RebondEvent,
   RewardEvent,
   TranscoderActivatedEvent,
@@ -483,8 +482,7 @@ export function reward(event: Reward): void {
     event.block.timestamp.toI32()
   );
   let round = createOrLoadRound(getBlockNum());
-  let poolId = makePoolId(event.params.transcoder.toHex(), round.id);
-  let pool = Pool.load(poolId);
+  let pool = createOrLoadPool(round.id, event.params.transcoder.toHex());
   let protocol = createOrLoadProtocol();
 
   delegate.delegatedAmount = delegate.delegatedAmount.plus(
@@ -496,13 +494,13 @@ export function reward(event: Reward): void {
   );
   transcoder.lastRewardRound = round.id;
 
-  pool!.rewardTokens = convertToDecimal(event.params.amount);
-  pool!.feeShare = transcoder.feeShare;
-  pool!.rewardCut = transcoder.rewardCut;
+  pool.rewardTokens = convertToDecimal(event.params.amount);
+  pool.feeShare = transcoder.feeShare;
+  pool.rewardCut = transcoder.rewardCut;
 
   transcoder.save();
   delegate.save();
-  pool!.save();
+  pool.save();
   protocol.save();
 
   createOrLoadTransactionFromEvent(event);

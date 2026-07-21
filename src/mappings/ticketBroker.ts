@@ -4,6 +4,7 @@ import {
   createOrLoadBroadcaster,
   createOrLoadBroadcasterDay,
   createOrLoadDay,
+  createOrLoadPool,
   createOrLoadProtocol,
   createOrLoadRound,
   createOrLoadTransactionFromEvent,
@@ -12,12 +13,10 @@ import {
   getBlockNum,
   getEthPriceUsd,
   makeEventId,
-  makePoolId,
   ZERO_BD,
 } from "../../utils/helpers";
 import {
   DepositFundedEvent,
-  Pool,
   ReserveClaimedEvent,
   ReserveFundedEvent,
   WinningTicketRedeemedEvent,
@@ -42,8 +41,6 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let faceValue = convertToDecimal(event.params.faceValue);
   let ethPrice = getEthPriceUsd();
   let faceValueUSD = faceValue.times(ethPrice);
-  let poolId = makePoolId(event.params.recipient.toHex(), round.id);
-  let pool = Pool.load(poolId);
 
   createOrLoadTransactionFromEvent(event);
 
@@ -102,7 +99,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   // Update transcoder's fee volume
   let transcoder = createOrLoadTranscoder(
     event.params.recipient.toHex(),
-    event.block.timestamp.toI32()
+    timestamp
   );
   transcoder.totalVolumeETH = transcoder.totalVolumeETH.plus(faceValue);
   transcoder.totalVolumeUSD = transcoder.totalVolumeUSD.plus(faceValueUSD);
@@ -122,10 +119,9 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   protocol.save();
 
   // update the transcoder pool fees
-  if (pool) {
-    pool.fees = pool.fees.plus(faceValue);
-    pool.save();
-  }
+  let pool = createOrLoadPool(round.id, event.params.recipient.toHex());
+  pool.fees = pool.fees.plus(faceValue);
+  pool.save();
 
   day.totalSupply = protocol.totalSupply;
   day.totalActiveStake = protocol.totalActiveStake;

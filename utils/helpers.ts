@@ -13,6 +13,7 @@ import {
   Day,
   Delegator,
   LivepeerAccount,
+  Pool,
   Protocol,
   Round,
   Transaction,
@@ -49,6 +50,33 @@ export function leftPad(str: string, size: i32): string {
 // Make a derived pool ID from a transcoder address
 export function makePoolId(transcoderAddress: string, roundId: string): string {
   return leftPad(roundId, 10) + "-" + transcoderAddress;
+}
+
+export function createOrLoadPool(roundId: string, transcoderAddress: string): Pool {
+  let poolId = makePoolId(transcoderAddress, roundId);
+  let pool = Pool.load(poolId);
+
+  if (pool == null) {
+    pool = new Pool(poolId);
+    pool.round = roundId;
+    pool.delegate = transcoderAddress;
+    pool.fees = ZERO_BD;
+    let transcoder = Transcoder.load(transcoderAddress);
+
+    if (transcoder) {
+      pool.totalStake = transcoder.totalStake;
+      pool.rewardCut = transcoder.rewardCut;
+      pool.feeShare = transcoder.feeShare;
+    } else {
+      // Failsafe: the Transcoder should exist, but default the non-nullable
+      // fields if it is missing so save() cannot abort.
+      pool.totalStake = ZERO_BD;
+      pool.rewardCut = ZERO_BI;
+      pool.feeShare = ZERO_BI;
+    }
+    pool.save();
+  }
+  return pool;
 }
 
 // Make a derived share ID from a delegator address
