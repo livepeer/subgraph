@@ -23,6 +23,7 @@ import {
   ParameterUpdate,
   Rebond,
   Reward,
+  RewardCallerSet,
   TranscoderActivated,
   TranscoderDeactivated,
   TranscoderSlashed,
@@ -37,6 +38,7 @@ import {
   EarningsClaimedEvent,
   ParameterUpdateEvent,
   RebondEvent,
+  RewardCallerSetEvent,
   RewardEvent,
   TranscoderActivatedEvent,
   TranscoderDeactivatedEvent,
@@ -572,6 +574,34 @@ export function transcoderUpdate(event: TranscoderUpdate): void {
   transcoderUpdateEvent.feeShare = event.params.feeShare;
   transcoderUpdateEvent.delegate = event.params.transcoder.toHex();
   transcoderUpdateEvent.save();
+}
+
+export function rewardCallerSet(event: RewardCallerSet): void {
+  let round = createOrLoadRound(getBlockNum());
+  let transcoder = createOrLoadTranscoder(
+    event.params.transcoder.toHex(),
+    event.block.timestamp.toI32()
+  );
+
+  // The zero address unsets the reward caller
+  if (event.params.rewardCaller.toHex() == EMPTY_ADDRESS.toHex()) {
+    transcoder.rewardCaller = null;
+  } else {
+    transcoder.rewardCaller = event.params.rewardCaller.toHex();
+  }
+  transcoder.save();
+
+  createOrLoadTransactionFromEvent(event);
+
+  let rewardCallerSetEvent = new RewardCallerSetEvent(
+    makeEventId(event.transaction.hash, event.logIndex)
+  );
+  rewardCallerSetEvent.transaction = event.transaction.hash.toHex();
+  rewardCallerSetEvent.timestamp = event.block.timestamp.toI32();
+  rewardCallerSetEvent.round = round.id;
+  rewardCallerSetEvent.delegate = event.params.transcoder.toHex();
+  rewardCallerSetEvent.rewardCaller = event.params.rewardCaller.toHex();
+  rewardCallerSetEvent.save();
 }
 
 export function transcoderActivated(event: TranscoderActivated): void {

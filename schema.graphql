@@ -106,6 +106,8 @@ type Transcoder @entity {
   delegator: Delegator
   "Service URI endpoint that can be used to send off-chain requests"
   serviceURI: String
+  "Address delegated to call reward on the transcoder's behalf - null if unset"
+  rewardCaller: String
   "Days which the transcoder earned fees"
   transcoderDays: [TranscoderDay!]!
 }
@@ -584,6 +586,24 @@ type RewardEvent implements Event @entity {
   rewardTokens: BigDecimal!
   "Reference to the delegate that claimed its inflationary token reward"
   delegate: Transcoder!
+}
+
+"""
+RewardCallerSetEvent entities are created for every emitted RewardCallerSet event.
+"""
+type RewardCallerSetEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occured in"
+  round: Round!
+  "Reference to the transcoder that set the reward caller"
+  delegate: Transcoder!
+  "Address authorized to call reward - the zero address when unset"
+  rewardCaller: String!
 }
 
 """
