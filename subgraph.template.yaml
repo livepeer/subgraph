@@ -31,6 +31,7 @@ dataSources:
           - Pool
           - Protocol
           - RebondEvent
+          - RewardCallerSetEvent
           - RewardEvent
           - Transaction
           - Transcoder
@@ -61,6 +62,8 @@ dataSources:
           handler: withdrawStake
         - event: Reward(indexed address,uint256)
           handler: reward
+        - event: RewardCallerSet(indexed address,indexed address)
+          handler: rewardCallerSet
         - event: WithdrawFees(indexed address,address,uint256)
           handler: withdrawFees
         - event: ParameterUpdate(string)

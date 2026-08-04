@@ -826,6 +826,25 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "transcoder",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "rewardCaller",
+        "type": "address"
+      }
+    ],
+    "name": "RewardCallerSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "newDelegate",
         "type": "address"
       },
