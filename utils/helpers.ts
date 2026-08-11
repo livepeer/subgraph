@@ -62,22 +62,43 @@ export function createOrLoadPool(roundId: string, transcoderAddress: string): Po
     pool.delegate = transcoderAddress;
     pool.fees = ZERO_BD;
 
-    // Propagate cumulative factors from the previous round's pool so every
-    // pool has valid factors even if the transcoder misses reward() or has
-    // no fees in a round. This mirrors the contract's latestCumulativeFactorsPool.
-    let prevRoundNum = integerFromString(roundId).minus(ONE_BI);
-    let prevPool = Pool.load(
-      makePoolId(transcoderAddress, prevRoundNum.toString())
-    );
-    if (prevPool) {
-      pool.cumulativeRewardFactor = prevPool.cumulativeRewardFactor;
-      pool.cumulativeFeeFactor = prevPool.cumulativeFeeFactor;
+    let transcoder = Transcoder.load(transcoderAddress);
+
+    // Propagate cumulative factors from the most recent EXISTING pool so they
+    // never reset to base across a round gap. Normally that is the previous
+    // round's pool, but when the transcoder was inactive — or newRound's
+    // non-deterministic enumeration skipped it (see #249) — the previous
+    // round's pool can be missing for several rounds. Walk back to the most
+    // recent pool that exists, bounded below by lastRewardRound (which is
+    // guaranteed to have a pool with valid factors). This mirrors the
+    // contract's latestCumulativeFactorsPool.
+    //
+    // Only checking round-1 (the previous behavior) left the factors at 0
+    // whenever that single pool was missing, and reward() then reset the
+    // cumulative reward factor to base (10^27) — corrupting the stake of every
+    // delegator whose last claim predated the gap.
+    let sourcePool: Pool | null = null;
+    if (transcoder != null && transcoder.lastRewardRound != null) {
+      let cursor = integerFromString(roundId).minus(ONE_BI);
+      let floor = integerFromString(transcoder.lastRewardRound!);
+      while (cursor.ge(floor)) {
+        let candidate = Pool.load(
+          makePoolId(transcoderAddress, cursor.toString())
+        );
+        if (candidate != null) {
+          sourcePool = candidate;
+          break;
+        }
+        cursor = cursor.minus(ONE_BI);
+      }
+    }
+    if (sourcePool != null) {
+      pool.cumulativeRewardFactor = sourcePool.cumulativeRewardFactor;
+      pool.cumulativeFeeFactor = sourcePool.cumulativeFeeFactor;
     } else {
       pool.cumulativeRewardFactor = ZERO_BI;
       pool.cumulativeFeeFactor = ZERO_BI;
     }
-
-    let transcoder = Transcoder.load(transcoderAddress);
 
     if (transcoder) {
       pool.totalStake = transcoder.totalStake;
