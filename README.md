@@ -1,6 +1,6 @@
 # Livepeer Subgraph
 
-[![Discord](https://img.shields.io/discord/423160867534929930.svg?style=flat-square)](https://discord.gg/livepeer)
+[![Discord](https://img.shields.io/discord/423160867534929930.svg?style=flat-square)](https://discord.gg/55SZFEEH5y)
 [![Onchain Deploy](https://github.com/livepeer/subgraph/actions/workflows/deploy.yml/badge.svg)](https://github.com/livepeer/subgraph/actions/workflows/deploy.yml)
 [![Staging Deploy](https://github.com/livepeer/subgraph/actions/workflows/staging.yml/badge.svg)](https://github.com/livepeer/subgraph/actions/workflows/staging.yml)
 [![Tag Version Check](https://github.com/livepeer/subgraph/actions/workflows/version-check.yml/badge.svg)](https://github.com/livepeer/subgraph/actions/workflows/version-check.yml)
