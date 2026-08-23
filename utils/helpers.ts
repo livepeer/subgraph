@@ -523,10 +523,22 @@ export function getPriceForPair(address: string): BigDecimal {
           );
           pricePair = lastKnownLptEthPrice;
         } else {
-          log.info(
-            "slot0 call reverted for LPT/ETH pool {} with no cached price",
-            [address]
-          );
+          // lastKnownLptEthPrice resets on every subgraph restart; fall
+          // back to the entity-backed protocol.lptPriceEth first.
+          let protocol = createOrLoadProtocol();
+          if (!protocol.lptPriceEth.equals(ZERO_BD)) {
+            log.warning(
+              "slot0 call reverted for LPT/ETH pool {} with no in-memory cache; " +
+                "carrying forward durable protocol.lptPriceEth {}",
+              [address, protocol.lptPriceEth.toString()]
+            );
+            pricePair = protocol.lptPriceEth;
+          } else {
+            log.info(
+              "slot0 call reverted for LPT/ETH pool {} with no cached price",
+              [address]
+            );
+          }
         }
       }
     }
