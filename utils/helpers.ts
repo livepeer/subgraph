@@ -5,6 +5,7 @@ import {
   Bytes,
   dataSource,
   ethereum,
+  log,
 } from "@graphprotocol/graph-ts";
 import { RoundsManager } from "../src/types/RoundsManager/RoundsManager";
 import {
@@ -461,6 +462,18 @@ export function getLptPriceEth(): BigDecimal {
   return getPriceForPair(getUniswapV3LptEthPoolAddress());
 }
 
+// Last-known price per pool address; carried across handlers so a transient
+// RPC revert (or a laggard backend returning a wrong-but-valid 0 price) does
+// not permanently zero the USD accumulators. The zero sentinel for
+// "pool not yet deployed / off-network" is indistinguishable from "RPC
+// hiccup" — carrying the last known value is strictly safer than emitting a
+// silent zero that corrupts downstream totals.
+//
+// We use individual variables because AssemblyScript's support for Map with
+// BigDecimal values is unreliable across graph-ts versions.
+let lastKnownDaiEthPrice: BigDecimal = ZERO_BD;
+let lastKnownLptEthPrice: BigDecimal = ZERO_BD;
+
 export function getPriceForPair(address: string): BigDecimal {
   let pricePair = ZERO_BD;
 
@@ -478,6 +491,44 @@ export function getPriceForPair(address: string): BigDecimal {
         BigInt.fromI32(18)
       );
       pricePair = prices[1];
+      // Only cache a non-zero price so we don't persist the "pool not yet
+      // deployed" zero as the last-known value (see issue #248, case 3).
+      if (!pricePair.equals(ZERO_BD)) {
+        if (address == getUniswapV3DaiEthPoolAddress()) {
+          lastKnownDaiEthPrice = pricePair;
+        } else if (address == getUniswapV3LptEthPoolAddress()) {
+          lastKnownLptEthPrice = pricePair;
+        }
+      }
+    } else {
+      // RPC call reverted — carry forward the last successfully read price.
+      if (address == getUniswapV3DaiEthPoolAddress()) {
+        if (!lastKnownDaiEthPrice.equals(ZERO_BD)) {
+          log.warning(
+            "slot0 call reverted for DAI/ETH pool {}; carrying forward last known price {}",
+            [address, lastKnownDaiEthPrice.toString()]
+          );
+          pricePair = lastKnownDaiEthPrice;
+        } else {
+          log.info(
+            "slot0 call reverted for DAI/ETH pool {} with no cached price",
+            [address]
+          );
+        }
+      } else if (address == getUniswapV3LptEthPoolAddress()) {
+        if (!lastKnownLptEthPrice.equals(ZERO_BD)) {
+          log.warning(
+            "slot0 call reverted for LPT/ETH pool {}; carrying forward last known price {}",
+            [address, lastKnownLptEthPrice.toString()]
+          );
+          pricePair = lastKnownLptEthPrice;
+        } else {
+          log.info(
+            "slot0 call reverted for LPT/ETH pool {} with no cached price",
+            [address]
+          );
+        }
+      }
     }
   }
 
