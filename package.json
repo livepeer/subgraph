@@ -24,24 +24,24 @@
     "test": "yarn docker:build && docker compose -f docker-compose.test.yml up --abort-on-container-exit"
   },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.69.1",
-    "@nomiclabs/hardhat-ethers": "^2.2.2",
-    "@nomiclabs/hardhat-waffle": "^2.0.5",
+    "@graphprotocol/graph-cli": "^0.98.1",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
     "@typechain/ethers-v5": "^10.2.0",
-    "@types/mocha": "^10.0.1",
+    "@types/mocha": "^10.0.10",
     "chai": "^4.3.7",
     "ethereum-waffle": "^4.0.10",
     "ethers": "^5.7.2",
     "hardhat": "^2.28.3",
-    "typechain": "^8.1.1"
+    "typechain": "^8.3.2"
   },
   "dependencies": {
-    "@graphprotocol/graph-ts": "0.29.3",
+    "@graphprotocol/graph-ts": "0.38.2",
     "apollo-fetch": "^0.7.0",
-    "fs-extra": "^11.3.3",
-    "handlebars": "^4.5.2",
+    "fs-extra": "^11.4.0",
+    "handlebars": "^4.7.9",
     "js-yaml": "^4.1.1",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typy": "^3.3.0",
     "yaml-convert": "^1.0.1"
