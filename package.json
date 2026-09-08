@@ -72,6 +72,7 @@
     "**/mocha/js-yaml": "^4.3.2",
     "**/mocha/minimatch": "^5.1.9",
     "**/mocha/diff": "^5.2.1",
-    "**/@ethersproject/providers/ws": "^8.21.1"
+    "**/@ethersproject/providers/ws": "^8.21.1",
+    "parse-duration": "^2.1.3"
   }
 }
