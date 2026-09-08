@@ -15,7 +15,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Fail if tag mismatches package.json version
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
@@ -32,7 +32,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || !startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Fail if package.json mismatches latest tag
