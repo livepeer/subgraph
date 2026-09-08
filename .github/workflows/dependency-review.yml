@@ -1,0 +1,19 @@
+name: Dependency Review
+
+on:
+  pull_request:
+
+# Fails the PR if it introduces a dependency with a known vulnerability.
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
