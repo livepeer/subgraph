@@ -13,11 +13,13 @@ import {
   getBondingManagerAddress,
   getLptPriceEth,
   getTimestampForDaysPast,
+  integerFromString,
   makeEventId,
   ONE_BD,
   ONE_BI,
   PERC_DIVISOR,
   ZERO_BD,
+  ZERO_BI,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
 // Import event types from the registrar contract ABIs
@@ -125,6 +127,13 @@ export function newRound(event: NewRound): void {
     // entry in a field called "rewardTokens". If "rewardTokens" is null for a
     // given transcoder and round then we know the transcoder failed to call reward()
     createOrLoadPool(round.id, currentTranscoder.toHex());
+
+    if (transcoder) {
+      // Snapshot pendingRewardCommission as activeCumulativeRewards for this round,
+      // mirroring the contract's setCurrentRoundTotalActiveStake snapshot
+      transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
+      transcoder.save();
+    }
 
     currentTranscoder =
       bondingManager.getNextTranscoderInPool(currentTranscoder);
