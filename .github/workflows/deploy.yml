@@ -1,5 +1,8 @@
 name: Onchain Deploy
 
+permissions:
+  contents: read
+
 on:
   push:
     tags:
