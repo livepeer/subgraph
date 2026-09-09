@@ -1,5 +1,8 @@
 name: Tag Version Check
 
+permissions:
+  contents: read
+
 on:
   push:
     tags:
