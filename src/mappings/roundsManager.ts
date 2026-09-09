@@ -50,10 +50,14 @@ export function newRound(event: NewRound): void {
   let totalActiveStake = BigDecimal.zero();
   let transcoder: Transcoder | null = null;
 
-  // will revert if there are no transcoders in pool
+  // getFirstTranscoderInPool reverts only if the pool is empty, which is
+  // impossible post-launch. A revert here is a determinism hazard (RPC
+  // backend returning bad data), not a legitimate control-flow path — log
+  // critical so it surfaces immediately rather than silently skipping the
+  // transcoder enumeration (see issue #248, case 1).
   let callResult = bondingManager.try_getFirstTranscoderInPool();
   if (callResult.reverted) {
-    log.info("getFirstTranscoderInPool reverted", []);
+    log.critical("getFirstTranscoderInPool reverted", []);
   } else {
     currentTranscoder = callResult.value;
     transcoder = createOrLoadTranscoder(
@@ -62,10 +66,12 @@ export function newRound(event: NewRound): void {
     );
   }
 
-  // will revert if there is no LPT bonded
+  // getTotalBonded reverts only when no LPT is bonded, which is impossible
+  // post-launch. A revert here is a determinism hazard — log critical so it
+  // surfaces immediately (see issue #248, case 2).
   let getTotalBondedCallResult = bondingManager.try_getTotalBonded();
   if (getTotalBondedCallResult.reverted) {
-    log.info("getTotalBonded reverted", []);
+    log.critical("getTotalBonded reverted", []);
   } else {
     totalActiveStake = convertToDecimal(getTotalBondedCallResult.value);
   }
@@ -76,6 +82,26 @@ export function newRound(event: NewRound): void {
   round.save();
 
   let protocol = createOrLoadProtocol();
+
+  // Carry forward the last known totalActiveStake if the call reverted or
+  // returned zero (impossible post-launch, indicating a bad RPC response).
+  // This prevents zeroing protocol.totalActiveStake and downstream
+  // participationRate / numActiveTranscoders for the entire round.
+  if (
+    getTotalBondedCallResult.reverted ||
+    totalActiveStake.equals(ZERO_BD)
+  ) {
+    let lastStake = protocol.totalActiveStake;
+    if (!lastStake.equals(ZERO_BD)) {
+      totalActiveStake = lastStake;
+      protocol.totalActiveStake = totalActiveStake;
+      protocol.save();
+      log.warning(
+        "totalActiveStake reverted/zero; carrying forward last known value {}",
+        [lastStake.toString()]
+      );
+    }
+  }
 
   // Activate all transcoders pending activation
   let pendingActivation = protocol.pendingActivation;
@@ -118,7 +144,10 @@ export function newRound(event: NewRound): void {
     90
   );
 
-  // Iterate over all active transcoders
+  // Iterate over all active transcoders using the try_ variant so that a
+  // reverted eth_call (bad RPC backend) is visible rather than silently
+  // returning EMPTY_ADDRESS, which would truncate the enumeration and
+  // skip every transcoder after it (see issue #248, case 5).
   while (EMPTY_ADDRESS.toHex() != currentTranscoder.toHex()) {
     // create a unique "pool" for each active transcoder. If a transcoder calls
     // reward() for a given round, we store its reward tokens inside this Pool
@@ -126,8 +155,17 @@ export function newRound(event: NewRound): void {
     // given transcoder and round then we know the transcoder failed to call reward()
     createOrLoadPool(round.id, currentTranscoder.toHex());
 
-    currentTranscoder =
-      bondingManager.getNextTranscoderInPool(currentTranscoder);
+    let nextResult = bondingManager.try_getNextTranscoderInPool(
+      currentTranscoder
+    );
+    if (nextResult.reverted) {
+      log.critical(
+        "getNextTranscoderInPool reverted for transcoder {} — enumeration truncated (POI divergence risk)",
+        [currentTranscoder.toHex()]
+      );
+      break;
+    }
+    currentTranscoder = nextResult.value;
 
     transcoder = Transcoder.load(currentTranscoder.toHex());
 
