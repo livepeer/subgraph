@@ -132,7 +132,9 @@ export function newRound(event: NewRound): void {
 
     if (transcoder) {
       // Snapshot pendingRewardCommission as activeCumulativeRewards for this round,
-      // mirroring the contract's setCurrentRoundTotalActiveStake snapshot
+      // mirroring the contract's setCurrentRoundTotalActiveStake snapshot.
+      // This is a fresh load, made after the pending (de)activation loops
+      // above, so saving it can't restore a stale `active` flag.
       transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
 
       // --- Get the 30, 60, 90 day sums of volume ---
