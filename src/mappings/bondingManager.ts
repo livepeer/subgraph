@@ -590,6 +590,10 @@ export function reward(event: Reward): void {
   let transcoderCommission = percOf(totalRewardTokens, pool.rewardCut);
   let delegatorsRewards = totalRewardTokens.minus(transcoderCommission);
 
+  // Snapshot the commission that is active this round, as the contract does
+  // at the start of updateTranscoderWithRewards
+  transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
+
   // Compute rewards earned by the transcoder's own staked commission
   let totalStakeBI = convertFromDecimal(pool.totalStake);
   let transcoderRewardStakeRewards = ZERO_BI;
@@ -842,7 +846,8 @@ export function earningsClaimed(event: EarningsClaimed): void {
     );
     transcoder.pendingRewardCommission = ZERO_BI;
     transcoder.pendingFeeCommission = ZERO_BI;
-    transcoder.activeCumulativeRewards = ZERO_BI;
+    // activeCumulativeRewards is not cleared, matching the contract: fees
+    // later this round still use it, and the next reward() resets it
     transcoder.save();
   }
 

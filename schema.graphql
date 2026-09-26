@@ -114,9 +114,9 @@ type Transcoder @entity {
   pendingRewardCommission: BigInt!
   "Lifetime total orchestrator reward commission earned in wei. Never resets."
   lifetimeRewardCommission: BigInt!
-  "Snapshot of pendingRewardCommission at the start of the current round. Used to compute the transcoder's share of delegator rewards earned by its own staked commission. Resets to zero on claim."
+  "Snapshot of pendingRewardCommission taken when the transcoder calls reward(), matching the contract. Used to compute the transcoder's share of delegator rewards and fees earned by its own staked commission. Not cleared on claim; the next reward() replaces it."
   activeCumulativeRewards: BigInt!
-  "Unclaimed orchestrator fee commission in wei. Resets to zero on claim."
+  "Unclaimed orchestrator fee commission in wei. Includes both feeShare commission and fees earned on staked commission. Resets to zero on claim."
   pendingFeeCommission: BigInt!
   "Lifetime total orchestrator fee commission earned in wei. Never resets."
   lifetimeFeeCommission: BigInt!

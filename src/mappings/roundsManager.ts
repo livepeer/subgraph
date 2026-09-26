@@ -13,13 +13,11 @@ import {
   getBondingManagerAddress,
   getLptPriceEth,
   getTimestampForDaysPast,
-  integerFromString,
   makeEventId,
   ONE_BD,
   ONE_BI,
   PERC_DIVISOR,
   ZERO_BD,
-  ZERO_BI,
 } from "../../utils/helpers";
 import { BondingManager } from "../types/BondingManager/BondingManager";
 // Import event types from the registrar contract ABIs
@@ -131,12 +129,6 @@ export function newRound(event: NewRound): void {
     transcoder = Transcoder.load(currentTranscoder.toHex());
 
     if (transcoder) {
-      // Snapshot pendingRewardCommission as activeCumulativeRewards for this round,
-      // mirroring the contract's setCurrentRoundTotalActiveStake snapshot.
-      // This is a fresh load, made after the pending (de)activation loops
-      // above, so saving it can't restore a stale `active` flag.
-      transcoder.activeCumulativeRewards = transcoder.pendingRewardCommission;
-
       // --- Get the 30, 60, 90 day sums of volume ---
       let thirtyDaySum = ZERO_BD;
       let sixtyDaySum = ZERO_BD;

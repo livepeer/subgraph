@@ -12,13 +12,13 @@ import {
   createOrLoadTranscoder,
   createOrLoadTranscoderDay,
   getBlockNum,
+  getBondingManagerAddress,
   getEthPriceUsd,
   integerFromString,
   latestCumulativeRewardFactor,
   makeEventId,
   ONE_BI,
   percOf,
-  PRECISE_PERC_DIVISOR,
   precisePercOf,
   ZERO_BD,
   ZERO_BI,
@@ -37,6 +37,7 @@ import {
   WinningTicketRedeemed,
   Withdrawal,
 } from "../types/TicketBroker/TicketBroker";
+import { BondingManager } from "../types/TicketBroker/BondingManager";
 
 export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let round = createOrLoadRound(getBlockNum());
@@ -129,24 +130,63 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   // update the transcoder pool fees and cumulative fee factor
   let pool = createOrLoadPool(round.id, event.params.recipient.toHex());
 
-  // Compute cumulative fee factor (matches on-chain PreciseMathUtils)
-  // Use previous round's CRF, matching contract's latestCumulativeFactorsPool(_round - 1)
-  // (falls back to lastRewardRound's pool when round - 1 has none)
-  let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
-  let prevCRF = latestCumulativeRewardFactor(
-    event.params.recipient.toHex(),
-    prevRoundNum.toString()
+  // Read the round's earnings pool from the contract, which has already
+  // applied these fees. Its cumulativeFeeFactor is exact, including the
+  // contract's retroactive CRF estimate when round - 1 missed reward().
+  let bondingManager = BondingManager.bind(
+    Address.fromString(getBondingManagerAddress())
+  );
+  let onChainPool = bondingManager.try_getTranscoderEarningsPoolForRound(
+    event.params.recipient,
+    integerFromString(round.id)
   );
 
-  let delegatorsFees = percOf(event.params.faceValue, pool.feeShare);
+  let totalStakeBI = convertFromDecimal(pool.totalStake);
+  let feeShare = pool.feeShare;
+  if (!onChainPool.reverted) {
+    totalStakeBI = onChainPool.value.value0;
+    feeShare = onChainPool.value.value2;
+  }
+
+  let delegatorsFees = percOf(event.params.faceValue, feeShare);
   let transcoderFeeCommission = event.params.faceValue.minus(delegatorsFees);
 
-  // Accumulate orchestrator fee commission
-  transcoder.pendingFeeCommission = transcoder.pendingFeeCommission.plus(transcoderFeeCommission);
-  transcoder.lifetimeFeeCommission = transcoder.lifetimeFeeCommission.plus(transcoderFeeCommission);
-
-  let totalStakeBI = convertFromDecimal(pool.totalStake);
+  // Fees earned by the transcoder's own staked commission, mirroring the
+  // contract's transcoderRewardStakeFees. Until reward() is called this round
+  // the contract uses cumulativeRewards (pendingRewardCommission here).
+  let rewardCalledThisRound =
+    transcoder.lastRewardRound != null &&
+    transcoder.lastRewardRound! == round.id;
+  let activeCumulativeRewards = rewardCalledThisRound
+    ? transcoder.activeCumulativeRewards
+    : transcoder.pendingRewardCommission;
+  let transcoderRewardStakeFees = ZERO_BI;
   if (totalStakeBI.gt(ZERO_BI)) {
+    transcoderRewardStakeFees = precisePercOf(
+      delegatorsFees,
+      activeCumulativeRewards,
+      totalStakeBI
+    );
+  }
+
+  // Accumulate orchestrator fee commission (feeShare + fees on staked commission)
+  transcoder.pendingFeeCommission = transcoder.pendingFeeCommission
+    .plus(transcoderFeeCommission)
+    .plus(transcoderRewardStakeFees);
+  transcoder.lifetimeFeeCommission = transcoder.lifetimeFeeCommission
+    .plus(transcoderFeeCommission)
+    .plus(transcoderRewardStakeFees);
+
+  if (!onChainPool.reverted) {
+    pool.cumulativeFeeFactor = onChainPool.value.value4;
+  } else if (totalStakeBI.gt(ZERO_BI)) {
+    // Fallback: compute it as the contract does, from the previous round's
+    // CRF (latestCumulativeFactorsPool(_round - 1)).
+    let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
+    let prevCRF = latestCumulativeRewardFactor(
+      event.params.recipient.toHex(),
+      prevRoundNum.toString()
+    );
     pool.cumulativeFeeFactor = pool.cumulativeFeeFactor.plus(
       precisePercOf(prevCRF, delegatorsFees, totalStakeBI)
     );
