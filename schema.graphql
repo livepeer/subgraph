@@ -221,7 +221,7 @@ type Delegator @entity {
   withdrawnFees: BigDecimal!
   "Amount of Livepeer Token the delegator has delegated"
   delegatedAmount: BigDecimal!
-  "Proportional claim on the orchestrator's pool (bondedAmount * 10^27 / crf[lastClaimRound]). Invariant across claims, only changes on bond/unbond."
+  "Proportional claim on the orchestrator's pool (bondedAmount * 10^27 / crf[lastClaimRound]). Recomputed on bond, unbond, rebond and earnings claims; unchanged by an ordinary claim, but a self-claim adds the orchestrator's bonded commission."
   shares: BigInt!
   "Unbonding locks associated with the delegator"
   unbondingLocks: [UnbondingLock!] @derivedFrom(field: "delegator")

@@ -96,7 +96,10 @@ export function createOrLoadPool(roundId: string, transcoderAddress: string): Po
       pool.cumulativeRewardFactor = sourcePool.cumulativeRewardFactor;
       pool.cumulativeFeeFactor = sourcePool.cumulativeFeeFactor;
     } else {
-      pool.cumulativeRewardFactor = ZERO_BI;
+      // No reward history: start the reward factor at the 10^27 base the
+      // contract implies for an uninitialized pool, so shares * crf / 10^27
+      // gives the right stake. The fee factor genuinely starts at zero.
+      pool.cumulativeRewardFactor = PRECISE_PERC_DIVISOR;
       pool.cumulativeFeeFactor = ZERO_BI;
     }
 
@@ -114,6 +117,34 @@ export function createOrLoadPool(roundId: string, transcoderAddress: string): Po
     pool.save();
   }
   return pool;
+}
+
+// Cumulative reward factor for a transcoder as of a round, mirroring the
+// contract's latestCumulativeFactorsPool: use the round's pool if it has a
+// factor, otherwise fall back to the lastRewardRound pool when that is
+// earlier, and default to the 10^27 base when neither exists.
+export function latestCumulativeRewardFactor(
+  transcoderAddress: string,
+  roundId: string
+): BigInt {
+  let pool = Pool.load(makePoolId(transcoderAddress, roundId));
+  if (pool != null && !pool.cumulativeRewardFactor.equals(ZERO_BI)) {
+    return pool.cumulativeRewardFactor;
+  }
+  let transcoder = Transcoder.load(transcoderAddress);
+  if (transcoder != null && transcoder.lastRewardRound != null) {
+    let lastRewardRound = transcoder.lastRewardRound!;
+    if (integerFromString(lastRewardRound).lt(integerFromString(roundId))) {
+      let rewardPool = Pool.load(makePoolId(transcoderAddress, lastRewardRound));
+      if (
+        rewardPool != null &&
+        !rewardPool.cumulativeRewardFactor.equals(ZERO_BI)
+      ) {
+        return rewardPool.cumulativeRewardFactor;
+      }
+    }
+  }
+  return PRECISE_PERC_DIVISOR;
 }
 
 // Make a derived share ID from a delegator address

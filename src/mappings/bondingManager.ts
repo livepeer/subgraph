@@ -10,8 +10,8 @@ import {
   createOrLoadTranscoder,
   EMPTY_ADDRESS,
   getBlockNum,
+  latestCumulativeRewardFactor,
   makeEventId,
-  makePoolId,
   makeUnbondingLockId,
   MAXIMUM_VALUE_UINT256,
   ONE_BI,
@@ -43,7 +43,6 @@ import {
   DelegatorSnapshot,
   EarningsClaimedEvent,
   ParameterUpdateEvent,
-  Pool,
   RebondEvent,
   RewardCallerSetEvent,
   RewardEvent,
@@ -154,20 +153,11 @@ export function bond(event: Bond): void {
   );
 
   // Compute shares: bondedAmount * 10^27 / crf[lastClaimRound]
-  // shares is invariant across claims, only changes on bond/unbond
-  let poolForShares = Pool.load(
-    makePoolId(event.params.newDelegate.toHex(), round.id)
-  );
-  let sharesRefCRF = PRECISE_PERC_DIVISOR;
-  if (
-    poolForShares &&
-    !poolForShares.cumulativeRewardFactor.equals(ZERO_BI)
-  ) {
-    sharesRefCRF = poolForShares.cumulativeRewardFactor;
-  }
   delegator.shares = event.params.bondedAmount
     .times(PRECISE_PERC_DIVISOR)
-    .div(sharesRefCRF);
+    .div(
+      latestCumulativeRewardFactor(event.params.newDelegate.toHex(), round.id)
+    );
 
   round.save();
   delegate.save();
@@ -314,19 +304,11 @@ export function unbond(event: Unbond): void {
   if (delegatorData.value0.isZero()) {
     delegator.shares = ZERO_BI;
   } else {
-    let poolForShares = Pool.load(
-      makePoolId(event.params.delegate.toHex(), round.id)
-    );
-    let sharesRefCRF = PRECISE_PERC_DIVISOR;
-    if (
-      poolForShares &&
-      !poolForShares.cumulativeRewardFactor.equals(ZERO_BI)
-    ) {
-      sharesRefCRF = poolForShares.cumulativeRewardFactor;
-    }
     delegator.shares = delegatorData.value0
       .times(PRECISE_PERC_DIVISOR)
-      .div(sharesRefCRF);
+      .div(
+        latestCumulativeRewardFactor(event.params.delegate.toHex(), round.id)
+      );
   }
 
   // Delegator no longer delegated to anyone if it does not have a bonded amount
@@ -438,19 +420,9 @@ export function rebond(event: Rebond): void {
   delegator.fees = convertToDecimal(delegatorData.value1);
 
   // Compute shares: bondedAmount * 10^27 / crf[lastClaimRound]
-  let poolForShares = Pool.load(
-    makePoolId(event.params.delegate.toHex(), round.id)
-  );
-  let sharesRefCRF = PRECISE_PERC_DIVISOR;
-  if (
-    poolForShares &&
-    !poolForShares.cumulativeRewardFactor.equals(ZERO_BI)
-  ) {
-    sharesRefCRF = poolForShares.cumulativeRewardFactor;
-  }
   delegator.shares = delegatorData.value0
     .times(PRECISE_PERC_DIVISOR)
-    .div(sharesRefCRF);
+    .div(latestCumulativeRewardFactor(event.params.delegate.toHex(), round.id));
 
   // If the sender field for the lock is equal to the delegator's address then
   // we know that this is an unbonding lock the delegator created by calling
@@ -847,6 +819,19 @@ export function earningsClaimed(event: EarningsClaimed): void {
     convertToDecimal(event.params.rewards)
   );
   delegator.fees = delegator.fees.plus(convertToDecimal(event.params.fees));
+  // Rebase shares on the new lastClaimRound. For an ordinary delegator this
+  // leaves shares unchanged (rewards grow with the CRF), but a self-claim also
+  // bonds the orchestrator's commission, which the old shares don't include.
+  if (event.params.delegate.toHex() != EMPTY_ADDRESS.toHex()) {
+    delegator.shares = convertFromDecimal(delegator.bondedAmount)
+      .times(PRECISE_PERC_DIVISOR)
+      .div(
+        latestCumulativeRewardFactor(
+          event.params.delegate.toHex(),
+          event.params.endRound.toString()
+        )
+      );
+  }
   delegator.save();
 
   // Reset orchestrator's unclaimed commission when they claim

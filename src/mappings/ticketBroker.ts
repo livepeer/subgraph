@@ -14,8 +14,8 @@ import {
   getBlockNum,
   getEthPriceUsd,
   integerFromString,
+  latestCumulativeRewardFactor,
   makeEventId,
-  makePoolId,
   ONE_BI,
   percOf,
   PRECISE_PERC_DIVISOR,
@@ -25,7 +25,6 @@ import {
 } from "../../utils/helpers";
 import {
   DepositFundedEvent,
-  Pool,
   ReserveClaimedEvent,
   ReserveFundedEvent,
   WinningTicketRedeemedEvent,
@@ -132,17 +131,12 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 
   // Compute cumulative fee factor (matches on-chain PreciseMathUtils)
   // Use previous round's CRF, matching contract's latestCumulativeFactorsPool(_round - 1)
+  // (falls back to lastRewardRound's pool when round - 1 has none)
   let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
-  let prevPoolForFees = Pool.load(
-    makePoolId(event.params.recipient.toHex(), prevRoundNum.toString())
+  let prevCRF = latestCumulativeRewardFactor(
+    event.params.recipient.toHex(),
+    prevRoundNum.toString()
   );
-  let prevCRF = PRECISE_PERC_DIVISOR; // default: 10^27
-  if (
-    prevPoolForFees &&
-    !prevPoolForFees.cumulativeRewardFactor.equals(ZERO_BI)
-  ) {
-    prevCRF = prevPoolForFees.cumulativeRewardFactor;
-  }
 
   let delegatorsFees = percOf(event.params.faceValue, pool.feeShare);
   let transcoderFeeCommission = event.params.faceValue.minus(delegatorsFees);
