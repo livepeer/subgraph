@@ -214,7 +214,10 @@ dataSources:
         - Protocol
         - Transcoder
         - Broadcaster
+        - BroadcasterDay
+        - Pool
         - Round
+        - TranscoderDay
         - WinningTicketRedeemedEvent
         - ReserveFundedEvent
         - ReserveClaimedEvent

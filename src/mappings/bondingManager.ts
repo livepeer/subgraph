@@ -823,10 +823,11 @@ export function earningsClaimed(event: EarningsClaimed): void {
     convertToDecimal(event.params.rewards)
   );
   delegator.fees = delegator.fees.plus(convertToDecimal(event.params.fees));
-  // Rebase shares on the new lastClaimRound. For an ordinary delegator this
-  // leaves shares unchanged (rewards grow with the CRF), but a self-claim also
-  // bonds the orchestrator's commission, which the old shares don't include.
-  if (event.params.delegate.toHex() != EMPTY_ADDRESS.toHex()) {
+  // A self-claim also bonds the orchestrator's commission, which the old
+  // shares don't include, so rebase them on the new lastClaimRound. An
+  // ordinary claim leaves shares unchanged (rewards grow with the CRF), so
+  // skip it there rather than let integer division drift them down.
+  if (event.params.delegator.toHex() == event.params.delegate.toHex()) {
     delegator.shares = convertFromDecimal(delegator.bondedAmount)
       .times(PRECISE_PERC_DIVISOR)
       .div(
