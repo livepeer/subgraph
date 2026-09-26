@@ -71,10 +71,15 @@ export function bond(event: Bond): void {
     event.params.newDelegate.toHex(),
     event.block.timestamp.toI32()
   );
-  let delegator = createOrLoadDelegator(
-    event.params.delegator.toHex(),
-    event.block.timestamp.toI32()
-  );
+  // When self-bonding, delegate and delegator are the same entity. Share one
+  // object so saving delegator doesn't overwrite delegate's delegatedAmount.
+  let delegator =
+    event.params.delegator.toHex() == event.params.newDelegate.toHex()
+      ? delegate
+      : createOrLoadDelegator(
+          event.params.delegator.toHex(),
+          event.block.timestamp.toI32()
+        );
   let protocol = createOrLoadProtocol();
 
   // If self delegating, set status and assign reference to self
@@ -94,10 +99,15 @@ export function bond(event: Bond): void {
       event.params.oldDelegate.toHex(),
       event.block.timestamp.toI32()
     );
-    let oldDelegate = createOrLoadDelegator(
-      event.params.oldDelegate.toHex(),
-      event.block.timestamp.toI32()
-    );
+    // Moving stake off a self-delegation: oldDelegate is the delegator itself,
+    // so share the object for the same reason as above.
+    let oldDelegate =
+      event.params.oldDelegate.toHex() == event.params.delegator.toHex()
+        ? delegator
+        : createOrLoadDelegator(
+            event.params.oldDelegate.toHex(),
+            event.block.timestamp.toI32()
+          );
     let oldDelegateData = bondingManager.getDelegator(event.params.oldDelegate);
 
     // if previous delegate was itself, set status and unassign reference to self
@@ -273,10 +283,15 @@ export function unbond(event: Unbond): void {
     event.params.delegate.toHex(),
     event.block.timestamp.toI32()
   );
-  let delegate = createOrLoadDelegator(
-    event.params.delegate.toHex(),
-    event.block.timestamp.toI32()
-  );
+  // When unbonding self-stake, delegate and delegator are the same entity.
+  // Share one object so saving delegator doesn't overwrite delegatedAmount.
+  let delegate =
+    event.params.delegate.toHex() == event.params.delegator.toHex()
+      ? delegator
+      : createOrLoadDelegator(
+          event.params.delegate.toHex(),
+          event.block.timestamp.toI32()
+        );
   let unbondingLock = UnbondingLock.load(uniqueUnbondingLockId);
   if (unbondingLock === null) {
     unbondingLock = new UnbondingLock(uniqueUnbondingLockId);
@@ -385,10 +400,15 @@ export function rebond(event: Rebond): void {
     event.params.delegate.toHex(),
     event.block.timestamp.toI32()
   );
-  let delegator = createOrLoadDelegator(
-    event.params.delegator.toHex(),
-    event.block.timestamp.toI32()
-  );
+  // When rebonding to self, delegate and delegator are the same entity. Share
+  // one object so saving delegator doesn't overwrite delegatedAmount.
+  let delegator =
+    event.params.delegator.toHex() == event.params.delegate.toHex()
+      ? delegate
+      : createOrLoadDelegator(
+          event.params.delegator.toHex(),
+          event.block.timestamp.toI32()
+        );
   let delegateData = bondingManager.getDelegator(event.params.delegate);
   let protocol = createOrLoadProtocol();
   let uniqueUnbondingLockId = makeUnbondingLockId(
