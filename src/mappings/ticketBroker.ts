@@ -150,6 +150,10 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   if (!onChainPool.reverted && onChainPool.value.value0.gt(ZERO_BI)) {
     totalStakeBI = onChainPool.value.value0;
     feeShare = onChainPool.value.value2;
+    // Persist the contract's values so later handlers (e.g. reward) see them
+    pool.totalStake = convertToDecimal(totalStakeBI);
+    pool.rewardCut = onChainPool.value.value1;
+    pool.feeShare = feeShare;
   }
 
   let delegatorsFees = percOf(event.params.faceValue, feeShare);

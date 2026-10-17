@@ -584,6 +584,12 @@ export function reward(event: Reward): void {
     prevCRF = PRECISE_PERC_DIVISOR; // default: 10^27 = percPoints(1,1)
   }
 
+  // The contract sets the pool's commission to the transcoder's current
+  // rewardCut/feeShare when reward() runs (rewardWithHint's setCommission),
+  // so a mid-round TranscoderUpdate applies to this round's rewards
+  pool.feeShare = transcoder.feeShare;
+  pool.rewardCut = transcoder.rewardCut;
+
   let totalRewardTokens = event.params.amount; // raw BigInt in wei
   let transcoderCommission = percOf(totalRewardTokens, pool.rewardCut);
   let delegatorsRewards = totalRewardTokens.minus(transcoderCommission);
@@ -619,8 +625,6 @@ export function reward(event: Reward): void {
   }
 
   pool.rewardTokens = convertToDecimal(event.params.amount);
-  pool.feeShare = transcoder.feeShare;
-  pool.rewardCut = transcoder.rewardCut;
 
   transcoder.save();
   delegate.save();
