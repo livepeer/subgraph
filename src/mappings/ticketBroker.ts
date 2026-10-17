@@ -143,7 +143,11 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 
   let totalStakeBI = convertFromDecimal(pool.totalStake);
   let feeShare = pool.feeShare;
-  if (!onChainPool.reverted) {
+  // The pool is only initialized once the contract has credited fees or
+  // stake for this round. A ticket that transferred nothing (sender's deposit
+  // and reserve exhausted) still emits WinningTicketRedeemed but skips
+  // updateTranscoderWithFees, leaving an all-zero pool, so ignore zeros.
+  if (!onChainPool.reverted && onChainPool.value.value0.gt(ZERO_BI)) {
     totalStakeBI = onChainPool.value.value0;
     feeShare = onChainPool.value.value2;
   }
@@ -177,7 +181,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     .plus(transcoderFeeCommission)
     .plus(transcoderRewardStakeFees);
 
-  if (!onChainPool.reverted) {
+  if (!onChainPool.reverted && onChainPool.value.value4.gt(ZERO_BI)) {
     pool.cumulativeFeeFactor = onChainPool.value.value4;
   } else if (totalStakeBI.gt(ZERO_BI)) {
     // Fallback: compute it as the contract does, from the previous round's
