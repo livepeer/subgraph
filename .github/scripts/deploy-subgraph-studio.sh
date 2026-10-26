@@ -17,7 +17,7 @@ cleanup() {
 trap cleanup EXIT
 
 set -o pipefail
-npx graph deploy --studio "$STUDIO_SLUG" --version-label "$VERSION_LABEL" --deploy-key "$DEPLOY_KEY" | tee "$LOG_FILE"
+npx graph deploy "$STUDIO_SLUG" --version-label "$VERSION_LABEL" --deploy-key "$DEPLOY_KEY" | tee "$LOG_FILE"
 
 STUDIO_QUERY_URL="$(grep -Eo 'https://api\.studio\.thegraph\.com/query/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/[A-Za-z0-9._-]+' "$LOG_FILE" | tail -n 1 || true)"
 

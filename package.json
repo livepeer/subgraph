@@ -24,24 +24,24 @@
     "test": "yarn docker:build && docker compose -f docker-compose.test.yml up --abort-on-container-exit"
   },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.69.1",
-    "@nomiclabs/hardhat-ethers": "^2.2.2",
-    "@nomiclabs/hardhat-waffle": "^2.0.5",
+    "@graphprotocol/graph-cli": "0.98.1",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
     "@typechain/ethers-v5": "^10.2.0",
-    "@types/mocha": "^10.0.1",
+    "@types/mocha": "^10.0.10",
     "chai": "^4.3.7",
     "ethereum-waffle": "^4.0.10",
     "ethers": "^5.7.2",
     "hardhat": "^2.28.3",
-    "typechain": "^8.1.1"
+    "typechain": "^8.3.2"
   },
   "dependencies": {
-    "@graphprotocol/graph-ts": "0.29.3",
+    "@graphprotocol/graph-ts": "0.38.2",
     "apollo-fetch": "^0.7.0",
-    "fs-extra": "^11.3.3",
+    "fs-extra": "^11.4.0",
     "handlebars": "^4.7.9",
     "js-yaml": "^4.3.1",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typy": "^3.3.0",
     "yaml-convert": "^1.0.1"
@@ -65,18 +65,19 @@
     "**/@ethersproject/providers/ws": "^8.21.1",
     "**/hardhat/uuid": "^11.1.1",
     "**/jayson/uuid": "^11.1.1",
-    "**/binary-install-raw/axios": "^1.13.0",
     "**/apisauce/axios": "^1.13.0",
-    "**/binary-install-raw/tar": "^7.5.18",
     "**/hardhat/undici": "^6.28.0",
     "**/hardhat/adm-zip": "^0.6.0",
     "**/ipfs-unixfs/protobufjs": "^7.5.6",
-    "**/ipfs-http-client/parse-duration": "^2.1.3",
     "**/mocha/serialize-javascript": "^7.0.5",
     "**/solc/tmp": "^0.2.6",
     "**/tmp-promise/tmp": "^0.2.6",
     "**/jsprim/json-schema": "^0.4.0",
     "**/request/tough-cookie": "^4.1.3",
-    "**/ipfs-core-utils/parse-duration": "^2.1.3"
+    "**/gluegun/cross-spawn": "^7.0.5",
+    "**/gluegun/semver": "^7.5.2",
+    "**/@graphprotocol/graph-cli/glob": "^11.1.0",
+    "**/@graphprotocol/graph-cli/undici": "^7.29.0",
+    "**/@graphprotocol/graph-cli/yaml": "^2.8.3"
   }
 }
