@@ -1,5 +1,6 @@
 import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
+  convertFromDecimal,
   convertToDecimal,
   createOrLoadBroadcaster,
   createOrLoadBroadcasterDay,
@@ -11,9 +12,16 @@ import {
   createOrLoadTranscoder,
   createOrLoadTranscoderDay,
   getBlockNum,
+  getBondingManagerAddress,
   getEthPriceUsd,
+  integerFromString,
+  latestCumulativeRewardFactor,
   makeEventId,
+  ONE_BI,
+  percOf,
+  precisePercOf,
   ZERO_BD,
+  ZERO_BI,
 } from "../../utils/helpers";
 import {
   DepositFundedEvent,
@@ -29,6 +37,7 @@ import {
   WinningTicketRedeemed,
   Withdrawal,
 } from "../types/TicketBroker/TicketBroker";
+import { BondingManager } from "../types/TicketBroker/BondingManager";
 
 export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let round = createOrLoadRound(getBlockNum());
@@ -118,8 +127,79 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   protocol.winningTicketCount = protocol.winningTicketCount + 1;
   protocol.save();
 
-  // update the transcoder pool fees
+  // update the transcoder pool fees and cumulative fee factor
   let pool = createOrLoadPool(round.id, event.params.recipient.toHex());
+
+  // Read the round's earnings pool from the contract, which has already
+  // applied these fees. Its cumulativeFeeFactor is exact, including the
+  // contract's retroactive CRF estimate when round - 1 missed reward().
+  let bondingManager = BondingManager.bind(
+    Address.fromString(getBondingManagerAddress())
+  );
+  let onChainPool = bondingManager.try_getTranscoderEarningsPoolForRound(
+    event.params.recipient,
+    integerFromString(round.id)
+  );
+
+  let totalStakeBI = convertFromDecimal(pool.totalStake);
+  let feeShare = pool.feeShare;
+  // The pool is only initialized once the contract has credited fees or
+  // stake for this round. A ticket that transferred nothing (sender's deposit
+  // and reserve exhausted) still emits WinningTicketRedeemed but skips
+  // updateTranscoderWithFees, leaving an all-zero pool, so ignore zeros.
+  if (!onChainPool.reverted && onChainPool.value.value0.gt(ZERO_BI)) {
+    totalStakeBI = onChainPool.value.value0;
+    feeShare = onChainPool.value.value2;
+    // Persist the contract's values so later handlers (e.g. reward) see them
+    pool.totalStake = convertToDecimal(totalStakeBI);
+    pool.rewardCut = onChainPool.value.value1;
+    pool.feeShare = feeShare;
+  }
+
+  let delegatorsFees = percOf(event.params.faceValue, feeShare);
+  let transcoderFeeCommission = event.params.faceValue.minus(delegatorsFees);
+
+  // Fees earned by the transcoder's own staked commission, mirroring the
+  // contract's transcoderRewardStakeFees. Until reward() is called this round
+  // the contract uses cumulativeRewards (pendingRewardCommission here).
+  let rewardCalledThisRound =
+    transcoder.lastRewardRound != null &&
+    transcoder.lastRewardRound! == round.id;
+  let activeCumulativeRewards = rewardCalledThisRound
+    ? transcoder.activeCumulativeRewards
+    : transcoder.pendingRewardCommission;
+  let transcoderRewardStakeFees = ZERO_BI;
+  if (totalStakeBI.gt(ZERO_BI)) {
+    transcoderRewardStakeFees = precisePercOf(
+      delegatorsFees,
+      activeCumulativeRewards,
+      totalStakeBI
+    );
+  }
+
+  // Accumulate orchestrator fee commission (feeShare + fees on staked commission)
+  transcoder.pendingFeeCommission = transcoder.pendingFeeCommission
+    .plus(transcoderFeeCommission)
+    .plus(transcoderRewardStakeFees);
+  transcoder.lifetimeFeeCommission = transcoder.lifetimeFeeCommission
+    .plus(transcoderFeeCommission)
+    .plus(transcoderRewardStakeFees);
+
+  if (!onChainPool.reverted && onChainPool.value.value4.gt(ZERO_BI)) {
+    pool.cumulativeFeeFactor = onChainPool.value.value4;
+  } else if (totalStakeBI.gt(ZERO_BI)) {
+    // Fallback: compute it as the contract does, from the previous round's
+    // CRF (latestCumulativeFactorsPool(_round - 1)).
+    let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
+    let prevCRF = latestCumulativeRewardFactor(
+      event.params.recipient.toHex(),
+      prevRoundNum.toString()
+    );
+    pool.cumulativeFeeFactor = pool.cumulativeFeeFactor.plus(
+      precisePercOf(prevCRF, delegatorsFees, totalStakeBI)
+    );
+  }
+
   pool.fees = pool.fees.plus(faceValue);
   pool.save();
 
