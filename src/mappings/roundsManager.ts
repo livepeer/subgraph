@@ -126,9 +126,6 @@ export function newRound(event: NewRound): void {
     // given transcoder and round then we know the transcoder failed to call reward()
     createOrLoadPool(round.id, currentTranscoder.toHex());
 
-    currentTranscoder =
-      bondingManager.getNextTranscoderInPool(currentTranscoder);
-
     transcoder = Transcoder.load(currentTranscoder.toHex());
 
     if (transcoder) {
@@ -164,6 +161,9 @@ export function newRound(event: NewRound): void {
 
       transcoder.save();
     }
+
+    currentTranscoder =
+      bondingManager.getNextTranscoderInPool(currentTranscoder);
   }
 
   // Update rolling fee windows for tracked broadcasters (gateways)
