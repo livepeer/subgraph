@@ -17,9 +17,8 @@ COPY yarn.lock /subgraph/yarn.lock
 COPY schema.graphql /subgraph/schema.graphql
 COPY subgraph.template.yaml /subgraph/subgraph.template.yaml
 COPY templatify.ts /subgraph/templatify.ts
-COPY hardhat.config.ts /subgraph/hardhat.config.ts
 COPY tsconfig.json /subgraph/tsconfig.json
-COPY tsconfig.hardhat.json /subgraph/tsconfig.hardhat.json
+COPY tsconfig.test.json /subgraph/tsconfig.test.json
 COPY typechain-types /subgraph/typechain-types
 
 # Install dependencies
