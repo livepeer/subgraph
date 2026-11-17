@@ -17,3 +17,6 @@ jobs:
         uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
+          # decompress (no patched release) is pulled in by graph-cli and only
+          # loaded by `graph node`, which this repo never runs.
+          allow-ghsas: GHSA-mp2f-45pm-3cg9
