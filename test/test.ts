@@ -657,6 +657,37 @@ describe("Token contract", function () {
       await expectBroadcasterMatchesContract(after);
     });
 
+    it("credits only the amount paid when the deposit and reserve fall short of the ticket", async () => {
+      const before = await getSyncedBroadcaster();
+
+      // Far more than the remaining deposit plus transcoder 1's reserve share
+      const faceValue = before.deposit.add(before.reserve).add(
+        ethers.utils.parseEther("10")
+      );
+
+      const receipt = await redeemWinningTicket(faceValue, 3);
+
+      // The contract pays the deposit plus whatever it could claim from the reserve
+      const claimed = receipt.logs
+        .filter((log) => log.address === TicketBroker.address)
+        .map((log) => TicketBroker.interface.parseLog(log))
+        .filter((event) => event.name === "ReserveClaimed")
+        .reduce(
+          (sum: BigNumber, event) => sum.add(event.args.amount),
+          BigNumber.from(0)
+        );
+      const paid = before.deposit.add(claimed);
+      expect(paid.lt(faceValue), "this case needs an underfunded ticket").to.equal(
+        true
+      );
+
+      // Volume counts what was paid, not the ticket's face value
+      const after = await getIndexedBroadcaster();
+      expect(after.deposit).to.deep.equal(BigNumber.from(0));
+      expect(after.totalVolumeETH).to.deep.equal(before.totalVolumeETH.add(paid));
+      await expectBroadcasterMatchesContract(after);
+    });
+
     it.skip("creates a poll", async () => {
       const createPollAndCheckResult = async () => {
         const hash = ethers.utils.formatBytes32String(
