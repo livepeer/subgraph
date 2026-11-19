@@ -107,6 +107,40 @@ const waitForSubgraphToBeSynced = async () =>
     setTimeout(checkSubgraphSynced, 8000);
   });
 
+// Wait until the subgraph has indexed at least the given block
+const waitForSubgraphBlock = async (blockNumber: number) => {
+  const deadline = Date.now() + 120 * 1000;
+  while (true) {
+    const result = await fetchSubgraph({
+      query: `{ _meta { block { number hash } hasIndexingErrors } }`,
+    });
+    const meta = result?.data?._meta;
+    if (meta?.hasIndexingErrors) {
+      throw new Error("Subgraph has indexing errors");
+    }
+    if (meta && meta.block.number >= blockNumber) {
+      // Guard against a graph-node store left over from an earlier chain
+      const chainBlock = await ethers.provider.getBlock(meta.block.number);
+      if (chainBlock?.hash !== meta.block.hash) {
+        throw new Error(
+          `Subgraph indexed block ${meta.block.number} from a different chain ` +
+            `(stale graph-node data?)`
+        );
+      }
+      return;
+    }
+    if (Date.now() > deadline) {
+      throw new Error(
+        `Timed out waiting for the subgraph to index block ${blockNumber}`
+      );
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+};
+
+// Subgraph BigDecimal ETH amounts (e.g. "0.8") as wei
+const ethToWei = (value: string) => ethers.utils.parseEther(value);
+
 describe("Token contract", function () {
   let RoundsManager: RoundsManager;
   let BondingManager: BondingManager;
@@ -436,62 +470,191 @@ describe("Token contract", function () {
       await waitForSubgraphToBeSynced();
     });
 
-    it("correctly updates the broadcaster deposit when ticket value is less than deposit", async () => {
-      const faceValue = ethers.utils.parseEther(".2");
+    const getIndexedBroadcaster = async () => {
+      const result = await fetchSubgraph({
+        query: `{
+          broadcaster(id: "${broadcaster.address.toLowerCase()}") {
+            deposit
+            reserve
+            totalVolumeETH
+          }
+        }`,
+      });
+      const indexed = result.data.broadcaster;
+      expect(indexed, "broadcaster is indexed").to.not.be.null;
+      return {
+        deposit: ethToWei(indexed.deposit),
+        reserve: ethToWei(indexed.reserve),
+        totalVolumeETH: ethToWei(indexed.totalVolumeETH),
+      };
+    };
+
+    // Broadcaster state as indexed up to the current block
+    const getSyncedBroadcaster = async () => {
+      await waitForSubgraphBlock(await ethers.provider.getBlockNumber());
+      return getIndexedBroadcaster();
+    };
+
+    // Signs a winning ticket from the broadcaster to transcoder 1 and redeems
+    // it. recipientRand must be unique per ticket so the ticket hash is unused.
+    const redeemWinningTicket = async (
+      faceValue: BigNumber,
+      recipientRand: number
+    ) => {
+      // Redemption reverts unless the current round is initialized, and the
+      // ticket's creation round needs a block hash, which only an initialized
+      // round has. The chain keeps producing blocks, so if the round is about
+      // to end, wait for the next one: otherwise the redemption can land in a
+      // new, uninitialized round and revert.
+      const roundEnd = (await RoundsManager.currentRoundStartBlock()).add(
+        roundLength
+      );
+      const blocksLeft = roundEnd.sub(await ethers.provider.getBlockNumber());
+      if (blocksLeft.lt(8)) {
+        await waitUntilBlock(roundEnd.toNumber());
+      }
+      if (!(await RoundsManager.currentRoundInitialized())) {
+        await (await RoundsManager.initializeRound(defaults)).wait();
+      }
 
       const ticket = await createWinningTicket(
         transcoder1,
         broadcaster,
-        1,
+        recipientRand,
         faceValue
       );
-      const ticketHash = ethers.utils.keccak256(
-        ethers.utils.defaultAbiCoder.encode(
-          [
-            "address",
-            "address",
-            "uint256",
-            "uint256",
-            "uint256",
-            "string",
-            "uint256",
-          ],
-          [
-            ticket.recipient,
-            ticket.sender,
-            ticket.faceValue,
-            ticket.winProb,
-            ticket.senderNonce,
-            ticket.recipientRandHash,
-            ticket.auxData,
-          ]
-        )
+      // TicketBroker.getTicketHash is keccak256(abi.encodePacked(...)) over
+      // (address, address, uint256, uint256, uint256, bytes32, bytes)
+      const ticketHash = ethers.utils.solidityKeccak256(
+        [
+          "address",
+          "address",
+          "uint256",
+          "uint256",
+          "uint256",
+          "bytes32",
+          "bytes",
+        ],
+        [
+          ticket.recipient,
+          ticket.sender,
+          ticket.faceValue,
+          ticket.winProb,
+          ticket.senderNonce,
+          ticket.recipientRandHash,
+          ticket.auxData,
+        ]
+      );
+      expect(ticketHash).to.equal(await TicketBroker.getTicketHash(ticket));
+
+      // The contract recovers the signer from the eth-signed (EIP-191) hash of
+      // the raw 32 bytes. Use eth_sign rather than signer.signMessage: the
+      // latter sends personal_sign, which the test geth node rejects without a
+      // password argument ("missing value for required argument 2").
+      const signedTicketHash: string = await ethers.provider.send("eth_sign", [
+        broadcaster.address,
+        ticketHash,
+      ]);
+
+      // Dry run first so a revert surfaces its reason (the real tx has a fixed
+      // gas limit, so it would only report a bare CALL_EXCEPTION)
+      await TicketBroker.connect(transcoder1).callStatic.redeemWinningTicket(
+        ticket,
+        signedTicketHash,
+        recipientRand
       );
 
-      const signedTicketHash = await broadcaster.signMessage(ticketHash);
+      const tx = await TicketBroker.connect(transcoder1).redeemWinningTicket(
+        ticket,
+        signedTicketHash,
+        recipientRand,
+        defaults
+      );
+      await expect(tx).to.emit(TicketBroker, "WinningTicketRedeemed");
+      const receipt = await tx.wait();
 
-      await expect(
-        TicketBroker.connect(transcoder1).redeemWinningTicket(
-          ticket,
-          signedTicketHash,
-          1,
-          defaults
-        )
-      ).to.emit(TicketBroker, "WinningTicketRedeemed");
-
-      const winningTicketRedeemedEvents = await fetchSubgraph({
+      // The redemption is indexed as an event
+      await waitForSubgraphBlock(receipt.blockNumber);
+      const result = await fetchSubgraph({
         query: `{
-          winningTicketRedeemedEvents {
-             sender {
-              id
-            }
-            id
+          winningTicketRedeemedEvents(
+            where: { transaction: "${receipt.transactionHash.toLowerCase()}" }
+          ) {
+            sender { id }
+            recipient { id }
             faceValue
           }
         }`,
       });
+      const events = result.data.winningTicketRedeemedEvents;
+      expect(events).to.have.length(1);
+      expect(events[0].sender.id).to.equal(broadcaster.address.toLowerCase());
+      expect(events[0].recipient.id).to.equal(
+        transcoder1.address.toLowerCase()
+      );
+      expect(ethToWei(events[0].faceValue)).to.deep.equal(faceValue);
 
-      console.log({ winningTicketRedeemedEvents });
+      return receipt;
+    };
+
+    // The indexed deposit and reserve match the contract's own accounting
+    const expectBroadcasterMatchesContract = async (indexed: {
+      deposit: BigNumber;
+      reserve: BigNumber;
+    }) => {
+      const senderInfo = await TicketBroker.getSenderInfo(broadcaster.address);
+      expect(indexed.deposit).to.deep.equal(senderInfo.sender.deposit);
+      expect(indexed.reserve).to.deep.equal(senderInfo.reserve.fundsRemaining);
+    };
+
+    it("correctly updates the broadcaster deposit when ticket value is less than deposit", async () => {
+      const faceValue = ethers.utils.parseEther(".2");
+
+      const before = await getSyncedBroadcaster();
+      expect(
+        faceValue.lt(before.deposit),
+        "this case needs a face value below the deposit"
+      ).to.equal(true);
+
+      await redeemWinningTicket(faceValue, 1);
+
+      // The face value comes out of the deposit only; the reserve is untouched
+      const after = await getIndexedBroadcaster();
+      expect(after.deposit).to.deep.equal(before.deposit.sub(faceValue));
+      expect(after.reserve).to.deep.equal(before.reserve);
+      expect(after.totalVolumeETH).to.deep.equal(
+        before.totalVolumeETH.add(faceValue)
+      );
+      await expectBroadcasterMatchesContract(after);
+    });
+
+    it("correctly updates the broadcaster deposit and reserve when ticket value is greater than deposit", async () => {
+      const before = await getSyncedBroadcaster();
+      expect(before.deposit.gt(0), "deposit left to use up").to.equal(true);
+
+      // Small enough to fit in transcoder 1's share of the reserve
+      const shortfall = ethers.utils.parseEther(".2");
+      const faceValue = before.deposit.add(shortfall);
+
+      const receipt = await redeemWinningTicket(faceValue, 2);
+
+      // The contract pays the shortfall from the reserve
+      const reserveClaims = receipt.logs
+        .filter((log) => log.address === TicketBroker.address)
+        .map((log) => TicketBroker.interface.parseLog(log))
+        .filter((event) => event.name === "ReserveClaimed");
+      expect(reserveClaims).to.have.length(1);
+      expect(reserveClaims[0].args.amount).to.deep.equal(shortfall);
+
+      // The deposit is emptied and the reserve drops by the claimed shortfall
+      // only (not by the whole face value, and not twice)
+      const after = await getIndexedBroadcaster();
+      expect(after.deposit).to.deep.equal(BigNumber.from(0));
+      expect(after.reserve).to.deep.equal(before.reserve.sub(shortfall));
+      expect(after.totalVolumeETH).to.deep.equal(
+        before.totalVolumeETH.add(faceValue)
+      );
+      await expectBroadcasterMatchesContract(after);
     });
 
     it.skip("creates a poll", async () => {
