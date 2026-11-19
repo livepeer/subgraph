@@ -54,7 +54,8 @@ export function newRound(event: NewRound): void {
   let callResult = bondingManager.try_getFirstTranscoderInPool();
   if (callResult.reverted) {
     log.info("getFirstTranscoderInPool reverted", []);
-  } else {
+  } else if (callResult.value.toHex() != EMPTY_ADDRESS.toHex()) {
+    // An empty pool returns the zero address rather than reverting
     currentTranscoder = callResult.value;
     transcoder = createOrLoadTranscoder(
       currentTranscoder.toHex(),

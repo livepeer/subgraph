@@ -1,5 +1,12 @@
-import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
+  Address,
+  BigDecimal,
+  BigInt,
+  Bytes,
+  dataSource,
+} from "@graphprotocol/graph-ts";
+import {
+  convertFromDecimal,
   convertToDecimal,
   createOrLoadBroadcaster,
   createOrLoadBroadcasterDay,
@@ -11,9 +18,16 @@ import {
   createOrLoadTranscoder,
   createOrLoadTranscoderDay,
   getBlockNum,
+  getBondingManagerAddress,
   getEthPriceUsd,
+  integerFromString,
+  latestCumulativeRewardFactor,
   makeEventId,
+  ONE_BI,
+  percOf,
+  precisePercOf,
   ZERO_BD,
+  ZERO_BI,
 } from "../../utils/helpers";
 import {
   DepositFundedEvent,
@@ -29,6 +43,7 @@ import {
   WinningTicketRedeemed,
   Withdrawal,
 } from "../types/TicketBroker/TicketBroker";
+import { BondingManager } from "../types/TicketBroker/BondingManager";
 
 export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   let round = createOrLoadRound(getBlockNum());
@@ -57,28 +72,35 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   winningTicketRedeemedEvent.auxData = event.params.auxData;
   winningTicketRedeemedEvent.save();
 
-  // The faceValue of the ticket will be subtracted from the ticket sender (broadcaster) deposit.
-  // In case the deposit is insufficient to cover the faceValue, the difference will be subtracted from the reserve.
+  // The faceValue of the ticket is subtracted from the ticket sender (broadcaster) deposit.
+  // If the deposit can't cover it, the contract empties the deposit and pays the shortfall
+  // (capped at the recipient's reserve allocation) from the reserve, emitting ReserveClaimed
+  // with the amount actually paid. The reserveClaimed handler subtracts that amount, so the
+  // reserve must not be touched here or the claim would be counted twice.
+  //
+  // The recipient is paid what the contract actually transferred, not the face
+  // value: the deposit, plus any reserve claimed, can fall short of it (and be
+  // zero), and the contract credits fees with only the transferred amount.
   let broadcaster = createOrLoadBroadcaster(event.params.sender.toHex());
+  let paid = faceValue;
   if (faceValue.gt(broadcaster.deposit)) {
+    paid = broadcaster.deposit.plus(
+      reserveClaimedForTicket(
+        event.transaction.hash,
+        event.logIndex,
+        event.params.sender.toHex(),
+        event.params.recipient.toHex()
+      )
+    );
     broadcaster.deposit = ZERO_BD;
-
-    let difference = faceValue.minus(broadcaster.deposit);
-    if (difference.gt(broadcaster.reserve)) {
-      // we have an error here, broadcaster reserves have been fully depleted
-      log.error("Broadcaster reserves have been depleted to zero for ID: {}", [
-        broadcaster.id,
-      ]);
-      broadcaster.reserve = ZERO_BD;
-    } else {
-      broadcaster.reserve = broadcaster.reserve.minus(difference);
-    }
   } else {
     broadcaster.deposit = broadcaster.deposit.minus(faceValue);
   }
+  let paidUSD = paid.times(ethPrice);
+  let paidWei = convertFromDecimal(paid);
 
-  broadcaster.totalVolumeETH = broadcaster.totalVolumeETH.plus(faceValue);
-  broadcaster.totalVolumeUSD = broadcaster.totalVolumeUSD.plus(faceValueUSD);
+  broadcaster.totalVolumeETH = broadcaster.totalVolumeETH.plus(paid);
+  broadcaster.totalVolumeUSD = broadcaster.totalVolumeUSD.plus(paidUSD);
   
   let broadcasterDay = createOrLoadBroadcasterDay(
     timestamp,
@@ -86,8 +108,8 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   );
   broadcaster.lastFundedDay = broadcasterDay.date;
   broadcaster.lastActiveDay = broadcasterDay.date;
-  broadcasterDay.volumeETH = broadcasterDay.volumeETH.plus(faceValue);
-  broadcasterDay.volumeUSD = broadcasterDay.volumeUSD.plus(faceValueUSD);
+  broadcasterDay.volumeETH = broadcasterDay.volumeETH.plus(paid);
+  broadcasterDay.volumeUSD = broadcasterDay.volumeUSD.plus(paidUSD);
   broadcasterDay.save();
   let broadcasterDays = broadcaster.broadcasterDays;
   if (!broadcasterDays.includes(broadcasterDay.id)) {
@@ -101,12 +123,12 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
     event.params.recipient.toHex(),
     timestamp
   );
-  transcoder.totalVolumeETH = transcoder.totalVolumeETH.plus(faceValue);
-  transcoder.totalVolumeUSD = transcoder.totalVolumeUSD.plus(faceValueUSD);
+  transcoder.totalVolumeETH = transcoder.totalVolumeETH.plus(paid);
+  transcoder.totalVolumeUSD = transcoder.totalVolumeUSD.plus(paidUSD);
 
   // Update total protocol fee volume
-  protocol.totalVolumeETH = protocol.totalVolumeETH.plus(faceValue);
-  protocol.totalVolumeUSD = protocol.totalVolumeUSD.plus(faceValueUSD);
+  protocol.totalVolumeETH = protocol.totalVolumeETH.plus(paid);
+  protocol.totalVolumeUSD = protocol.totalVolumeUSD.plus(paidUSD);
 
   // Track active broadcasters based on ticket activity.
   let activeBroadcasters = protocol.activeBroadcasters;
@@ -118,24 +140,98 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   protocol.winningTicketCount = protocol.winningTicketCount + 1;
   protocol.save();
 
-  // update the transcoder pool fees
+  // update the transcoder pool fees and cumulative fee factor
   let pool = createOrLoadPool(round.id, event.params.recipient.toHex());
-  pool.fees = pool.fees.plus(faceValue);
+
+  // Read the round's earnings pool from the contract, which has already
+  // applied these fees. Its cumulativeFeeFactor is exact, including the
+  // contract's retroactive CRF estimate when round - 1 missed reward().
+  let bondingManager = BondingManager.bind(
+    Address.fromString(getBondingManagerAddress())
+  );
+  let onChainPool = bondingManager.try_getTranscoderEarningsPoolForRound(
+    event.params.recipient,
+    integerFromString(round.id)
+  );
+
+  let totalStakeBI = convertFromDecimal(pool.totalStake);
+  let feeShare = pool.feeShare;
+  // The pool is only initialized once the contract has credited fees or
+  // stake for this round. A ticket that transferred nothing (sender's deposit
+  // and reserve exhausted) still emits WinningTicketRedeemed but skips
+  // updateTranscoderWithFees, leaving an all-zero pool, so ignore zeros.
+  if (!onChainPool.reverted && onChainPool.value.value0.gt(ZERO_BI)) {
+    totalStakeBI = onChainPool.value.value0;
+    feeShare = onChainPool.value.value2;
+    // Persist the contract's values so later handlers (e.g. reward) see them
+    pool.totalStake = convertToDecimal(totalStakeBI);
+    pool.rewardCut = onChainPool.value.value1;
+    pool.feeShare = feeShare;
+  }
+
+  let delegatorsFees = percOf(paidWei, feeShare);
+  let transcoderFeeCommission = paidWei.minus(delegatorsFees);
+
+  // Fees earned by the transcoder's own staked commission, mirroring the
+  // contract's transcoderRewardStakeFees. Until reward() is called this round
+  // the contract uses cumulativeRewards (pendingRewardCommission here).
+  let rewardCalledThisRound =
+    transcoder.lastRewardRound != null &&
+    transcoder.lastRewardRound! == round.id;
+  let activeCumulativeRewards = rewardCalledThisRound
+    ? transcoder.activeCumulativeRewards
+    : transcoder.pendingRewardCommission;
+  let transcoderRewardStakeFees = ZERO_BI;
+  if (totalStakeBI.gt(ZERO_BI)) {
+    transcoderRewardStakeFees = precisePercOf(
+      delegatorsFees,
+      activeCumulativeRewards,
+      totalStakeBI
+    );
+  }
+
+  // Accumulate orchestrator fee commission (feeShare + fees on staked commission)
+  transcoder.pendingFeeCommission = transcoder.pendingFeeCommission
+    .plus(transcoderFeeCommission)
+    .plus(transcoderRewardStakeFees);
+  transcoder.lifetimeFeeCommission = transcoder.lifetimeFeeCommission
+    .plus(transcoderFeeCommission)
+    .plus(transcoderRewardStakeFees);
+
+  if (!onChainPool.reverted && onChainPool.value.value4.gt(ZERO_BI)) {
+    pool.cumulativeFeeFactor = onChainPool.value.value4;
+  } else if (totalStakeBI.gt(ZERO_BI)) {
+    // Fallback: compute it as the contract does, from the previous round's
+    // CRF (latestCumulativeFactorsPool(_round - 1)).
+    let prevRoundNum = integerFromString(round.id).minus(ONE_BI);
+    let prevCRF = latestCumulativeRewardFactor(
+      event.params.recipient.toHex(),
+      prevRoundNum.toString()
+    );
+    pool.cumulativeFeeFactor = pool.cumulativeFeeFactor.plus(
+      precisePercOf(prevCRF, delegatorsFees, totalStakeBI)
+    );
+  }
+
+  pool.fees = pool.fees.plus(paid);
   pool.save();
+  if (paid.gt(ZERO_BD)) {
+    transcoder.lastFeeRound = round.id;
+  }
 
   day.totalSupply = protocol.totalSupply;
   day.totalActiveStake = protocol.totalActiveStake;
   day.participationRate = protocol.participationRate;
-  day.volumeETH = day.volumeETH.plus(faceValue);
-  day.volumeUSD = day.volumeUSD.plus(faceValueUSD);
+  day.volumeETH = day.volumeETH.plus(paid);
+  day.volumeUSD = day.volumeUSD.plus(paidUSD);
   day.save();
 
   let transcoderDay = createOrLoadTranscoderDay(
     timestamp,
     event.params.recipient.toHex()
   );
-  transcoderDay.volumeETH = transcoderDay.volumeETH.plus(faceValue);
-  transcoderDay.volumeUSD = transcoderDay.volumeUSD.plus(faceValueUSD);
+  transcoderDay.volumeETH = transcoderDay.volumeETH.plus(paid);
+  transcoderDay.volumeUSD = transcoderDay.volumeUSD.plus(paidUSD);
   transcoderDay.save();
 
   // Manually manage the array of transcoder days (add newest to the beginning of the list)
@@ -147,8 +243,8 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
   transcoder.save();
 
   // Update fee volume for this round
-  round.volumeETH = round.volumeETH.plus(faceValue);
-  round.volumeUSD = round.volumeUSD.plus(faceValueUSD);
+  round.volumeETH = round.volumeETH.plus(paid);
+  round.volumeUSD = round.volumeUSD.plus(paidUSD);
   round.save();
 }
 
@@ -253,4 +349,33 @@ export function withdrawal(event: Withdrawal): void {
   withdrawalEvent.deposit = convertToDecimal(event.params.deposit);
   withdrawalEvent.reserve = convertToDecimal(event.params.reserve);
   withdrawalEvent.save();
+}
+
+// The reserve paid toward a winning ticket. When a ticket's face value exceeds
+// the sender's deposit, the contract claims the shortfall from the reserve
+// (emitting ReserveClaimed, handled earlier in the same transaction) just
+// before emitting WinningTicketRedeemed. Look back a few logs for it, stopping
+// at an earlier ticket in the same transaction (batch redemptions).
+function reserveClaimedForTicket(
+  txHash: Bytes,
+  logIndex: BigInt,
+  sender: string,
+  recipient: string
+): BigDecimal {
+  let index = logIndex;
+  for (let i = 0; i < 8 && index.gt(ZERO_BI); i++) {
+    index = index.minus(ONE_BI);
+    let id = makeEventId(txHash, index);
+    if (WinningTicketRedeemedEvent.load(id) != null) {
+      break;
+    }
+    let claim = ReserveClaimedEvent.load(id);
+    if (claim != null) {
+      if (claim.reserveHolder == sender && claim.claimant == recipient) {
+        return claim.amount;
+      }
+      break;
+    }
+  }
+  return ZERO_BD;
 }

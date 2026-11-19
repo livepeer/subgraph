@@ -25,6 +25,7 @@ dataSources:
           - BondEvent
           - TransferBondEvent
           - Delegator
+          - DelegatorSnapshot
           - LivepeerAccount
           - EarningsClaimedEvent
           - ParameterUpdateEvent
@@ -201,6 +202,8 @@ dataSources:
       abis:
         - name: TicketBroker
           file: ./abis/TicketBroker.json
+        - name: BondingManager
+          file: ./abis/BondingManager.json
         - name: UniswapV3Pool
           file: ./abis/UniswapV3Pool.json
         - name: RoundsManager
@@ -211,7 +214,10 @@ dataSources:
         - Protocol
         - Transcoder
         - Broadcaster
+        - BroadcasterDay
+        - Pool
         - Round
+        - TranscoderDay
         - WinningTicketRedeemedEvent
         - ReserveFundedEvent
         - ReserveClaimedEvent

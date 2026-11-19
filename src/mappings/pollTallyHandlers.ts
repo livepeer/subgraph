@@ -4,6 +4,7 @@ import {
   createOrLoadRound,
   createOrLoadTranscoder,
   createOrLoadVote,
+  EMPTY_ADDRESS,
   getBlockNum,
   integerFromString,
   makeVoteId,
@@ -100,15 +101,6 @@ export function updatePollTallyOnBond(event: Bond): void {
       .minus(event.params.additionalAmount)
       .gt(ZERO_BI) &&
     event.params.oldDelegate.toHex() != event.params.newDelegate.toHex();
-  let oldDelegateVoteId = makeVoteId(
-    event.params.oldDelegate.toHex(),
-    pollAddress
-  );
-  let oldDelegateVote = createOrLoadVote(oldDelegateVoteId);
-  let oldDelegate = createOrLoadTranscoder(
-    event.params.oldDelegate.toHex(),
-    event.block.timestamp.toI32()
-  );
   let newDelegateVoteId = makeVoteId(
     event.params.newDelegate.toHex(),
     pollAddress
@@ -122,7 +114,16 @@ export function updatePollTallyOnBond(event: Bond): void {
   let vote = createOrLoadVote(voteId);
   let bondedAmount = convertToDecimal(event.params.bondedAmount);
 
-  if (oldDelegateVote) {
+  // A first bond has no old delegate (the zero address): don't create a
+  // Transcoder or Vote for it
+  if (event.params.oldDelegate.toHex() != EMPTY_ADDRESS.toHex()) {
+    let oldDelegateVote = createOrLoadVote(
+      makeVoteId(event.params.oldDelegate.toHex(), pollAddress)
+    );
+    let oldDelegate = createOrLoadTranscoder(
+      event.params.oldDelegate.toHex(),
+      event.block.timestamp.toI32()
+    );
     updateTally = true;
     if (oldDelegate.status == "Registered") {
       oldDelegateVote.registeredTranscoder = true;

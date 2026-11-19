@@ -38,8 +38,8 @@ services:
     container_name: ipfs
     ports:
       - "5001:5001"
-    volumes:
-      - ./data/ipfs:/data/ipfs
+    tmpfs:
+      - /data/ipfs
   postgres:
     image: postgres:16
     container_name: postgres
@@ -51,5 +51,8 @@ services:
       POSTGRES_PASSWORD: let-me-in
       POSTGRES_DB: graph-node
       POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+    # Keep test state in memory so every run starts from an empty graph-node
+    # store. A store persisted from an earlier run still holds the previous
+    # chain's head and blocks, which the freshly started geth chain doesn't match.
+    tmpfs:
+      - /var/lib/postgresql/data
