@@ -78,6 +78,8 @@ type Transcoder @entity {
   activationTimestamp: Int!
   "Last round that the transcoder called reward"
   lastRewardRound: Round
+  "Last round in which the transcoder earned ticket fees"
+  lastFeeRound: Round
   "% of block reward cut paid to transcoder by a delegator"
   rewardCut: BigInt!
   "The last timestamped update to reward cut, beginning at 12:00am UTC"
@@ -228,7 +230,7 @@ type Delegator @entity {
 }
 
 """
-Snapshot of delegator state at each state-changing event, enabling historical stake and reward computation via cumulative factors
+Snapshot of a delegator's state as of the end of a round, enabling historical stake and reward computation via cumulative factors. Written on every state-changing event, but the ID is delegator + round, so several events in one round overwrite each other and only the round's final state is kept: this is per-round history, not per-event history
 """
 type DelegatorSnapshot @entity {
   "Unique identifier: delegator address + round number"

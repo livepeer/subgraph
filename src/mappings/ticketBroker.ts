@@ -202,6 +202,7 @@ export function winningTicketRedeemed(event: WinningTicketRedeemed): void {
 
   pool.fees = pool.fees.plus(faceValue);
   pool.save();
+  transcoder.lastFeeRound = round.id;
 
   day.totalSupply = protocol.totalSupply;
   day.totalActiveStake = protocol.totalActiveStake;

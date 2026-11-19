@@ -69,18 +69,37 @@ export function createOrLoadPool(roundId: string, transcoderAddress: string): Po
     // round's pool, but when the transcoder was inactive — or newRound's
     // non-deterministic enumeration skipped it (see #249) — the previous
     // round's pool can be missing for several rounds. Walk back to the most
-    // recent pool that exists, bounded below by lastRewardRound (which is
-    // guaranteed to have a pool with valid factors). This mirrors the
-    // contract's latestCumulativeFactorsPool.
+    // recent pool that exists, bounded below by the later of lastRewardRound
+    // and lastFeeRound (each is guaranteed to have a pool with valid
+    // factors). This mirrors the contract's latestCumulativeFactorsPool,
+    // which falls back to lastRewardRound for the reward factor and
+    // lastFeeRound for the fee factor, so fees earned before a transcoder's
+    // first reward() still carry forward.
     //
     // Only checking round-1 (the previous behavior) left the factors at 0
     // whenever that single pool was missing, and reward() then reset the
     // cumulative reward factor to base (10^27) — corrupting the stake of every
     // delegator whose last claim predated the gap.
     let sourcePool: Pool | null = null;
-    if (transcoder != null && transcoder.lastRewardRound != null) {
+    let floor = ZERO_BI;
+    let hasHistory = false;
+    if (transcoder != null) {
+      let lastRewardRound = transcoder.lastRewardRound;
+      if (lastRewardRound !== null) {
+        floor = integerFromString(lastRewardRound);
+        hasHistory = true;
+      }
+      let lastFeeRound = transcoder.lastFeeRound;
+      if (lastFeeRound !== null) {
+        let feeFloor = integerFromString(lastFeeRound);
+        if (!hasHistory || feeFloor.gt(floor)) {
+          floor = feeFloor;
+        }
+        hasHistory = true;
+      }
+    }
+    if (hasHistory) {
       let cursor = integerFromString(roundId).minus(ONE_BI);
-      let floor = integerFromString(transcoder.lastRewardRound!);
       while (cursor.ge(floor)) {
         let candidate = Pool.load(
           makePoolId(transcoderAddress, cursor.toString())
