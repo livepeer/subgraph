@@ -24,6 +24,7 @@ import {
   Rebond,
   Reward,
   RewardCallerSet,
+  ThirdPartyBonderAuthorization as ThirdPartyBonderAuthorizationEventParam,
   TranscoderActivated,
   TranscoderDeactivated,
   TranscoderSlashed,
@@ -40,6 +41,8 @@ import {
   RebondEvent,
   RewardCallerSetEvent,
   RewardEvent,
+  ThirdPartyBonderAuthorization,
+  ThirdPartyBonderAuthorizationEvent,
   TranscoderActivatedEvent,
   TranscoderDeactivatedEvent,
   TranscoderSlashedEvent,
@@ -218,6 +221,38 @@ export function transferBond(event: TransferBond): void {
   transferBondEvent.oldUnbondingLockId =
     event.params.oldUnbondingLockId.toI32();
   transferBondEvent.save();
+}
+
+export function thirdPartyBonderAuthorization(
+  event: ThirdPartyBonderAuthorizationEventParam
+): void {
+  let round = createOrLoadRound(getBlockNum());
+  let delegator = event.params.delegator.toHex();
+  let bonder = event.params.bonder.toHex();
+
+  // Remove the pair on revoke since the event below keeps the history
+  let id = delegator + "-" + bonder;
+  if (event.params.authorized) {
+    let authorization = new ThirdPartyBonderAuthorization(id);
+    authorization.delegator = delegator;
+    authorization.bonder = bonder;
+    authorization.authorizedTimestamp = event.block.timestamp.toI32();
+    authorization.save();
+  } else {
+    store.remove("ThirdPartyBonderAuthorization", id);
+  }
+
+  createOrLoadTransactionFromEvent(event);
+  let authorizationEvent = new ThirdPartyBonderAuthorizationEvent(
+    makeEventId(event.transaction.hash, event.logIndex)
+  );
+  authorizationEvent.transaction = event.transaction.hash.toHex();
+  authorizationEvent.timestamp = event.block.timestamp.toI32();
+  authorizationEvent.round = round.id;
+  authorizationEvent.delegator = delegator;
+  authorizationEvent.bonder = bonder;
+  authorizationEvent.authorized = event.params.authorized;
+  authorizationEvent.save();
 }
 
 // Handler for Unbond events

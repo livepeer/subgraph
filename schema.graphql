@@ -278,6 +278,20 @@ type UnbondingLock @entity {
 }
 
 """
+Bonder the delegator currently allows to add stake to it with bondForWithHint() or transferBond(), removed on revoke
+"""
+type ThirdPartyBonderAuthorization @entity {
+  "Delegator address + bonder address"
+  id: ID!
+  "Address of the account that granted the authorization"
+  delegator: String!
+  "Address allowed to add stake to the delegator"
+  bonder: String!
+  "Timestamp of the grant"
+  authorizedTimestamp: Int!
+}
+
+"""
 Stake weighted poll
 """
 type Poll @entity {
@@ -568,6 +582,26 @@ type TransferBondEvent implements Event @entity {
   oldDelegator: Delegator!
   newUnbondingLockId: Int!
   oldUnbondingLockId: Int!
+}
+
+"""
+ThirdPartyBonderAuthorizationEvent entities are created for every emitted ThirdPartyBonderAuthorization event.
+"""
+type ThirdPartyBonderAuthorizationEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occurred in"
+  round: Round!
+  "Address of the account that granted or revoked the authorization"
+  delegator: String!
+  "Address allowed to add stake to the delegator while authorized"
+  bonder: String!
+  "Whether the bonder is authorized after this event"
+  authorized: Boolean!
 }
 
 """

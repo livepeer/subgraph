@@ -33,6 +33,8 @@ dataSources:
           - RebondEvent
           - RewardCallerSetEvent
           - RewardEvent
+          - ThirdPartyBonderAuthorization
+          - ThirdPartyBonderAuthorizationEvent
           - Transaction
           - Transcoder
           - TranscoderActivatedEvent
@@ -70,6 +72,8 @@ dataSources:
           handler: parameterUpdate
         - event: TransferBond(indexed address,indexed address,uint256,uint256,uint256)
           handler: transferBond
+        - event: ThirdPartyBonderAuthorization(indexed address,indexed address,bool)
+          handler: thirdPartyBonderAuthorization
   - kind: ethereum/contract
     name: L2Migrator
     network: {{networkName}}
