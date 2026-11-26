@@ -209,6 +209,8 @@ type Delegator @entity {
   delegatedAmount: BigDecimal!
   "Unbonding locks associated with the delegator"
   unbondingLocks: [UnbondingLock!] @derivedFrom(field: "delegator")
+  "Bonders the delegator currently allows to add stake to it"
+  thirdPartyBonders: [ThirdPartyBonderAuthorization!] @derivedFrom(field: "delegator")
 }
 
 """
@@ -283,8 +285,8 @@ Bonder the delegator currently allows to add stake to it with bondForWithHint() 
 type ThirdPartyBonderAuthorization @entity {
   "Delegator address + bonder address"
   id: ID!
-  "Address of the account that granted the authorization"
-  delegator: String!
+  "Reference to the delegator that granted the authorization"
+  delegator: Delegator!
   "Address allowed to add stake to the delegator"
   bonder: String!
   "Timestamp of the grant"
@@ -596,8 +598,8 @@ type ThirdPartyBonderAuthorizationEvent implements Event @entity {
   timestamp: Int!
   "Reference to the round the event occurred in"
   round: Round!
-  "Address of the account that granted or revoked the authorization"
-  delegator: String!
+  "Reference to the delegator that granted or revoked the authorization"
+  delegator: Delegator!
   "Address allowed to add stake to the delegator while authorized"
   bonder: String!
   "Whether the bonder is authorized after this event"

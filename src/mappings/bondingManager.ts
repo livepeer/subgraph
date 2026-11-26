@@ -227,14 +227,17 @@ export function thirdPartyBonderAuthorization(
   event: ThirdPartyBonderAuthorizationEventParam
 ): void {
   let round = createOrLoadRound(getBlockNum());
-  let delegator = event.params.delegator.toHex();
+  let delegator = createOrLoadDelegator(
+    event.params.delegator.toHex(),
+    event.block.timestamp.toI32()
+  );
   let bonder = event.params.bonder.toHex();
 
   // Remove the pair on revoke since the event below keeps the history
-  let id = delegator + "-" + bonder;
+  let id = delegator.id + "-" + bonder;
   if (event.params.authorized) {
     let authorization = new ThirdPartyBonderAuthorization(id);
-    authorization.delegator = delegator;
+    authorization.delegator = delegator.id;
     authorization.bonder = bonder;
     authorization.authorizedTimestamp = event.block.timestamp.toI32();
     authorization.save();
@@ -249,7 +252,7 @@ export function thirdPartyBonderAuthorization(
   authorizationEvent.transaction = event.transaction.hash.toHex();
   authorizationEvent.timestamp = event.block.timestamp.toI32();
   authorizationEvent.round = round.id;
-  authorizationEvent.delegator = delegator;
+  authorizationEvent.delegator = delegator.id;
   authorizationEvent.bonder = bonder;
   authorizationEvent.authorized = event.params.authorized;
   authorizationEvent.save();
