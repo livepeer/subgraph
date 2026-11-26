@@ -209,6 +209,8 @@ type Delegator @entity {
   delegatedAmount: BigDecimal!
   "Unbonding locks associated with the delegator"
   unbondingLocks: [UnbondingLock!] @derivedFrom(field: "delegator")
+  "Bonders the delegator currently allows to add stake to it"
+  thirdPartyBonders: [ThirdPartyBonderAuthorization!] @derivedFrom(field: "delegator")
 }
 
 """
@@ -275,6 +277,20 @@ type UnbondingLock @entity {
   withdrawRound: BigInt!
   "Account that initiates the transaction that creates the unbonding lock"
   sender: String!
+}
+
+"""
+Bonder the delegator currently allows to add stake to it with bondForWithHint() or transferBond(), removed on revoke
+"""
+type ThirdPartyBonderAuthorization @entity {
+  "Delegator address + bonder address"
+  id: ID!
+  "Reference to the delegator that granted the authorization"
+  delegator: Delegator!
+  "Address allowed to add stake to the delegator"
+  bonder: String!
+  "Timestamp of the grant"
+  authorizedTimestamp: Int!
 }
 
 """
@@ -568,6 +584,26 @@ type TransferBondEvent implements Event @entity {
   oldDelegator: Delegator!
   newUnbondingLockId: Int!
   oldUnbondingLockId: Int!
+}
+
+"""
+ThirdPartyBonderAuthorizationEvent entities are created for every emitted ThirdPartyBonderAuthorization event.
+"""
+type ThirdPartyBonderAuthorizationEvent implements Event @entity {
+  "Ethereum transaction hash + event log index"
+  id: ID!
+  "Reference to the transaction the event was included in"
+  transaction: Transaction!
+  "Timestamp of the transaction the event was included in"
+  timestamp: Int!
+  "Reference to the round the event occurred in"
+  round: Round!
+  "Reference to the delegator that granted or revoked the authorization"
+  delegator: Delegator!
+  "Address allowed to add stake to the delegator while authorized"
+  bonder: String!
+  "Whether the bonder is authorized after this event"
+  authorized: Boolean!
 }
 
 """
